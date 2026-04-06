@@ -14,6 +14,7 @@ import {
   X,
   Search,
   ArrowLeft,
+  Menu,
 } from 'lucide-react';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -82,6 +83,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const [screenshotName, setScreenshotName] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
 
   const refreshConversations = useCallback(async () => {
     const response = await authFetch('/api/chat/conversations');
@@ -212,50 +214,72 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
-      <nav className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-neutral-100 bg-white relative z-40">
-        <div className="flex items-center cursor-pointer" onClick={() => router.push('/')}>
-          <span className={`text-3xl sm:text-4xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
-            soso.
-          </span>
-        </div>
-
-        <div className="flex items-center flex-wrap justify-center sm:justify-end gap-3 sm:gap-5">
-          <Link
-            href="/search"
-            className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest"
-          >
-            {t('nav.search')}
-          </Link>
-          <Link
-            href="/about"
-            className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest"
-          >
-            {t('nav.about')}
-          </Link>
-          <Link
-            href="/students"
-            className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest"
-          >
-            {t('nav.students')}
-          </Link>
-          <span className="text-[10px] sm:text-[11px] font-black text-black uppercase tracking-widest underline underline-offset-4">
-            AI Chat
-          </span>
-          <div className="hidden sm:block h-4 w-px bg-neutral-200 mx-1" />
-          <div className="flex items-center gap-3 sm:gap-4">
-            {(['en', 'ru', 'uz'] as const).map((lang) => (
+      <nav className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-neutral-100 bg-white relative z-40">
+        <div className="mx-auto w-full max-w-7xl space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center cursor-pointer" onClick={() => router.push('/')}>
+              <span className={`text-3xl sm:text-4xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
+                soso.
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <HeaderAccountActions />
               <button
-                key={lang}
-                onClick={() => setLanguage(lang)}
-                className={`text-[10px] font-black uppercase tracking-widest transition-all ${
-                  language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
-                }`}
+                type="button"
+                onClick={() => setHeaderMenuOpen((prev) => !prev)}
+                className="inline-flex h-8 w-8 items-center justify-center border border-neutral-200 bg-white text-neutral-700 sm:hidden"
+                aria-label={headerMenuOpen ? 'Close header menu' : 'Open header menu'}
               >
-                {lang}
+                {headerMenuOpen ? <X size={14} /> : <Menu size={14} />}
               </button>
-            ))}
+            </div>
           </div>
-          <HeaderAccountActions />
+
+          <div className={`${headerMenuOpen ? 'block' : 'hidden'} border-t border-neutral-100 pt-3 space-y-3 sm:block sm:border-0 sm:pt-0`}>
+            <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <Link
+                href="/search"
+                onClick={() => setHeaderMenuOpen(false)}
+                className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest"
+              >
+                {t('nav.search')}
+              </Link>
+              <Link
+                href="/about"
+                onClick={() => setHeaderMenuOpen(false)}
+                className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest"
+              >
+                {t('nav.about')}
+              </Link>
+              <Link
+                href="/students"
+                onClick={() => setHeaderMenuOpen(false)}
+                className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest"
+              >
+                {t('nav.students')}
+              </Link>
+              <span className="text-[10px] sm:text-[11px] font-black text-black uppercase tracking-widest underline underline-offset-4">
+                AI Chat
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {(['en', 'ru', 'uz'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => {
+                    setLanguage(lang);
+                    setHeaderMenuOpen(false);
+                  }}
+                  className={`text-[10px] font-black uppercase tracking-widest transition-all ${
+                    language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </nav>
 

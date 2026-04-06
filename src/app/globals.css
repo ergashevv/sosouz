@@ -24,6 +24,15 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-['Inter'] font-extrabold tracking-tight;
   }
+
+  /* Prevent iOS Safari from auto-zooming focused form fields */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer components {
