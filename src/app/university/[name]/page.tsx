@@ -31,6 +31,21 @@ function LoadingState() {
   );
 }
 
+function deriveDomain(basicInfo: { domains?: string[]; web_pages?: string[] }): string {
+  if (Array.isArray(basicInfo.domains) && basicInfo.domains.length > 0 && basicInfo.domains[0]) {
+    return basicInfo.domains[0];
+  }
+
+  const fallbackPage = Array.isArray(basicInfo.web_pages) ? basicInfo.web_pages[0] : null;
+  if (!fallbackPage) return "unknown";
+
+  try {
+    return new URL(fallbackPage).hostname || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 async function UniversityContent({ name, lang = 'en' }: { name: string, lang?: Language }) {
   const decodedName = decodeURIComponent(name);
   const basicInfo = await fetchUniversityByName(decodedName);
@@ -45,8 +60,13 @@ async function UniversityContent({ name, lang = 'en' }: { name: string, lang?: L
     );
   }
 
-  const domain = (basicInfo.domains && basicInfo.domains.length > 0) ? basicInfo.domains[0] : (basicInfo.web_pages && basicInfo.web_pages[0] ? new URL(basicInfo.web_pages[0]).hostname : 'unknown');
-  const aiDetails = await performResearch(decodedName, basicInfo.country, domain, lang);
+  const domain = deriveDomain(basicInfo);
+  let aiDetails: Awaited<ReturnType<typeof performResearch>> = null;
+  try {
+    aiDetails = await performResearch(decodedName, basicInfo.country, domain, lang);
+  } catch (error) {
+    console.error("Research fetch failed:", error);
+  }
   const logoSrc = getLogoUrl(domain);
   const fallbackSrc = getFallbackLogoUrl(domain);
 

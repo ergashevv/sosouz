@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type SyntheticEvent } from 'react';
 
 interface SmartImageProps {
   src: string;
@@ -10,22 +10,42 @@ interface SmartImageProps {
 }
 
 export default function SmartImage({ src, fallback, alt, className }: SmartImageProps) {
-  const [hasError, setHasError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [usedFallback, setUsedFallback] = useState(false);
+  const [isLowRes, setIsLowRes] = useState(false);
 
-  // If the src changes, reset the error state
-  // We can also use a key={src} on the component from the parent
-  // But here we'll just handle it by choosing the src to render
-  
+  useEffect(() => {
+    setCurrentSrc(src);
+    setUsedFallback(false);
+    setIsLowRes(false);
+  }, [src, fallback]);
+
   const handleError = () => {
-    setHasError(true);
+    if (!usedFallback) {
+      setCurrentSrc(fallback);
+      setUsedFallback(true);
+      setIsLowRes(false);
+      return;
+    }
+
+    // If both primary and fallback fail, keep showing fallback URL.
+    setCurrentSrc(fallback);
+  };
+
+  const handleLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget;
+    // Very small source logos look blurry when stretched.
+    setIsLowRes(img.naturalWidth < 96 || img.naturalHeight < 96);
   };
 
   return (
     <img 
-      src={hasError ? fallback : src} 
+      src={currentSrc} 
       alt={alt} 
       className={className}
       onError={handleError}
+      onLoad={handleLoad}
+      style={isLowRes ? { width: '72%', height: '72%' } : undefined}
     />
   );
 }

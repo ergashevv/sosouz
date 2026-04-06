@@ -2,10 +2,11 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, MapPin, Globe } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import { countries } from '@/lib/countries';
 import { Outfit } from 'next/font/google';
 import { useLanguage } from '@/contexts/LanguageContext';
+import HeaderAccountActions from '@/components/HeaderAccountActions';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
@@ -57,7 +58,7 @@ function SearchHeaderContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <div 
               className="flex flex-col cursor-pointer"
               onClick={() => router.push('/')}
@@ -82,6 +83,8 @@ function SearchHeaderContent() {
                 </button>
               ))}
             </div>
+
+            <HeaderAccountActions />
           </div>
 
           {/* Soft Search Interface */}

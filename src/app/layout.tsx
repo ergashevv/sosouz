@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { cookies } from "next/headers";
 import type { Language } from "@/lib/i18n";
+import FloatingChatLauncher from "@/components/FloatingChatLauncher";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -41,6 +42,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <LanguageProvider initialLanguage={initialLanguage}>
           {children}
+          <FloatingChatLauncher />
         </LanguageProvider>
       </body>
     </html>

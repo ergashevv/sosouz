@@ -316,7 +316,12 @@ export async function performResearch(
   domain?: string,
   lang = "en",
 ) {
-  const cachedDetails = await findCachedDetails(university);
+  let cachedDetails = null;
+  try {
+    cachedDetails = await findCachedDetails(university);
+  } catch (error) {
+    console.error("Cache lookup failed:", error);
+  }
 
   if (cachedDetails && isFresh(cachedDetails.last_updated) && hasMinimumDetails(cachedDetails)) {
     return cachedDetails;

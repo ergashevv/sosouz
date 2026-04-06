@@ -10,7 +10,7 @@ type InternalDict = {
 
 export const translations: InternalDict = {
   // Navigation & Common
-  "nav.search": { en: "Search & Discover", ru: "Поиск и Открытия", uz: "Qidiruv va Tadqiq" },
+  "nav.search": { en: "Search & Discover", ru: "Поиск", uz: "Qidiruv" },
   "nav.about": { en: "About Us", ru: "О Нас", uz: "Biz Haqimizda" },
   "nav.students": { en: "For Students", ru: "Студентам", uz: "Talabalar Uchun" },
   "nav.terms": { en: "Terms of Service", ru: "Условия Использования", uz: "Foydalanish Shartlari" },
@@ -59,6 +59,25 @@ export const translations: InternalDict = {
   "uni.refresh_status": { en: "Status", ru: "Статус", uz: "Holat" },
   "uni.sources": { en: "Data Sources", ru: "Источники Данных", uz: "Ma'lumot Manbalari" },
   "uni.confidence": { en: "Confidence", ru: "Уверенность", uz: "Ishonchlilik" },
+  "uni.important_links": { en: "Most Important Links", ru: "Самые Важные Ссылки", uz: "Eng Muhim Havolalar" },
+  "uni.important_apply": { en: "Where to apply", ru: "Куда подавать документы", uz: "Qayerdan hujjat topshirish" },
+  "uni.important_apply_desc": {
+    en: "Official admissions page to submit your application documents.",
+    ru: "Официальная страница приема, где подаются документы.",
+    uz: "Ariza va hujjat topshirish uchun rasmiy qabul sahifasi.",
+  },
+  "uni.important_programs": { en: "Programs and majors", ru: "Программы и направления", uz: "Yo'nalishlar va dasturlar" },
+  "uni.important_programs_desc": {
+    en: "Read program pages and choose your exact study direction.",
+    ru: "Изучите страницы программ и выберите нужное направление.",
+    uz: "Yo'nalish sahifalarini ko'rib, aniq dasturingizni tanlang.",
+  },
+  "uni.important_tuition": { en: "Tuition and contract details", ru: "Стоимость и условия контракта", uz: "Kontrakt va to'lov tafsilotlari" },
+  "uni.important_tuition_desc": {
+    en: "Official fees, payment terms, and contract-related details.",
+    ru: "Официальные цены, условия оплаты и детали контракта.",
+    uz: "Rasmiy kontrakt narxi, to'lov shartlari va tegishli ma'lumotlar.",
+  },
   
   // Footer
   "footer.copyright": { en: "© 2026 SOSO Education", ru: "© 2026 SOSO Образование", uz: "© 2026 SOSO Ta'lim" },

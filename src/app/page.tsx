@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Outfit } from 'next/font/google';
 import { useLanguage } from '@/contexts/LanguageContext';
+import HeaderAccountActions from '@/components/HeaderAccountActions';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
@@ -40,7 +41,7 @@ export default function Home() {
           </span>
         </div>
         
-        <div className="flex items-center flex-wrap justify-center sm:justify-end gap-3 sm:gap-6">
+        <div className="flex items-center flex-wrap justify-center sm:justify-end gap-3 sm:gap-5">
           <Link href="/search" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
           <Link href="/about" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
           <Link href="/students" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
@@ -60,6 +61,8 @@ export default function Home() {
               </button>
             ))}
           </div>
+
+          <HeaderAccountActions />
         </div>
       </nav>
 
