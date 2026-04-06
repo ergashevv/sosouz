@@ -3,7 +3,7 @@
 import useSWR from 'swr';
 import { fetchUniversities } from '@/lib/api';
 import UniversityCard from '@/components/UniversityCard';
-import { use, useEffect, useState } from 'react';
+import { use, useState } from 'react';
 import { Activity, Shield, Info, Database, Search, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import SearchHeader from '@/components/SearchHeader';
@@ -24,8 +24,7 @@ const buildSearchHref = (country: string, page: number, query?: string) => {
   return `/search?${params.toString()}`;
 };
 
-function ResultsGrid({ country, q, page }: { country: string, q?: string, page: number }) {
-  const { t } = useLanguage();
+function ResultsGrid({ country, q, page }: { country: string; q?: string; page: number }) {
   const { data: universities, error, isLoading } = useSWR(
     [country, q],
     fetcher,
@@ -132,11 +131,6 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
   const [searchCountry, setSearchCountry] = useState(country);
   const [searchQuery, setSearchQuery] = useState(query || '');
 
-  useEffect(() => {
-    setSearchCountry(country);
-    setSearchQuery(query || '');
-  }, [country, query]);
-
   const handleRefineSearch = (e: React.FormEvent) => {
     e.preventDefault();
     window.location.assign(buildSearchHref(searchCountry, 1, searchQuery || undefined));
@@ -219,7 +213,11 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
           </div>
         </div>
 
-        <ResultsGrid country={country} q={query} page={page} />
+        <ResultsGrid
+          country={country}
+          q={query}
+          page={page}
+        />
       </div>
 
       <footer className="mt-12 sm:mt-20 py-10 sm:py-12 border-t border-neutral-100 bg-white">
