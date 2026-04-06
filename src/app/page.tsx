@@ -7,11 +7,13 @@ import { countries } from '@/lib/countries';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Outfit } from 'next/font/google';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
 export default function Home() {
   const router = useRouter();
+  const { t, language, setLanguage } = useLanguage();
   const [query, setQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('United Kingdom');
 
@@ -29,10 +31,27 @@ export default function Home() {
             soso.
           </span>
         </div>
+        
         <div className="hidden md:flex items-center gap-8">
-          <Link href="/search" className="text-[13px] font-semibold text-neutral-600 hover:text-black transition-colors">Search & Discover</Link>
-          <Link href="/about" className="text-[13px] font-semibold text-neutral-600 hover:text-black transition-colors">About Us</Link>
-          <Link href="/students" className="text-[13px] font-semibold text-neutral-600 hover:text-black transition-colors">For Students</Link>
+          <Link href="/search" className="text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
+          <Link href="/about" className="text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
+          <Link href="/students" className="text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
+          
+          <div className="h-4 w-[1px] bg-neutral-200 mx-2"></div>
+          
+          <div className="flex items-center gap-4">
+            {(['en', 'ru', 'uz'] as const).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => setLanguage(lang)}
+                className={`text-[10px] font-black uppercase tracking-widest transition-all ${
+                  language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
+                }`}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
         </div>
       </nav>
 
@@ -51,15 +70,15 @@ export default function Home() {
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-neutral-800"></span>
               </span>
               <span className="text-xs font-semibold text-neutral-600 tracking-wide">
-                Explore 25,000+ Universities Worldwide
+                {t('home.hero.badge')}
               </span>
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1]">
-              Find the perfect university <br />
-              <span className="text-neutral-400 italic">for your future.</span>
+              {t('home.hero.title')} <br />
+              <span className="text-neutral-400 italic">{t('home.hero.subtitle')}</span>
             </h1>
             <p className="max-w-2xl mx-auto text-neutral-500 text-lg leading-relaxed mt-6">
-              Search through our verified global database to explore tuition fees, admission deadlines, and scholarship opportunities anywhere in the world.
+              {t('home.hero.desc')}
             </p>
           </motion.div>
 
@@ -88,12 +107,12 @@ export default function Home() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Ask for a university..."
+                  placeholder={t('home.search.placeholder')}
                   className="bg-transparent w-full py-2 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
                 />
               </div>
               <button type="submit" className="px-8 h-full bg-neutral-900 text-white text-sm font-bold rounded-full hover:bg-black transition-colors w-full md:w-auto flex items-center justify-center shadow-md">
-                Search
+                {t('home.search.btn')}
               </button>
             </div>
           </motion.form>
@@ -146,11 +165,11 @@ export default function Home() {
       <footer className="py-12 px-6 border-t border-black/10 bg-white flex flex-col justify-center">
         <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.4em] flex-1">
-            &copy; 2026 SOSO
+            {t('footer.copyright')}
           </div>
           <div className="flex flex-1 justify-center items-center gap-8">
-            <Link href="/about" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">About</Link>
-            <Link href="/terms" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">Terms of Service</Link>
+            <Link href="/about" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">{t('nav.about')}</Link>
+            <Link href="/terms" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">{t('nav.terms')}</Link>
           </div>
           <div className="flex flex-1 justify-end items-center gap-2 text-black font-bold text-[10px] uppercase tracking-widest">
             All systems operational
@@ -160,3 +179,4 @@ export default function Home() {
     </main>
   );
 }
+
