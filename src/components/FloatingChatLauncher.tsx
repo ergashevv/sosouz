@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MessageCircle } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { authFetch } from '@/lib/client-auth';
 
 interface AuthState {
   authenticated: boolean;
@@ -18,7 +19,7 @@ export default function FloatingChatLauncher() {
 
     const loadMe = async () => {
       try {
-        const response = await fetch('/api/auth/me');
+        const response = await authFetch('/api/auth/me');
         if (!active) return;
         if (!response.ok) {
           setAuthState({ authenticated: false });

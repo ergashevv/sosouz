@@ -2,7 +2,7 @@
 
 import { University, getLogoUrl, getFallbackLogoUrl } from '@/lib/api';
 import { motion } from 'framer-motion';
-import { MapPin, Globe, ArrowRight, Shield } from 'lucide-react';
+import { MapPin, Globe, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import SmartImage from './SmartImage';
 import { useLanguage } from '@/contexts/LanguageContext';

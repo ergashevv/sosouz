@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AsYouType, CountryCode, getCountryCallingCode, parsePhoneNumberFromString, validatePhoneNumberLength } from 'libphonenumber-js';
 import { AlertTriangle, ArrowLeft, KeyRound, LogOut, Save, ShieldAlert, UserRoundCheck } from 'lucide-react';
 import { countries } from '@/lib/countries';
+import { authFetch, clearAuthToken, setAuthToken } from '@/lib/client-auth';
 
 interface ProfilePanelProps {
   user: {
@@ -112,7 +113,8 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
   };
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await authFetch('/api/auth/logout', { method: 'POST' });
+    clearAuthToken();
     router.push('/');
     router.refresh();
   };
@@ -131,7 +133,7 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
         return;
       }
 
-      const response = await fetch('/api/profile', {
+      const response = await authFetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -183,7 +185,7 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
         return;
       }
 
-      const response = await fetch('/api/profile/password', {
+      const response = await authFetch('/api/profile/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -191,9 +193,12 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
           newPassword,
         }),
       });
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json()) as { error?: string; token?: string };
       if (!response.ok) {
         throw new Error(data.error || 'Password reset failed.');
+      }
+      if (typeof data.token === 'string' && data.token) {
+        setAuthToken(data.token);
       }
 
       setCurrentPassword('');
@@ -219,7 +224,7 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
         return;
       }
 
-      const response = await fetch('/api/profile', {
+      const response = await authFetch('/api/profile', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: deletePassword }),
@@ -229,6 +234,7 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
         throw new Error(data.error || 'Account deletion failed.');
       }
 
+      clearAuthToken();
       router.push('/');
       router.refresh();
     } catch (error: unknown) {

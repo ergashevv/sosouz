@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   createSession,
-  getSessionTokenFromCookies,
+  getSessionTokenFromRequest,
   hashPassword,
-  setSessionCookie,
   validatePassword,
   verifyPassword,
 } from "@/lib/auth";
@@ -18,7 +17,7 @@ interface PasswordResetPayload {
 
 export async function POST(request: Request) {
   try {
-    const token = await getSessionTokenFromCookies();
+    const token = getSessionTokenFromRequest(request);
     if (!token) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
@@ -67,9 +66,7 @@ export async function POST(request: Request) {
     });
 
     const nextToken = await createSession(session.user_id);
-    const response = NextResponse.json({ ok: true });
-    setSessionCookie(response, nextToken);
-    return response;
+    return NextResponse.json({ ok: true, token: nextToken });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Password reset failed.";
     return NextResponse.json({ error: message }, { status: 500 });

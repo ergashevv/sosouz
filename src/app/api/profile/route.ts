@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
-  getCurrentSessionUser,
+  getCurrentSessionUserFromRequest,
   normalizeCountryCode,
   sanitizeName,
   validatePhoneNumberByCountry,
   verifyPassword,
-  clearSessionCookie,
 } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -23,8 +22,8 @@ interface ProfileDeletePayload {
   password?: unknown;
 }
 
-export async function GET() {
-  const user = await getCurrentSessionUser();
+export async function GET(request: Request) {
+  const user = await getCurrentSessionUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
@@ -34,7 +33,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const user = await getCurrentSessionUser();
+    const user = await getCurrentSessionUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
@@ -106,7 +105,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const user = await getCurrentSessionUser();
+    const user = await getCurrentSessionUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
@@ -133,9 +132,7 @@ export async function DELETE(request: Request) {
 
     await prisma.user.delete({ where: { id: dbUser.id } });
 
-    const response = NextResponse.json({ ok: true });
-    clearSessionCookie(response);
-    return response;
+    return NextResponse.json({ ok: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to delete account.";
     return NextResponse.json({ error: message }, { status: 500 });

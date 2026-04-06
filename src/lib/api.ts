@@ -74,7 +74,8 @@ export const fetchUniversityByName = async (
 };
 
 export const getLogoUrl = (domain: string) => {
-  return `https://logo.clearbit.com/${domain}?size=800`;
+  const normalized = domain?.trim().toLowerCase() || "unknown";
+  return `/api/logo/${encodeURIComponent(normalized)}`;
 };
 
 export const getFallbackLogoUrl = (domain: string) => {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ChatRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCurrentSessionUser } from "@/lib/auth";
+import { getCurrentSessionUserFromRequest } from "@/lib/auth";
 import { generateAdvisorReply } from "@/lib/ai-chat";
 
 export const runtime = "nodejs";
@@ -26,7 +26,7 @@ function buildConversationTitle(content: string): string {
 }
 
 export async function GET(request: Request) {
-  const user = await getCurrentSessionUser();
+  const user = await getCurrentSessionUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const user = await getCurrentSessionUser();
+  const user = await getCurrentSessionUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

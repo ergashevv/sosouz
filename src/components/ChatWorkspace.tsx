@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { authFetch } from '@/lib/client-auth';
 
 interface ChatWorkspaceProps {
   user: {
@@ -82,7 +83,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [screenshotName, setScreenshotName] = useState<string | null>(null);
 
   const refreshConversations = useCallback(async () => {
-    const response = await fetch('/api/chat/conversations');
+    const response = await authFetch('/api/chat/conversations');
     if (!response.ok) throw new Error('Failed to load conversations.');
     const payload = (await response.json()) as { conversations: ConversationItem[] };
     setConversations(payload.conversations || []);
@@ -90,7 +91,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   }, []);
 
   const loadMessages = useCallback(async (conversationId: string) => {
-    const response = await fetch(`/api/chat/messages?conversationId=${conversationId}`);
+    const response = await authFetch(`/api/chat/messages?conversationId=${conversationId}`);
     if (!response.ok) throw new Error('Failed to load messages.');
     const payload = (await response.json()) as { messages: ChatMessage[] };
     setMessages(payload.messages || []);
@@ -103,7 +104,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
       try {
         const list = await refreshConversations();
         if (list.length === 0) {
-          const create = await fetch('/api/chat/conversations', { method: 'POST' });
+          const create = await authFetch('/api/chat/conversations', { method: 'POST' });
           if (!create.ok) throw new Error('Failed to create a conversation.');
           const createdPayload = (await create.json()) as { conversation: ConversationItem };
           const createdConversation = createdPayload.conversation;
@@ -127,7 +128,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const startNewChat = async () => {
     setError(null);
     try {
-      const response = await fetch('/api/chat/conversations', { method: 'POST' });
+      const response = await authFetch('/api/chat/conversations', { method: 'POST' });
       if (!response.ok) throw new Error('Could not create a new chat.');
       const payload = (await response.json()) as { conversation: ConversationItem };
       const createdConversation = payload.conversation;
@@ -166,7 +167,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
     setError(null);
 
     try {
-      const response = await fetch('/api/chat/messages', {
+      const response = await authFetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

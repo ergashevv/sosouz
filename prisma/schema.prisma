@@ -36,6 +36,17 @@ model SearchCache {
   last_updated DateTime @updatedAt
 }
 
+model UniversityLogo {
+  id          String   @id @default(uuid())
+  domain      String   @unique
+  mime_type   String
+  image_data  Bytes
+  source_url  String?
+  fetched_at  DateTime @default(now())
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
 model User {
   id               String             @id @default(uuid())
   first_name       String

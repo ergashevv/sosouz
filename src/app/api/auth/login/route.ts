@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import {
   createSession,
   normalizeCountryCode,
-  setSessionCookie,
   validatePhoneNumberByCountry,
   verifyPassword,
 } from "@/lib/auth";
@@ -45,8 +44,9 @@ export async function POST(request: Request) {
     }
 
     const token = await createSession(user.id);
-    const response = NextResponse.json({
+    return NextResponse.json({
       ok: true,
+      token,
       user: {
         id: user.id,
         firstName: user.first_name,
@@ -54,8 +54,6 @@ export async function POST(request: Request) {
         phoneE164: user.phone_e164,
       },
     });
-    setSessionCookie(response, token);
-    return response;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Login failed.";
     return NextResponse.json({ error: message }, { status: 500 });

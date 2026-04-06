@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 
 export const SESSION_COOKIE_NAME = "soso_session";
 const SESSION_TTL_DAYS = 30;
+export const SESSION_TTL_SECONDS = SESSION_TTL_DAYS * 24 * 60 * 60;
 
 export interface SessionUser {
   id: string;
@@ -17,6 +18,27 @@ export interface SessionUser {
   phoneE164: string;
   phoneCountry: string;
 }
+
+type UserSessionClient = {
+  findUnique: (args: unknown) => Promise<UserSessionRecord | null>;
+  create: (args: unknown) => Promise<unknown>;
+  delete: (args: unknown) => Promise<unknown>;
+  update: (args: unknown) => Promise<unknown>;
+};
+
+type UserSessionRecord = {
+  id: string;
+  expires_at: Date;
+  user: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    phone_e164: string;
+    phone_country: string;
+  };
+};
+
+const userSessionClient = (prisma as unknown as { userSession: UserSessionClient }).userSession;
 
 export function sanitizeName(value: unknown, max = 60): string {
   if (typeof value !== "string") return "";
@@ -81,10 +103,9 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 export async function createSession(userId: string): Promise<string> {
   const token = randomUUID();
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + SESSION_TTL_DAYS);
+  const expiresAt = getNextSessionExpiry();
 
-  await prisma.userSession.create({
+  await userSessionClient.create({
     data: {
       user_id: userId,
       token,
@@ -96,13 +117,13 @@ export async function createSession(userId: string): Promise<string> {
 }
 
 export function setSessionCookie(response: NextResponse, token: string) {
-  const maxAge = SESSION_TTL_DAYS * 24 * 60 * 60;
   response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge,
+    maxAge: SESSION_TTL_SECONDS,
+    expires: getNextSessionExpiry(),
   });
 }
 
@@ -121,17 +142,42 @@ export async function getSessionTokenFromCookies() {
   return cookieStore.get(SESSION_COOKIE_NAME)?.value || null;
 }
 
+export function getSessionTokenFromRequest(request: Request): string | null {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader) {
+    const [scheme, token] = authHeader.split(" ");
+    if (scheme?.toLowerCase() === "bearer" && token) {
+      return token.trim();
+    }
+  }
+
+  const cookieHeader = request.headers.get("cookie");
+  if (!cookieHeader) return null;
+  const entries = cookieHeader.split(";").map((chunk) => chunk.trim());
+  for (const entry of entries) {
+    if (!entry.startsWith(`${SESSION_COOKIE_NAME}=`)) continue;
+    const value = entry.slice(`${SESSION_COOKIE_NAME}=`.length);
+    if (!value) return null;
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  return null;
+}
+
 export async function getSessionUserByToken(token: string | null): Promise<SessionUser | null> {
   if (!token) return null;
 
-  const session = await prisma.userSession.findUnique({
+  const session = await userSessionClient.findUnique({
     where: { token },
     include: { user: true },
   });
 
   if (!session) return null;
   if (session.expires_at <= new Date()) {
-    await prisma.userSession.delete({ where: { id: session.id } }).catch(() => null);
+    await userSessionClient.delete({ where: { id: session.id } }).catch(() => null);
     return null;
   }
 
@@ -144,7 +190,30 @@ export async function getSessionUserByToken(token: string | null): Promise<Sessi
   };
 }
 
+export async function refreshSession(token: string): Promise<boolean> {
+  try {
+    await userSessionClient.update({
+      where: { token },
+      data: { expires_at: getNextSessionExpiry() },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function getCurrentSessionUser(): Promise<SessionUser | null> {
   const token = await getSessionTokenFromCookies();
   return await getSessionUserByToken(token);
+}
+
+export async function getCurrentSessionUserFromRequest(request: Request): Promise<SessionUser | null> {
+  const token = getSessionTokenFromRequest(request);
+  return await getSessionUserByToken(token);
+}
+
+function getNextSessionExpiry() {
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + SESSION_TTL_DAYS);
+  return expiresAt;
 }

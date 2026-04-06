@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateAdvisorReply } from "@/lib/ai-chat";
-import { getCurrentSessionUser } from "@/lib/auth";
+import { getCurrentSessionUserFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -40,7 +40,7 @@ function sanitizeMessages(
 }
 
 export async function POST(request: Request) {
-  const user = await getCurrentSessionUser();
+  const user = await getCurrentSessionUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Authentication required for chat." }, { status: 401 });
   }

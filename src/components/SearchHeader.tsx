@@ -73,10 +73,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
   }, []);
 
   useEffect(() => {
-    if (!shouldStickHeader) {
-      setIsLogoStickyElevated(false);
-      return;
-    }
+    if (!shouldStickHeader) return;
 
     const handleScroll = () => {
       setIsLogoStickyElevated(window.scrollY > 4);
@@ -89,10 +86,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
   }, [shouldStickHeader]);
 
   useEffect(() => {
-    if (!isSearchPinned) {
-      setIsSearchStickyActive(false);
-      return;
-    }
+    if (!isSearchPinned) return;
 
     const handleScroll = () => {
       setIsSearchStickyActive(window.scrollY < SEARCH_STICKY_SCROLL_LIMIT);

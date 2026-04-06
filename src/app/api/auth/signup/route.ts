@@ -6,7 +6,6 @@ import {
   hashPassword,
   normalizeCountryCode,
   sanitizeName,
-  setSessionCookie,
   validatePassword,
   validatePhoneNumberByCountry,
 } from "@/lib/auth";
@@ -72,8 +71,9 @@ export async function POST(request: Request) {
     });
 
     const token = await createSession(createdUser.id);
-    const response = NextResponse.json({
+    return NextResponse.json({
       ok: true,
+      token,
       user: {
         id: createdUser.id,
         firstName: createdUser.first_name,
@@ -81,8 +81,6 @@ export async function POST(request: Request) {
         phoneE164: createdUser.phone_e164,
       },
     });
-    setSessionCookie(response, token);
-    return response;
   } catch (error: unknown) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

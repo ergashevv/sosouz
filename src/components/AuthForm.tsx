@@ -7,6 +7,7 @@ import { countries } from '@/lib/countries';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { AsYouType, CountryCode, getCountryCallingCode, parsePhoneNumberFromString, validatePhoneNumberLength } from 'libphonenumber-js';
 import ReactCountryFlag from 'react-country-flag';
+import { setAuthToken } from '@/lib/client-auth';
 
 interface AuthFormProps {
   mode: 'login' | 'signup';
@@ -138,6 +139,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
       if (!response.ok) {
         throw new Error(typeof data.error === 'string' ? data.error : 'Authentication failed.');
       }
+      if (typeof data.token !== 'string' || !data.token) {
+        throw new Error('Invalid authentication token.');
+      }
+      setAuthToken(data.token);
 
       router.push(next);
       router.refresh();
