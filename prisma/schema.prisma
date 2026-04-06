@@ -14,6 +14,7 @@ model UniversityDetails {
   tuition_fees          String?
   scholarships          Json?    // Array of objects with { name, link }
   admission_requirements Json?    // Structured data
+  admission_deadline    String?
   detailed_overview     String?  @db.Text
   last_updated          DateTime @updatedAt
 }

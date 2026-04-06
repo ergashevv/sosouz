@@ -50,13 +50,21 @@ export async function performResearch(university: string, country?: string, doma
     let structuredData: ResearchOutput;
     try {
       const snippets = searchResults.slice(0, 5).map((r: any) => `${r.title}: ${r.snippet}`).join("\n\n");
-      const prompt = `Extract university details for ${university} into JSON:
-      - "annual_tuition_usd" (Range)
-      - "available_scholarships" (Array of {name, link})
-      - "admission_requirements" (Object)
-      - "admission_deadline" (String)
-      - "detailed_overview" (3-4 sentences overview)
-      Return ONLY JSON. Snippets: ${snippets}`;
+      const prompt = `You are a professional educational consultant and leading academic researcher with extensive internal knowledge about global universities. I need official, highly detailed, and accurate academic data about ${university} (Location: ${country || 'unknown'}, Domain: ${domain || 'unknown'}). 
+
+Combine your vast internal database with the following recent search snippets to construct a rich, authoritative academic profile.
+
+Requirements for the output:
+1. "annual_tuition_usd": Specific average tuition fee ranges for international students. Do not say "varies". Give an official estimate in USD (e.g., "$25,000 - $40,000/year").
+2. "available_scholarships": List 2-4 known official scholarships for international students at this university (e.g., "Global Excellence Scholarship") and their official links (if link unknown, provide the domain).
+3. "admission_requirements": An object describing concrete requirements (e.g., {"IELTS": "Overall 6.5 minimum", "GPA": "Minimum 3.0/4.0", "Documents": "Statement of Purpose, 2 LORs"}).
+4. "admission_deadline": Provide specific application months or periods (e.g., "Fall: January 15, Spring: September 1"). If rolling, say so.
+5. "detailed_overview": A rich, highly professional 4-5 sentence summary. Mention specific global rankings, major facilities, strong faculties, major achievements, and why international students choose this university specifically. Make it sound like a premium official directory overview.
+
+Return ONLY a valid JSON object matching the keys: annual_tuition_usd, available_scholarships, admission_requirements, admission_deadline, detailed_overview. Do not wrap it in markdown.
+
+Recent Search Snippets for extra context:
+${snippets}`;
 
       const aiResult = await model.generateContent(prompt);
       const text = aiResult.response.text();
@@ -79,6 +87,7 @@ export async function performResearch(university: string, country?: string, doma
         tuition_fees: structuredData.annual_tuition_usd,
         scholarships: structuredData.available_scholarships as any,
         admission_requirements: structuredData.admission_requirements as any,
+        admission_deadline: structuredData.admission_deadline,
         detailed_overview: structuredData.detailed_overview,
         domain: domain || null,
         country: country || null,
@@ -89,6 +98,7 @@ export async function performResearch(university: string, country?: string, doma
         tuition_fees: structuredData.annual_tuition_usd,
         scholarships: structuredData.available_scholarships as any,
         admission_requirements: structuredData.admission_requirements as any,
+        admission_deadline: structuredData.admission_deadline,
         detailed_overview: structuredData.detailed_overview,
         domain: domain || null,
         country: country || null,
