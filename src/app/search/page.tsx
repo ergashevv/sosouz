@@ -15,6 +15,14 @@ const fetcher = async ([country, query]: [string, string | undefined]) => {
   return await fetchUniversities(country, query);
 };
 
+const buildSearchHref = (country: string, page: number, query?: string) => {
+  const params = new URLSearchParams({ country, page: String(page) });
+  if (query && query.trim()) {
+    params.set('q', query.trim());
+  }
+  return `/search?${params.toString()}`;
+};
+
 function ResultsGrid({ country, q, page }: { country: string, q?: string, page: number }) {
   const { t } = useLanguage();
   const { data: universities, error, isLoading } = useSWR(
@@ -76,25 +84,25 @@ function ResultsGrid({ country, q, page }: { country: string, q?: string, page: 
       {/* Pagination Interface */}
       {totalPages > 1 && (
         <div className="flex flex-col md:flex-row items-center justify-between gap-12 py-20 border-t border-neutral-100 mt-20">
-          <Link
-            href={`/search?country=${country}${q ? `&q=${q}` : ''}&page=${Math.max(1, page - 1)}`}
+          <a
+            href={buildSearchHref(country, Math.max(1, page - 1), q)}
             className={`px-8 py-3 rounded-full border border-neutral-200 text-sm font-bold transition-all hover:bg-neutral-50 ${page === 1 ? 'opacity-20 pointer-events-none' : ''}`}
           >
             PREVIOUS
-          </Link>
+          </a>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
             {[...Array(totalPages)].map((_, i) => {
               const p = i + 1;
               if (p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1)) {
                 return (
-                  <Link
+                  <a
                     key={p}
-                    href={`/search?country=${country}${q ? `&q=${q}` : ''}&page=${p}`}
+                    href={buildSearchHref(country, p, q)}
                     className={`w-10 h-10 flex items-center justify-center text-xs font-bold rounded-full transition-all ${page === p ? 'bg-black text-white' : 'text-neutral-400 hover:text-black hover:bg-neutral-50'}`}
                   >
                     {p}
-                  </Link>
+                  </a>
                 );
               }
               if (p === page - 2 || p === page + 2) return <span key={p} className="text-neutral-300">...</span>;
@@ -102,12 +110,12 @@ function ResultsGrid({ country, q, page }: { country: string, q?: string, page: 
             })}
           </div>
 
-          <Link
-            href={`/search?country=${country}${q ? `&q=${q}` : ''}&page=${Math.min(totalPages, page + 1)}`}
+          <a
+            href={buildSearchHref(country, Math.min(totalPages, page + 1), q)}
             className={`px-8 py-3 rounded-full border border-neutral-200 text-sm font-bold transition-all hover:bg-neutral-50 ${page === totalPages ? 'opacity-20 pointer-events-none' : ''}`}
           >
             NEXT
-          </Link>
+          </a>
         </div>
       )}
     </div>

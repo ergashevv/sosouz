@@ -23,6 +23,15 @@ export const translations: InternalDict = {
   "home.search.placeholder": { en: "Ask for a university...", ru: "Найти университет...", uz: "Universitet nomini qidiring..." },
   "home.search.btn": { en: "Search", ru: "Искать", uz: "Izlash" },
 
+  "home.stats.verified": { en: "Verified Universities", ru: "Проверенные Университеты", uz: "Tasdiqlangan Universitetlar" },
+  "home.stats.countries": { en: "Countries", ru: "Страны", uz: "Davlatlar" },
+  "home.stats.free": { en: "Free Platform", ru: "Бесплатная Платформа", uz: "Bepul Platforma" },
+  
+  "home.reg.uk": { en: "UK UNIVERSITIES", ru: "УНИВЕРСИТЕТЫ ВЕЛИКОБРИТАНИИ", uz: "BRITANIYA UNIVERSITETLARI" },
+  "home.reg.us": { en: "US UNIVERSITIES", ru: "УНИВЕРСИТЕТЫ США", uz: "AQSH UNIVERSITETLARI" },
+  "home.reg.de": { en: "GERMANY UNIVERSITIES", ru: "УНИВЕРСИТЕТЫ ГЕРМАНИИ", uz: "GERMANIYA UNIVERSITETLARI" },
+  "home.reg.view": { en: "View All", ru: "Смотреть Все", uz: "Barchasini Ko'rish" },
+
   // Search Results Page
   "search.header.country": { en: "Search Results For", ru: "Результаты поиска для", uz: "Qidiruv natijalari:" },
   "search.header.query": { en: "Query:", ru: "Запрос:", uz: "Qidiruv:" },
@@ -39,14 +48,21 @@ export const translations: InternalDict = {
   "uni.tuition": { en: "Tuition Fees", ru: "Стоимость Обучения", uz: "Kontrakt Narxi" },
   "uni.deadline": { en: "Admission Deadline", ru: "Сроки Подачи Заявок", uz: "Qabul Muddatlari" },
   "uni.scholarships": { en: "Verified Scholarships", ru: "Проверенные Стипендии", uz: "Tasdiqlangan Grantlar" },
+  "uni.programs": { en: "Study Programs", ru: "Учебные Программы", uz: "Ta'lim Yo'nalishlari" },
   "uni.requirements": { en: "Admission Requirements", ru: "Требования к Поступлению", uz: "Qabul Talablari" },
   "uni.website": { en: "Official Website", ru: "Официальный Сайт", uz: "Rasmiy Veb-sayt" },
   "uni.visit": { en: "Visit Official Domain", ru: "Перейти на официальный домен", uz: "Rasmiy saytiga o'tish" },
   "uni.not_specified": { en: "Not specified", ru: "Не указано", uz: "Ko'rsatilmagan" },
   "uni.varies": { en: "Varies by program", ru: "Зависит от программы", uz: "Yo'nalishga qarab o'zgaradi" },
+  "uni.last_updated": { en: "Last Updated", ru: "Последнее Обновление", uz: "Oxirgi Yangilanish" },
+  "uni.next_refresh": { en: "Next Refresh", ru: "Следующее Обновление", uz: "Keyingi Yangilanish" },
+  "uni.refresh_status": { en: "Status", ru: "Статус", uz: "Holat" },
+  "uni.sources": { en: "Data Sources", ru: "Источники Данных", uz: "Ma'lumot Manbalari" },
+  "uni.confidence": { en: "Confidence", ru: "Уверенность", uz: "Ishonchlilik" },
   
   // Footer
   "footer.copyright": { en: "© 2026 SOSO Education", ru: "© 2026 SOSO Образование", uz: "© 2026 SOSO Ta'lim" },
+  "footer.status": { en: "All systems operational", ru: "Все системы работают", uz: "Barcha tizimlar ishlamoqda" },
 
   // About Page
   "about.title": { en: "About Us", ru: "О Нас", uz: "Biz Haqimizda" },

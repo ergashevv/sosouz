@@ -17,9 +17,17 @@ export default function Home() {
   const [query, setQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('United Kingdom');
 
+  const buildSearchHref = (country: string, searchQuery?: string) => {
+    const params = new URLSearchParams({ country });
+    if (searchQuery && searchQuery.trim()) {
+      params.set('q', searchQuery.trim());
+    }
+    return `/search?${params.toString()}`;
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/search?country=${selectedCountry}${query ? `&q=${query}` : ''}`);
+    window.location.assign(buildSearchHref(selectedCountry, query));
   };
 
   return (
@@ -126,36 +134,36 @@ export default function Home() {
           <div className="flex flex-wrap items-center justify-between md:justify-center gap-12 md:gap-32 border-b border-black/10 pb-24">
             <div className="flex flex-col items-center gap-4">
               <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">25.4K</span>
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><Shield size={12} /> Verified Universities</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><Shield size={12} /> {t('home.stats.verified')}</span>
             </div>
             <div className="flex flex-col items-center gap-4">
               <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">195+</span>
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><Database size={12} /> Countries</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><Database size={12} /> {t('home.stats.countries')}</span>
             </div>
             <div className="flex flex-col items-center gap-4">
               <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">100%</span>
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><LayoutGrid size={12} /> Free Platform</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><LayoutGrid size={12} /> {t('home.stats.free')}</span>
             </div>
           </div>
 
           {/* Quick Access Tiles */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: 'United Kingdom', label: 'UK REGISTRY', color: 'bg-black text-white border-black' },
-              { name: 'United States', label: 'US REGISTRY', color: 'bg-white text-black border-black/10 hover:border-black' },
-              { name: 'Germany', label: 'DE REGISTRY', color: 'bg-white text-black border-black/10 hover:border-black' }
+              { name: 'United Kingdom', key: 'home.reg.uk', color: 'bg-black text-white border-black' },
+              { name: 'United States', key: 'home.reg.us', color: 'bg-white text-black border-black/10 hover:border-black' },
+              { name: 'Germany', key: 'home.reg.de', color: 'bg-white text-black border-black/10 hover:border-black' }
             ].map(dest => (
-              <Link
+              <a
                 key={dest.name}
-                href={`/search?country=${dest.name}`}
+                href={buildSearchHref(dest.name)}
                 className={`p-10 border transition-all flex flex-col justify-between h-48 group ${dest.color}`}
               >
                 <MapPin size={24} className={dest.name === 'United Kingdom' ? 'text-white/50' : 'text-black/20'} />
                 <div>
-                  <h3 className="text-lg font-black uppercase tracking-tighter">{dest.label}</h3>
-                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">View Universities &rarr;</span>
+                  <h3 className="text-lg font-black uppercase tracking-tighter">{t(dest.key)}</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">{t('home.reg.view')} &rarr;</span>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </div>
@@ -172,7 +180,7 @@ export default function Home() {
             <Link href="/terms" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">{t('nav.terms')}</Link>
           </div>
           <div className="flex flex-1 justify-end items-center gap-2 text-black font-bold text-[10px] uppercase tracking-widest">
-            All systems operational
+            {t('footer.status')}
           </div>
         </div>
       </footer>

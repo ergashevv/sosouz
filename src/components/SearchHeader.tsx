@@ -19,6 +19,14 @@ function SearchHeaderContent() {
   const [selectedCountry, setSelectedCountry] = useState(initialCountry);
   const [scrolled, setScrolled] = useState(false);
 
+  const buildSearchHref = (country: string, searchQuery?: string) => {
+    const params = new URLSearchParams({ country });
+    if (searchQuery && searchQuery.trim()) {
+      params.set('q', searchQuery.trim());
+    }
+    return `/search?${params.toString()}`;
+  };
+
   // Sync state if URL changes externally (e.g. back button)
   const currentCountry = searchParams?.get('country') || 'United Kingdom';
   if (selectedCountry !== currentCountry) {
@@ -33,14 +41,14 @@ function SearchHeaderContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/search?country=${selectedCountry}${query ? `&q=${query}` : ''}`);
+    window.location.assign(buildSearchHref(selectedCountry, query));
   };
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCountry = e.target.value;
     setSelectedCountry(newCountry);
-    // Push the navigation dynamically immediately so the page updates its text
-    router.push(`/search?country=${newCountry}${query ? `&q=${query}` : ''}`);
+    // Hard navigation avoids mixed-content issues caused by misreported protocol upstream.
+    window.location.assign(buildSearchHref(newCountry, query));
   };
 
   return (

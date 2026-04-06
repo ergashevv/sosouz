@@ -8,14 +8,14 @@ export interface University {
 }
 
 export const fetchUniversities = async (country: string, query?: string): Promise<University[]> => {
-  const url = new URL('http://universities.hipolabs.com/search');
+  const url = new URL('/api/hipo/search', typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
   url.searchParams.set('country', country);
   if (query) {
     url.searchParams.set('name', query);
   }
 
   const response = await fetch(url.toString(), {
-    next: { revalidate: 3600 } // Cache for 1 hour
+    next: { revalidate: 3600 }
   });
 
   if (!response.ok) {
@@ -26,7 +26,7 @@ export const fetchUniversities = async (country: string, query?: string): Promis
 };
 
 export const fetchUniversityByName = async (name: string): Promise<University | null> => {
-  const url = new URL('http://universities.hipolabs.com/search');
+  const url = new URL('/api/hipo/search', typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
   url.searchParams.set('name', name);
 
   const response = await fetch(url.toString());

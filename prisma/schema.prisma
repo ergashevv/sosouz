@@ -13,9 +13,14 @@ model UniversityDetails {
   country               String?
   tuition_fees          String?
   scholarships          Json?    // Array of objects with { name, link }
+  programs              Json?    // Array of main study directions/programs
   admission_requirements Json?    // Structured data
   admission_deadline    String?
   detailed_overview     String?  @db.Text
+  source_links          Json?    // Array of source URLs used for enrichment
+  data_confidence       Float?
+  refresh_status        String?  // fresh | stale | partial | failed
+  next_refresh_at       DateTime?
   last_updated          DateTime @updatedAt
 }
 

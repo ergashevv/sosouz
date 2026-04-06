@@ -3,13 +3,13 @@ import { performResearch } from "@/lib/research";
 
 export async function POST(req: Request) {
   try {
-    const { university, country, domain } = await req.json();
+    const { university, country, domain, lang } = await req.json();
 
     if (!university) {
       return NextResponse.json({ error: "University name is required" }, { status: 400 });
     }
 
-    const result = await performResearch(university, country, domain);
+    const result = await performResearch(university, country, domain, lang);
     
     if (!result) {
       return NextResponse.json({ error: "Research failed" }, { status: 500 });

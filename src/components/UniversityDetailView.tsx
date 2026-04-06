@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Globe, MapPin, ExternalLink, GraduationCap, DollarSign, Award, ClipboardList, Info, Sparkles, ArrowLeft, Shield, Zap, Search } from 'lucide-react';
+import { Globe, MapPin, ExternalLink, GraduationCap, DollarSign, Award, ClipboardList, Info, ArrowLeft, Shield, Search, Clock3, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import SmartImage from '@/components/SmartImage';
 import { University } from '@/lib/api';
@@ -10,9 +10,15 @@ import { useLanguage } from '@/contexts/LanguageContext';
 export interface AIResearchData {
   tuition_fees?: string | null;
   scholarships?: { name: string; link: string }[] | null;
+  programs?: string[] | null;
   admission_requirements?: Record<string, string | number | boolean> | null;
   admission_deadline?: string | null;
   detailed_overview?: string | null;
+  source_links?: string[] | null;
+  data_confidence?: number | null;
+  refresh_status?: string | null;
+  last_updated?: string | Date | null;
+  next_refresh_at?: string | Date | null;
 }
 
 export interface UniversityDetailsProps {
@@ -25,6 +31,19 @@ export interface UniversityDetailsProps {
 
 export default function UniversityDetailView({ basicInfo, aiDetails, domain, logoSrc, fallbackSrc }: UniversityDetailsProps) {
   const { t } = useLanguage();
+  const lastUpdated =
+    aiDetails?.last_updated ? new Date(aiDetails.last_updated) : null;
+  const nextRefreshAt =
+    aiDetails?.next_refresh_at ? new Date(aiDetails.next_refresh_at) : null;
+  const formattedLastUpdated =
+    lastUpdated && !Number.isNaN(lastUpdated.getTime())
+      ? lastUpdated.toLocaleString()
+      : null;
+  const formattedNextRefresh =
+    nextRefreshAt && !Number.isNaN(nextRefreshAt.getTime())
+      ? nextRefreshAt.toLocaleDateString()
+      : null;
+
   return (
     <div className="pb-64 relative z-10 bg-white">
       {/* Hero Section */}
@@ -87,6 +106,22 @@ export default function UniversityDetailView({ basicInfo, aiDetails, domain, log
                 <p className="text-xl text-neutral-700 leading-relaxed font-medium transition-colors">
                    {aiDetails?.detailed_overview || "..."}
                 </p>
+                <div className="mt-8 pt-6 border-t border-neutral-100 flex flex-wrap items-center gap-4 text-xs text-neutral-500 font-medium">
+                  <div className="inline-flex items-center gap-2">
+                    <Clock3 size={14} className="text-neutral-400" />
+                    {t('uni.last_updated')}: {formattedLastUpdated || t('uni.not_specified')}
+                  </div>
+                  {aiDetails?.refresh_status ? (
+                    <div className="px-3 py-1 rounded-full border border-neutral-200 bg-neutral-50 text-[10px] uppercase tracking-wider font-bold">
+                      {t('uni.refresh_status')}: {aiDetails.refresh_status}
+                    </div>
+                  ) : null}
+                  {formattedNextRefresh ? (
+                    <div className="text-[11px] text-neutral-400">
+                      {t('uni.next_refresh')}: {formattedNextRefresh}
+                    </div>
+                  ) : null}
+                </div>
              </div>
           </section>
 
@@ -115,6 +150,28 @@ export default function UniversityDetailView({ basicInfo, aiDetails, domain, log
                 </div>
              </div>
           </div>
+
+          <section className="space-y-12">
+             <div className="flex items-center gap-4 border-b border-neutral-100 pb-8">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                   <BookOpen size={20} />
+                </div>
+                <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.programs')}</h2>
+             </div>
+             {(aiDetails?.programs && aiDetails.programs.length > 0) ? (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {aiDetails.programs.map((program, i) => (
+                   <div key={`${program}-${i}`} className="px-5 py-4 rounded-2xl border border-neutral-200 bg-white text-sm font-semibold text-neutral-700 shadow-sm">
+                     {program}
+                   </div>
+                 ))}
+               </div>
+             ) : (
+               <div className="p-10 text-center rounded-3xl border-2 border-dashed border-neutral-100 bg-neutral-50">
+                 <p className="text-sm font-medium text-neutral-400">{t('uni.not_specified')}</p>
+               </div>
+             )}
+          </section>
 
           <section className="space-y-12">
              <div className="flex items-center gap-4 border-b border-neutral-100 pb-8">
@@ -173,6 +230,30 @@ export default function UniversityDetailView({ basicInfo, aiDetails, domain, log
                       {t('uni.visit')} <ExternalLink size={16} />
                    </a>
                  ))}
+              </div>
+              <div className="p-6 bg-white/5 rounded-3xl border border-white/10 space-y-4 relative z-10">
+                <div className="text-[10px] uppercase tracking-widest font-bold text-white/70">{t('uni.sources')}</div>
+                {(aiDetails?.source_links && aiDetails.source_links.length > 0) ? (
+                  <div className="space-y-2">
+                    {aiDetails.source_links.slice(0, 4).map((source, i) => (
+                      <a
+                        key={`${source}-${i}`}
+                        href={source}
+                        target="_blank"
+                        className="block text-xs text-neutral-300 hover:text-white underline underline-offset-2 break-all"
+                      >
+                        {source}
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-neutral-400">{t('uni.not_specified')}</p>
+                )}
+                {typeof aiDetails?.data_confidence === 'number' ? (
+                  <p className="text-[11px] text-neutral-400">
+                    {t('uni.confidence')}: {Math.round(aiDetails.data_confidence * 100)}%
+                  </p>
+                ) : null}
               </div>
               <div className="p-6 bg-white/5 rounded-3xl border border-white/10 flex gap-4 items-start relative z-10">
                  <Info size={18} className="text-neutral-400 shrink-0 mt-0.5" />
