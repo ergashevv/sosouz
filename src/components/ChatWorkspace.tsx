@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { DragEvent, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -40,6 +40,8 @@ interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  attachmentDataUrl?: string | null;
+  attachmentName?: string | null;
   createdAt: string;
 }
 
@@ -84,6 +86,55 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [screenshotName, setScreenshotName] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const dragDepthRef = useRef(0);
+
+  const handleMediaFile = useCallback((file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setError('Only image files are supported for media upload.');
+      return;
+    }
+    void fileToDataUrl(file)
+      .then((dataUrl) => {
+        setScreenshotDataUrl(dataUrl);
+        setScreenshotName(file.name);
+        setError(null);
+      })
+      .catch(() => {
+        setError('Failed to read selected image.');
+      });
+  }, []);
+
+  const handleDragEnter = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current += 1;
+    setIsDragActive(true);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = 0;
+    setIsDragActive(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    handleMediaFile(file);
+  };
 
   const refreshConversations = useCallback(async () => {
     const response = await authFetch('/api/chat/conversations');
@@ -156,15 +207,20 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!activeConversationId || !input.trim() || sending) return;
+    if (!activeConversationId || sending || (!input.trim() && !screenshotDataUrl)) return;
+
+    const pendingContent = input.trim();
+    const pendingScreenshotDataUrl = screenshotDataUrl;
+    const pendingScreenshotName = screenshotName;
 
     const optimisticUserMessage: ChatMessage = {
       id: `tmp-${Date.now()}`,
       role: 'user',
-      content: input.trim(),
+      content: pendingContent,
+      attachmentDataUrl: pendingScreenshotDataUrl,
+      attachmentName: pendingScreenshotName,
       createdAt: new Date().toISOString(),
     };
-    const pendingContent = input.trim();
     setInput('');
     setMessages((prev) => [...prev, optimisticUserMessage]);
     setSending(true);
@@ -179,16 +235,29 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
           content: pendingContent,
           recommendationCountry: country,
           language,
-          screenshotDataUrl,
+          screenshotDataUrl: pendingScreenshotDataUrl,
+          screenshotName: pendingScreenshotName,
         }),
       });
-      const payload = await response.json();
+      const payload = (await response.json()) as {
+        error?: string;
+        userMessage?: ChatMessage;
+        message?: ChatMessage;
+      };
       if (!response.ok) {
         throw new Error(typeof payload.error === 'string' ? payload.error : 'Message failed.');
       }
 
-      const assistantMessage = payload.message as ChatMessage;
-      setMessages((prev) => [...prev, assistantMessage]);
+      if (!payload.userMessage || !payload.message) {
+        throw new Error('Unexpected response from server.');
+      }
+      const savedUserMessage = payload.userMessage;
+      const assistantMessage = payload.message;
+      setMessages((prev) =>
+        [...prev, assistantMessage].map((message) =>
+          message.id === optimisticUserMessage.id ? savedUserMessage : message,
+        ),
+      );
       setScreenshotDataUrl(null);
       setScreenshotName(null);
       await refreshConversations();
@@ -386,13 +455,36 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                   {messages.map((message) => (
                     <div
                       key={message.id}
-                      className={`max-w-[88%] px-3 py-2 text-sm whitespace-pre-wrap leading-relaxed border ${
+                      className={`max-w-[88%] px-3 py-2 text-sm whitespace-pre-wrap leading-relaxed border space-y-2 ${
                         message.role === 'assistant'
                           ? 'bg-white border-neutral-200 text-neutral-800'
                           : 'ml-auto bg-black text-white border-black'
                       }`}
                     >
-                      {message.role === 'assistant' ? normalizeAssistantText(message.content) : message.content}
+                      {message.content ? (
+                        <p>{message.role === 'assistant' ? normalizeAssistantText(message.content) : message.content}</p>
+                      ) : null}
+                      {message.attachmentDataUrl ? (
+                        <div className="space-y-1">
+                          {message.attachmentName ? (
+                            <p className={`text-[10px] ${message.role === 'assistant' ? 'text-neutral-500' : 'text-neutral-300'}`}>
+                              {message.attachmentName}
+                            </p>
+                          ) : null}
+                          <Image
+                            src={message.attachmentDataUrl}
+                            alt={message.attachmentName || 'Attached image'}
+                            width={640}
+                            height={360}
+                            unoptimized
+                            className={`w-full max-h-48 object-contain border ${
+                              message.role === 'assistant'
+                                ? 'bg-white border-neutral-200'
+                                : 'bg-neutral-950 border-white/20'
+                            }`}
+                          />
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                   {sending ? (
@@ -430,8 +522,19 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                   </div>
                 ) : null}
 
-                <form onSubmit={sendMessage} className="border-t border-neutral-200 pt-3 sticky bottom-0 bg-white">
-                  <div className="border border-neutral-200 bg-white p-2 flex items-end gap-2">
+                <form
+                  onSubmit={sendMessage}
+                  className="border-t border-neutral-200 pt-3 sticky bottom-0 bg-white"
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div
+                    className={`border p-2 flex items-end gap-2 transition-colors ${
+                      isDragActive ? 'border-black bg-neutral-100' : 'border-neutral-200 bg-white'
+                    }`}
+                  >
                     <textarea
                       value={input}
                       onChange={(event) => setInput(event.target.value)}
@@ -449,23 +552,23 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                           onChange={(event) => {
                             const file = event.target.files?.[0];
                             if (!file) return;
-                            void fileToDataUrl(file).then((dataUrl) => {
-                              setScreenshotDataUrl(dataUrl);
-                              setScreenshotName(file.name);
-                            });
+                            handleMediaFile(file);
                             event.currentTarget.value = '';
                           }}
                         />
                       </label>
                       <button
                         type="submit"
-                        disabled={!input.trim() || sending}
+                        disabled={(!input.trim() && !screenshotDataUrl) || sending}
                         className="inline-flex items-center justify-center w-9 h-9 bg-black text-white hover:bg-neutral-800 disabled:opacity-40 transition-colors"
                       >
                         <Send size={15} />
                       </button>
                     </div>
                   </div>
+                  {isDragActive ? (
+                    <p className="mt-2 text-[11px] text-neutral-500">Drop image here to attach as media.</p>
+                  ) : null}
                 </form>
 
                 {error ? <p className="mt-2 text-xs text-red-600">{error}</p> : null}

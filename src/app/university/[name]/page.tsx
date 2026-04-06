@@ -13,6 +13,8 @@ interface UniversityPageProps {
   searchParams: Promise<{ lang?: string }>;
 }
 
+const RESEARCH_TIMEOUT_MS = 7000;
+
 function LoadingState() {
   return (
     <section className="bg-white pt-[calc(var(--search-header-height,12rem)+1rem)] sm:pt-[calc(var(--search-header-height,12rem)+1.5rem)]">
@@ -73,6 +75,33 @@ function getNotFoundCopy(lang: Language): { title: string; message: string; acti
   };
 }
 
+function firstForwardedValue(value: string | null): string | null {
+  if (!value) return null;
+  const first = value.split(",")[0]?.trim();
+  return first || null;
+}
+
+function toSafeProto(value: string | null): "http" | "https" {
+  return value === "http" ? "http" : "https";
+}
+
+function toSafeHost(value: string | null): string | null {
+  if (!value) return null;
+  const normalized = value.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").trim();
+  if (!normalized) return null;
+  return /^[a-zA-Z0-9.-]+(?::\d+)?$/.test(normalized) ? normalized : null;
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallbackValue: T): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(fallbackValue), timeoutMs);
+    promise
+      .then((value) => resolve(value))
+      .catch(() => resolve(fallbackValue))
+      .finally(() => clearTimeout(timer));
+  });
+}
+
 async function UniversityContent({
   name,
   lang = 'en',
@@ -115,7 +144,11 @@ async function UniversityContent({
   const domain = deriveDomain(basicInfo);
   let aiDetails: Awaited<ReturnType<typeof performResearch>> = null;
   try {
-    aiDetails = await performResearch(decodedName, basicInfo.country, domain, lang);
+    aiDetails = await withTimeout(
+      performResearch(decodedName, basicInfo.country, domain, lang),
+      RESEARCH_TIMEOUT_MS,
+      null,
+    );
   } catch (error) {
     console.error("Research fetch failed:", error);
   }
@@ -146,9 +179,9 @@ export default async function UniversityDetail({ params, searchParams }: Univers
   const sParams = await searchParams;
   const cookieStore = await cookies();
   const headerStore = await headers();
-  const forwardedHost = headerStore.get('x-forwarded-host');
-  const host = forwardedHost || headerStore.get('host');
-  const proto = headerStore.get('x-forwarded-proto') || 'https';
+  const forwardedHost = toSafeHost(firstForwardedValue(headerStore.get("x-forwarded-host")));
+  const host = forwardedHost || toSafeHost(firstForwardedValue(headerStore.get("host")));
+  const proto = toSafeProto(firstForwardedValue(headerStore.get("x-forwarded-proto")));
   const apiOrigin = host ? `${proto}://${host}` : undefined;
   const lang = coerceLanguage(sParams.lang || cookieStore.get('soso_lang')?.value);
   

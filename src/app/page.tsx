@@ -137,15 +137,50 @@ export default function Home() {
             transition={{ duration: 0.8 }}
             className="space-y-6 sm:space-y-8"
           >
-            <div className="mx-auto w-fit inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white border border-neutral-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-8 hover:scale-105 transition-transform cursor-default">
-              <span className="flex h-1.5 w-1.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neutral-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-neutral-800"></span>
-              </span>
-              <span className="text-xs font-semibold text-neutral-600 tracking-wide">
-                {t('home.hero.badge')}
-              </span>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55 }}
+              className="mx-auto mb-8 w-fit"
+            >
+              <div className="relative overflow-hidden border border-neutral-300 bg-white px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.05)]">
+                <motion.span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-0 top-0 h-px w-full bg-black/80"
+                  animate={{ scaleX: [0, 1, 0], opacity: [0, 1, 0] }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: 'left' }}
+                />
+                <motion.span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-0 left-0 h-px w-full bg-black/40"
+                  animate={{ scaleX: [0, 1, 0], opacity: [0, 0.7, 0] }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: 0.35 }}
+                  style={{ transformOrigin: 'right' }}
+                />
+                <div className="relative z-10 inline-flex items-center gap-3 sm:gap-4">
+                  <span className="inline-flex items-center gap-2 border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-600">
+                    <motion.span
+                      className="inline-block h-1.5 w-1.5 bg-black"
+                      animate={{ opacity: [0.35, 1, 0.35] }}
+                      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                    Index 01
+                  </span>
+                  <span className="h-5 w-px bg-neutral-200" />
+                  <span className="text-sm sm:text-base font-semibold text-neutral-800 tracking-[0.01em]">
+                    {t('home.hero.badge')}
+                  </span>
+                  <motion.span
+                    className="border border-neutral-300 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-700"
+                    animate={{ y: [0, -1.5, 0] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    25K+
+                  </motion.span>
+                </div>
+              </div>
+            </motion.div>
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1]">
               {t('home.hero.title')} <br />
               <span className="text-neutral-400 italic">{t('home.hero.subtitle')}</span>

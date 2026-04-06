@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSessionUserFromRequest } from "@/lib/auth";
 import { generateAdvisorReply } from "@/lib/ai-chat";
+import {
+  parseChatMessageContent,
+  serializeChatMessageContent,
+} from "@/lib/chat-message-content";
 
 export const runtime = "nodejs";
 
@@ -11,6 +15,7 @@ interface SendMessagePayload {
   language?: "uz" | "ru" | "en";
   recommendationCountry?: string;
   screenshotDataUrl?: string;
+  screenshotName?: string;
 }
 
 const ChatRole = {
@@ -83,12 +88,17 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({
-    messages: messages.map((message) => ({
-      id: message.id,
-      role: message.role,
-      content: message.content,
-      createdAt: message.created_at,
-    })),
+    messages: messages.map((message) => {
+      const parsed = parseChatMessageContent(message.content);
+      return {
+        id: message.id,
+        role: message.role,
+        content: parsed.text,
+        attachmentDataUrl: parsed.attachmentDataUrl,
+        attachmentName: parsed.attachmentName,
+        createdAt: message.created_at,
+      };
+    }),
   });
 }
 
@@ -102,8 +112,14 @@ export async function POST(request: Request) {
     const payload = (await request.json()) as SendMessagePayload;
     const conversationId = typeof payload.conversationId === "string" ? payload.conversationId : "";
     const content = typeof payload.content === "string" ? payload.content.trim() : "";
-    if (!conversationId || !content) {
-      return NextResponse.json({ error: "conversationId and content are required." }, { status: 400 });
+    const screenshotDataUrl =
+      typeof payload.screenshotDataUrl === "string" ? payload.screenshotDataUrl.trim() : "";
+    const screenshotName = typeof payload.screenshotName === "string" ? payload.screenshotName : null;
+    if (!conversationId || (!content && !screenshotDataUrl)) {
+      return NextResponse.json(
+        { error: "conversationId and either content or screenshot are required." },
+        { status: 400 },
+      );
     }
 
     const conversation = await chatConversationRepo.findFirst({
@@ -113,11 +129,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
     }
 
-    await chatMessageRepo.create({
+    const savedUserMessage = await chatMessageRepo.create({
       data: {
         conversation_id: conversationId,
         role: ChatRole.user,
-        content,
+        content: serializeChatMessageContent({
+          text: content,
+          attachmentDataUrl: screenshotDataUrl || null,
+          attachmentName: screenshotName,
+        }),
       },
     });
 
@@ -136,11 +156,20 @@ export async function POST(request: Request) {
     const assistantReply = await generateAdvisorReply({
       language,
       recommendationCountry,
-      messages: history.map((item) => ({
-        role: item.role === ChatRole.assistant ? "assistant" : "user",
-        content: item.content,
-      })),
-      screenshotDataUrl: payload.screenshotDataUrl,
+      messages: history
+        .map((item) => {
+          const parsed = parseChatMessageContent(item.content);
+          const normalizedContent =
+            parsed.text ||
+            (parsed.attachmentDataUrl ? `[Attached image: ${parsed.attachmentName || "image"}]` : "");
+          if (!normalizedContent) return null;
+          return {
+            role: item.role === ChatRole.assistant ? "assistant" : "user",
+            content: normalizedContent,
+          };
+        })
+        .filter((item): item is { role: "user" | "assistant"; content: string } => Boolean(item)),
+      screenshotDataUrl,
     });
 
     const assistantMessage = await chatMessageRepo.create({
@@ -152,17 +181,30 @@ export async function POST(request: Request) {
     });
 
     if (conversation.title === "New chat") {
+      const conversationTitleSeed = content || screenshotName || "Image message";
       await chatConversationRepo.update({
         where: { id: conversationId },
-        data: { title: buildConversationTitle(content) },
+        data: { title: buildConversationTitle(conversationTitleSeed) },
       });
     }
 
+    const parsedSavedUserMessage = parseChatMessageContent(savedUserMessage.content);
+
     return NextResponse.json({
+      userMessage: {
+        content: parsedSavedUserMessage.text,
+        attachmentDataUrl: parsedSavedUserMessage.attachmentDataUrl,
+        attachmentName: parsedSavedUserMessage.attachmentName,
+        id: savedUserMessage.id,
+        role: savedUserMessage.role,
+        createdAt: savedUserMessage.created_at,
+      },
       message: {
         id: assistantMessage.id,
         role: assistantMessage.role,
         content: assistantMessage.content,
+        attachmentDataUrl: null,
+        attachmentName: null,
         createdAt: assistantMessage.created_at,
       },
     });

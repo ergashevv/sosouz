@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSessionUserFromRequest } from "@/lib/auth";
+import { getConversationMessagePreview } from "@/lib/chat-message-content";
 
 export const runtime = "nodejs";
 
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
       id: item.id,
       title: item.title,
       updatedAt: item.updated_at,
-      lastMessage: item.messages[0]?.content || null,
+      lastMessage: item.messages[0]?.content ? getConversationMessagePreview(item.messages[0].content) : null,
     })),
   });
 }
