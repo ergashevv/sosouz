@@ -32,12 +32,16 @@ function getApiOrigin(): string {
   return "http://127.0.0.1:3000";
 }
 
-function getSearchEndpoint(): URL {
-  return new URL("/api/hipo/search", getApiOrigin());
+function getSearchEndpoint(originOverride?: string): URL {
+  return new URL("/api/hipo/search", originOverride || getApiOrigin());
 }
 
-export const fetchUniversities = async (country: string, query?: string): Promise<University[]> => {
-  const url = getSearchEndpoint();
+export const fetchUniversities = async (
+  country: string,
+  query?: string,
+  originOverride?: string,
+): Promise<University[]> => {
+  const url = getSearchEndpoint(originOverride);
   url.searchParams.set("country", country);
   if (query) {
     url.searchParams.set("name", query);
@@ -54,8 +58,11 @@ export const fetchUniversities = async (country: string, query?: string): Promis
   return response.json();
 };
 
-export const fetchUniversityByName = async (name: string): Promise<University | null> => {
-  const url = getSearchEndpoint();
+export const fetchUniversityByName = async (
+  name: string,
+  originOverride?: string,
+): Promise<University | null> => {
+  const url = getSearchEndpoint(originOverride);
   url.searchParams.set("name", name);
 
   const response = await fetch(url.toString());

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import SearchHeader from '@/components/SearchHeader';
 import UniversityDetailView, { AIResearchData } from '@/components/UniversityDetailView';
 import type { Language } from '@/lib/i18n';
+import { headers } from 'next/headers';
 
 interface UniversityPageProps {
   params: Promise<{ name: string }>;
@@ -46,9 +47,17 @@ function deriveDomain(basicInfo: { domains?: string[]; web_pages?: string[] }): 
   }
 }
 
-async function UniversityContent({ name, lang = 'en' }: { name: string, lang?: Language }) {
+async function UniversityContent({
+  name,
+  lang = 'en',
+  apiOrigin,
+}: {
+  name: string;
+  lang?: Language;
+  apiOrigin?: string;
+}) {
   const decodedName = decodeURIComponent(name);
-  const basicInfo = await fetchUniversityByName(decodedName);
+  const basicInfo = await fetchUniversityByName(decodedName, apiOrigin);
   
   if (!basicInfo) {
     return (
@@ -93,13 +102,18 @@ export default async function UniversityDetail({ params, searchParams }: Univers
   const { name } = await params;
   const sParams = await searchParams;
   const cookieStore = await cookies();
+  const headerStore = await headers();
+  const forwardedHost = headerStore.get('x-forwarded-host');
+  const host = forwardedHost || headerStore.get('host');
+  const proto = headerStore.get('x-forwarded-proto') || 'https';
+  const apiOrigin = host ? `${proto}://${host}` : undefined;
   const lang = coerceLanguage(sParams.lang || cookieStore.get('soso_lang')?.value);
   
   return (
     <main className="min-h-screen bg-white">
       <SearchHeader />
       <Suspense fallback={<LoadingState />}>
-        <UniversityContent name={name} lang={lang} />
+        <UniversityContent name={name} lang={lang} apiOrigin={apiOrigin} />
       </Suspense>
     </main>
   );
