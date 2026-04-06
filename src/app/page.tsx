@@ -11,6 +11,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
+const INDEX_START_VALUE = 1;
+const INDEX_CLOCK_START_MS = Date.UTC(2026, 0, 1, 0, 0, 0);
+
+function formatBadgeIndex(nowMs: number): string {
+  const elapsedHours = Math.max(0, Math.floor((nowMs - INDEX_CLOCK_START_MS) / (1000 * 60 * 60)));
+  return String(INDEX_START_VALUE + elapsedHours).padStart(2, '0');
+}
 
 export default function Home() {
   const router = useRouter();
@@ -18,6 +25,7 @@ export default function Home() {
   const [query, setQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('United Kingdom');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dynamicIndex, setDynamicIndex] = useState('01');
 
   const buildSearchHref = (country: string, searchQuery?: string) => {
     const params = new URLSearchParams({ country });
@@ -44,6 +52,13 @@ export default function Home() {
     window.addEventListener('keydown', onEsc);
     return () => window.removeEventListener('keydown', onEsc);
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    const updateIndex = () => setDynamicIndex(formatBadgeIndex(Date.now()));
+    updateIndex();
+    const timerId = window.setInterval(updateIndex, 60 * 1000);
+    return () => window.clearInterval(timerId);
+  }, []);
 
   return (
     <main className="min-h-screen bg-white flex flex-col">
@@ -165,7 +180,7 @@ export default function Home() {
                       animate={{ opacity: [0.35, 1, 0.35] }}
                       transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                     />
-                    Index 01
+                    {`Index ${dynamicIndex}`}
                   </span>
                   <span className="h-5 w-px bg-neutral-200" />
                   <span className="text-sm sm:text-base font-semibold text-neutral-800 tracking-[0.01em]">
