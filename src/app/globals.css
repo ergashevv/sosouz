@@ -59,6 +59,148 @@
   .registry-label {
     @apply text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] mb-2 block;
   }
+
+  .hero-wrap {
+    @apply relative py-6 sm:py-16 lg:py-20;
+  }
+
+  .hero-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 8% auto auto 50%;
+    width: min(90vw, 760px);
+    height: 240px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.07) 0%, rgba(0, 0, 0, 0) 72%);
+    filter: blur(6px);
+    pointer-events: none;
+  }
+
+  .hero-grid {
+    @apply grid gap-4 sm:gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start;
+  }
+
+  .hero-copy {
+    @apply space-y-4 sm:space-y-6;
+  }
+
+  .hero-status-strip {
+    @apply relative w-full overflow-hidden border border-neutral-300 bg-white px-2.5 py-2 shadow-[0_8px_18px_rgba(0,0,0,0.05)] sm:w-auto sm:px-3 sm:py-2.5;
+  }
+
+  .hero-search-shell {
+    @apply rounded-[1.6rem] border border-neutral-200 bg-white p-4 sm:p-5 shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition-all hover:shadow-[0_20px_45px_rgba(0,0,0,0.1)];
+  }
+
+  .hero-search-row {
+    @apply flex items-center gap-3 rounded-2xl border border-neutral-200 px-4 py-2.5 bg-neutral-50/50;
+  }
+
+  .hero-search-btn {
+    @apply mt-1 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 text-sm font-bold text-white transition-colors hover:bg-black;
+  }
+
+  .home-intent-shell {
+    @apply relative overflow-hidden rounded-[2rem] border border-neutral-200 bg-white p-6 sm:p-10;
+    box-shadow: 0 20px 50px rgba(10, 10, 10, 0.06);
+  }
+
+  .home-intent-shell::before {
+    content: '';
+    position: absolute;
+    inset: -20% auto auto -10%;
+    width: 380px;
+    height: 380px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+    pointer-events: none;
+  }
+
+  .home-intent-shell::after {
+    content: '';
+    position: absolute;
+    inset: auto -12% -30% auto;
+    width: 320px;
+    height: 320px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0) 72%);
+    pointer-events: none;
+  }
+
+  .home-intent-grid {
+    @apply relative z-10 grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:gap-10;
+  }
+
+  .home-intent-main {
+    @apply space-y-5;
+  }
+
+  .home-intent-eyebrow {
+    @apply inline-flex items-center rounded-full border border-neutral-300 bg-neutral-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-600;
+  }
+
+  .home-intent-title {
+    @apply text-2xl sm:text-4xl font-black leading-tight tracking-tight text-neutral-900;
+  }
+
+  .home-intent-lead {
+    @apply max-w-2xl text-sm sm:text-base leading-relaxed text-neutral-600;
+  }
+
+  .home-intent-rail {
+    @apply rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4 sm:p-5;
+  }
+
+  .home-intent-rail-title {
+    @apply text-sm font-black uppercase tracking-[0.14em] text-neutral-700;
+  }
+
+  .home-intent-steps {
+    @apply mt-4 space-y-3;
+  }
+
+  .home-intent-step {
+    @apply flex items-start gap-3 text-sm text-neutral-700;
+  }
+
+  .home-intent-step-index {
+    @apply inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-white text-[11px] font-black text-neutral-700;
+  }
+
+  .home-intent-cards {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  .home-answer-card {
+    @apply rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5 transition-transform duration-300;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  }
+
+  .home-answer-card[data-tilt='left'] {
+    transform: rotate(-1.2deg);
+  }
+
+  .home-answer-card[data-tilt='right'] {
+    transform: rotate(1.2deg);
+  }
+
+  .home-answer-card:hover {
+    transform: translateY(-3px) rotate(0deg);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .home-answer-icon-wrap {
+    @apply mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 bg-neutral-50 text-neutral-700;
+  }
+
+  .home-answer-question {
+    @apply text-base font-black tracking-tight text-neutral-900;
+  }
+
+  .home-answer-text {
+    @apply mt-2 text-sm leading-relaxed text-neutral-600;
+  }
 }
 
 /* Custom Selection */
