@@ -15,6 +15,30 @@ interface PasswordResetPayload {
   newPassword?: unknown;
 }
 
+type SessionRecord = {
+  user_id: string;
+  expires_at: Date;
+  user: {
+    password_hash: string;
+  };
+};
+
+type UserSessionRepository = {
+  findUnique: (args: unknown) => Promise<SessionRecord | null>;
+  deleteMany: (args: unknown) => Promise<unknown>;
+};
+
+type UserRepository = {
+  update: (args: unknown) => Promise<unknown>;
+};
+
+type TransactionClient = {
+  user: UserRepository;
+  userSession: UserSessionRepository;
+};
+
+const userSessionRepo = (prisma as unknown as { userSession: UserSessionRepository }).userSession;
+
 export async function POST(request: Request) {
   try {
     const token = getSessionTokenFromRequest(request);
@@ -22,7 +46,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const session = await prisma.userSession.findUnique({
+    const session = await userSessionRepo.findUnique({
       where: { token },
       include: { user: true },
     });
@@ -35,18 +59,16 @@ export async function POST(request: Request) {
     const currentPassword = typeof payload.currentPassword === "string" ? payload.currentPassword : "";
     const newPassword = typeof payload.newPassword === "string" ? payload.newPassword : "";
 
-    if (!currentPassword) {
-      return NextResponse.json({ error: "Current password is required." }, { status: 400 });
-    }
-
     const passwordCheck = validatePassword(newPassword);
     if (!passwordCheck.ok) {
       return NextResponse.json({ error: passwordCheck.error }, { status: 400 });
     }
 
-    const validCurrentPassword = await verifyPassword(currentPassword, session.user.password_hash);
-    if (!validCurrentPassword) {
-      return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+    if (currentPassword) {
+      const validCurrentPassword = await verifyPassword(currentPassword, session.user.password_hash);
+      if (!validCurrentPassword) {
+        return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+      }
     }
 
     const samePassword = await verifyPassword(newPassword, session.user.password_hash);
@@ -56,11 +78,12 @@ export async function POST(request: Request) {
 
     const passwordHash = await hashPassword(newPassword);
     await prisma.$transaction(async (tx) => {
-      await tx.user.update({
+      const typedTx = tx as unknown as TransactionClient;
+      await typedTx.user.update({
         where: { id: session.user_id },
         data: { password_hash: passwordHash },
       });
-      await tx.userSession.deleteMany({
+      await typedTx.userSession.deleteMany({
         where: { user_id: session.user_id },
       });
     });

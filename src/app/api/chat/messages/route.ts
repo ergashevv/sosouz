@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { ChatRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSessionUserFromRequest } from "@/lib/auth";
 import { generateAdvisorReply } from "@/lib/ai-chat";
@@ -13,6 +12,40 @@ interface SendMessagePayload {
   recommendationCountry?: string;
   screenshotDataUrl?: string;
 }
+
+const ChatRole = {
+  user: "user",
+  assistant: "assistant",
+} as const;
+
+type ChatRoleValue = (typeof ChatRole)[keyof typeof ChatRole];
+
+type ConversationRecord = {
+  id: string;
+  user_id: string;
+  title: string;
+};
+
+type MessageRecord = {
+  id: string;
+  role: ChatRoleValue;
+  content: string;
+  created_at: Date;
+};
+
+type ChatConversationRepository = {
+  findFirst: (args: unknown) => Promise<ConversationRecord | null>;
+  update: (args: unknown) => Promise<unknown>;
+};
+
+type ChatMessageRepository = {
+  findMany: (args: unknown) => Promise<MessageRecord[]>;
+  create: (args: unknown) => Promise<MessageRecord>;
+};
+
+const chatConversationRepo =
+  (prisma as unknown as { chatConversation: ChatConversationRepository }).chatConversation;
+const chatMessageRepo = (prisma as unknown as { chatMessage: ChatMessageRepository }).chatMessage;
 
 function coerceLanguage(value: unknown): "uz" | "ru" | "en" {
   if (value === "uz" || value === "ru" || value === "en") return value;
@@ -37,14 +70,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "conversationId is required." }, { status: 400 });
   }
 
-  const conversation = await prisma.chatConversation.findFirst({
+  const conversation = await chatConversationRepo.findFirst({
     where: { id: conversationId, user_id: user.id },
   });
   if (!conversation) {
     return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
   }
 
-  const messages = await prisma.chatMessage.findMany({
+  const messages = await chatMessageRepo.findMany({
     where: { conversation_id: conversationId },
     orderBy: { created_at: "asc" },
   });
@@ -73,14 +106,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "conversationId and content are required." }, { status: 400 });
     }
 
-    const conversation = await prisma.chatConversation.findFirst({
+    const conversation = await chatConversationRepo.findFirst({
       where: { id: conversationId, user_id: user.id },
     });
     if (!conversation) {
       return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
     }
 
-    await prisma.chatMessage.create({
+    await chatMessageRepo.create({
       data: {
         conversation_id: conversationId,
         role: ChatRole.user,
@@ -88,7 +121,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const history = await prisma.chatMessage.findMany({
+    const history = await chatMessageRepo.findMany({
       where: { conversation_id: conversationId },
       orderBy: { created_at: "asc" },
       take: 20,
@@ -110,7 +143,7 @@ export async function POST(request: Request) {
       screenshotDataUrl: payload.screenshotDataUrl,
     });
 
-    const assistantMessage = await prisma.chatMessage.create({
+    const assistantMessage = await chatMessageRepo.create({
       data: {
         conversation_id: conversationId,
         role: ChatRole.assistant,
@@ -119,7 +152,7 @@ export async function POST(request: Request) {
     });
 
     if (conversation.title === "New chat") {
-      await prisma.chatConversation.update({
+      await chatConversationRepo.update({
         where: { id: conversationId },
         data: { title: buildConversationTitle(content) },
       });

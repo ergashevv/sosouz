@@ -10,6 +10,19 @@ import {
 } from "@/lib/auth";
 
 export const runtime = "nodejs";
+type UserRepository = {
+  update: (args: unknown) => Promise<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    phone_e164: string;
+    phone_country: string;
+  }>;
+  findUnique: (args: unknown) => Promise<{ id: string; password_hash: string } | null>;
+  delete: (args: unknown) => Promise<unknown>;
+};
+
+const userRepo = (prisma as unknown as { user: UserRepository }).user;
 
 interface ProfilePatchPayload {
   firstName?: unknown;
@@ -74,7 +87,7 @@ export async function PATCH(request: Request) {
       });
     }
 
-    const updated = await prisma.user.update({
+    const updated = await userRepo.update({
       where: { id: user.id },
       data: {
         first_name: nextFirstName,
@@ -116,7 +129,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Password is required to delete account." }, { status: 400 });
     }
 
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await userRepo.findUnique({
       where: { id: user.id },
       select: { id: true, password_hash: true },
     });
@@ -130,7 +143,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Invalid password." }, { status: 401 });
     }
 
-    await prisma.user.delete({ where: { id: dbUser.id } });
+    await userRepo.delete({ where: { id: dbUser.id } });
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {

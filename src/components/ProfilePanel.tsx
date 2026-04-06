@@ -343,9 +343,8 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
               type="password"
               value={currentPassword}
               onChange={(event) => setCurrentPassword(event.target.value)}
-              placeholder="Current password"
+              placeholder="Current password (optional)"
               minLength={8}
-              required
               className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-white/30"
             />
             <input

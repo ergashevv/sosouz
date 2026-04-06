@@ -81,6 +81,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [error, setError] = useState<string | null>(null);
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const [screenshotName, setScreenshotName] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const refreshConversations = useCallback(async () => {
     const response = await authFetch('/api/chat/conversations');
@@ -142,6 +143,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
   const openConversation = async (conversationId: string) => {
     setActiveConversationId(conversationId);
+    setSidebarOpen(false);
     setError(null);
     try {
       await loadMessages(conversationId);
@@ -269,9 +271,33 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             </div>
           </div>
 
-          <div className="border border-neutral-200 bg-white">
-            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] min-h-[72vh]">
-              <aside className="border-b lg:border-b-0 lg:border-r border-neutral-200 p-3 sm:p-4 space-y-3">
+          <div className="border border-neutral-200 bg-white relative overflow-hidden">
+            {sidebarOpen ? (
+              <button
+                type="button"
+                aria-label="Close chats"
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden absolute inset-0 z-20 bg-black/30"
+              />
+            ) : null}
+
+            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] min-h-[65vh] sm:min-h-[72vh]">
+              <aside
+                className={`absolute inset-y-0 left-0 z-30 w-[85%] max-w-[320px] border-r border-neutral-200 bg-white p-3 sm:p-4 space-y-3 transition-transform lg:static lg:z-auto lg:w-auto lg:max-w-none lg:translate-x-0 ${
+                  sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
+              >
+                <div className="flex items-center justify-between lg:hidden">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-700">Chats</p>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(false)}
+                    className="inline-flex h-8 w-8 items-center justify-center border border-neutral-200 bg-white text-neutral-700"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+
                 <button
                   onClick={() => void startNewChat()}
                   className="w-full inline-flex items-center justify-center gap-2 bg-black hover:bg-neutral-800 text-white text-xs font-bold uppercase tracking-widest py-2.5 transition-colors"
@@ -303,6 +329,14 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
               <section className="p-3 sm:p-4 lg:p-5 flex flex-col">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-neutral-200 pb-3">
                   <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSidebarOpen(true)}
+                      className="inline-flex h-8 w-8 items-center justify-center border border-neutral-200 bg-white text-neutral-700 lg:hidden"
+                      aria-label="Open chats"
+                    >
+                      <MessageCircle size={14} />
+                    </button>
                     <MessageCircle size={16} className="text-neutral-700" />
                     <h1 className="text-sm sm:text-base font-semibold text-neutral-900">SOSO AI Chat</h1>
                   </div>
@@ -317,7 +351,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                <div className="flex-1 overflow-y-auto py-4 space-y-3 min-h-[34vh]">
                   {messages.length === 0 ? (
                     <div className="h-full flex items-center justify-center">
                       <p className="text-sm text-neutral-400 text-center max-w-md">
@@ -372,7 +406,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                   </div>
                 ) : null}
 
-                <form onSubmit={sendMessage} className="border-t border-neutral-200 pt-3">
+                <form onSubmit={sendMessage} className="border-t border-neutral-200 pt-3 sticky bottom-0 bg-white">
                   <div className="border border-neutral-200 bg-white p-2 flex items-end gap-2">
                     <textarea
                       value={input}

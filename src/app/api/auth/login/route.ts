@@ -15,6 +15,20 @@ interface LoginPayload {
   password?: string;
 }
 
+type AuthUserRecord = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone_e164: string;
+  password_hash: string;
+};
+
+type UserAuthRepository = {
+  findUnique: (args: unknown) => Promise<AuthUserRecord | null>;
+};
+
+const userRepo = (prisma as unknown as { user: UserAuthRepository }).user;
+
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as LoginPayload;
@@ -30,7 +44,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: phoneValidation.error }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await userRepo.findUnique({
       where: { phone_e164: phoneValidation.phoneE164 },
     });
 

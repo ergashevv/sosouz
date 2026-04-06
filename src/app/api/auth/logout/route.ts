@@ -4,10 +4,16 @@ import { clearSessionCookie, getSessionTokenFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
+type UserSessionRepository = {
+  deleteMany: (args: unknown) => Promise<unknown>;
+};
+
+const userSessionRepo = (prisma as unknown as { userSession: UserSessionRepository }).userSession;
+
 export async function POST(request: Request) {
   const token = getSessionTokenFromRequest(request);
   if (token) {
-    await prisma.userSession.deleteMany({ where: { token } });
+    await userSessionRepo.deleteMany({ where: { token } });
   }
 
   const response = NextResponse.json({ ok: true });
