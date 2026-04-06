@@ -5,16 +5,18 @@ import { Globe, MapPin, ExternalLink, GraduationCap, DollarSign, Award, Clipboar
 import Link from 'next/link';
 import SmartImage from '@/components/SmartImage';
 import { University } from '@/lib/api';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { translations, type Language } from '@/lib/i18n';
 
 export interface AIResearchData {
   tuition_fees?: string | null;
   scholarships?: { name: string; link: string }[] | null;
-  programs?: string[] | null;
+  programs?: Array<string | { name?: string; link?: string | null }> | null;
   admission_requirements?: Record<string, string | number | boolean> | null;
   admission_deadline?: string | null;
   detailed_overview?: string | null;
-  source_links?: string[] | null;
+  source_links?:
+    | Array<string | { title?: string; link?: string; url?: string; snippet?: string }>
+    | null;
   data_confidence?: number | null;
   refresh_status?: string | null;
   last_updated?: string | Date | null;
@@ -27,36 +29,209 @@ export interface UniversityDetailsProps {
   domain: string;
   logoSrc: string;
   fallbackSrc: string;
+  lang?: Language;
 }
 
-export default function UniversityDetailView({ basicInfo, aiDetails, domain, logoSrc, fallbackSrc }: UniversityDetailsProps) {
-  const { t } = useLanguage();
+function t(key: string, lang: Language) {
+  const entry = translations[key];
+  if (!entry) return key;
+  return entry[lang] || entry.en;
+}
+
+function pad2(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateStable(date: Date, lang: Language): string {
+  const day = pad2(date.getUTCDate());
+  const month = pad2(date.getUTCMonth() + 1);
+  const year = String(date.getUTCFullYear());
+
+  if (lang === 'en') {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${day} ${monthNames[date.getUTCMonth()]} ${year}`;
+  }
+
+  return `${day}.${month}.${year}`;
+}
+
+function formatDateTimeStable(date: Date, lang: Language): string {
+  const baseDate = formatDateStable(date, lang);
+  const hours = pad2(date.getUTCHours());
+  const minutes = pad2(date.getUTCMinutes());
+  return `${baseDate}, ${hours}:${minutes} UTC`;
+}
+
+interface NormalizedProgram {
+  name: string;
+  link: string | null;
+}
+
+interface NormalizedSource {
+  title: string;
+  link: string;
+  shortLink: string;
+  host: string;
+  linkType: 'program' | 'general';
+}
+
+function normalizeProgram(
+  program: string | { name?: string; link?: string | null },
+  fallbackLink: string | null,
+): NormalizedProgram | null {
+  if (typeof program === 'string') {
+    const name = program.trim();
+    if (!name) return null;
+    return { name, link: fallbackLink };
+  }
+
+  if (!program || typeof program !== 'object') return null;
+  const name = typeof program.name === 'string' ? program.name.trim() : '';
+  const link = typeof program.link === 'string' ? program.link.trim() : '';
+  if (!name) return null;
+
+  return { name, link: link || fallbackLink };
+}
+
+function toShortLink(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '');
+    const path = parsed.pathname.replace(/\/$/, '');
+    if (!path || path === '/') return host;
+    return `${host}${path.length > 28 ? `${path.slice(0, 28)}...` : path}`;
+  } catch {
+    return url.length > 40 ? `${url.slice(0, 40)}...` : url;
+  }
+}
+
+function getHostLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return 'external';
+  }
+}
+
+function inferSourceType(url: string): 'program' | 'general' {
+  try {
+    const path = new URL(url).pathname.toLowerCase();
+    if (/(program|programme|course|study|undergraduate|postgraduate|department)/.test(path)) {
+      return 'program';
+    }
+  } catch {
+    return 'general';
+  }
+  return 'general';
+}
+
+function cleanSourceTitle(rawTitle: string, url: string, fallbackTitle: string): string {
+  const trimmed = rawTitle.trim();
+  if (!trimmed || /^source\s+\d+$/i.test(trimmed)) {
+    try {
+      const parsed = new URL(url);
+      const segments = parsed.pathname.split('/').filter(Boolean);
+      const lastSegment = segments[segments.length - 1] || '';
+      if (lastSegment) {
+        return decodeURIComponent(lastSegment)
+          .replace(/[-_]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+    } catch {
+      return fallbackTitle;
+    }
+    return fallbackTitle;
+  }
+
+  return trimmed
+    .replace(/\s*\|\s*.*$/, '')
+    .replace(/\s+-\s*(Official Site|Official Website|Home)$/i, '')
+    .trim();
+}
+
+function normalizeSource(
+  source: string | { title?: string; link?: string; url?: string; snippet?: string },
+  index: number,
+): NormalizedSource | null {
+  const fallbackTitle = `Source ${index + 1}`;
+  if (typeof source === 'string') {
+    const link = source.trim();
+    if (!link) return null;
+    return {
+      title: fallbackTitle,
+      link,
+      shortLink: toShortLink(link),
+      host: getHostLabel(link),
+      linkType: inferSourceType(link),
+    };
+  }
+
+  if (!source || typeof source !== 'object') return null;
+  const linkRaw = typeof source.link === 'string' ? source.link : source.url;
+  const link = typeof linkRaw === 'string' ? linkRaw.trim() : '';
+  if (!link) return null;
+  const titleRaw = typeof source.title === 'string' ? source.title : '';
+  const title = cleanSourceTitle(titleRaw, link, fallbackTitle);
+
+  return {
+    title,
+    link,
+    shortLink: toShortLink(link),
+    host: getHostLabel(link),
+    linkType: inferSourceType(link),
+  };
+}
+
+export default function UniversityDetailView({
+  basicInfo,
+  aiDetails,
+  domain,
+  logoSrc,
+  fallbackSrc,
+  lang = 'en',
+}: UniversityDetailsProps) {
+  const websiteFallback = basicInfo.web_pages?.[0] || null;
+  const normalizedPrograms = (aiDetails?.programs || [])
+    .map((program) => normalizeProgram(program, websiteFallback))
+    .filter((program): program is NormalizedProgram => Boolean(program));
+  const normalizedSources = (aiDetails?.source_links || [])
+    .map((source, index) => normalizeSource(source, index))
+    .filter((source): source is NormalizedSource => Boolean(source))
+    .slice(0, 4);
   const lastUpdated =
     aiDetails?.last_updated ? new Date(aiDetails.last_updated) : null;
   const nextRefreshAt =
     aiDetails?.next_refresh_at ? new Date(aiDetails.next_refresh_at) : null;
   const formattedLastUpdated =
     lastUpdated && !Number.isNaN(lastUpdated.getTime())
-      ? lastUpdated.toLocaleString()
+      ? formatDateTimeStable(lastUpdated, lang)
       : null;
   const formattedNextRefresh =
     nextRefreshAt && !Number.isNaN(nextRefreshAt.getTime())
-      ? nextRefreshAt.toLocaleDateString()
+      ? formatDateStable(nextRefreshAt, lang)
       : null;
+  const openLabel = lang === 'uz' ? "Ochish" : lang === 'ru' ? 'Открыть' : 'Open';
+  const opensToLabel = lang === 'uz' ? "Ochiladigan sahifa" : lang === 'ru' ? 'Откроется страница' : 'Opens page';
+  const sourceTypeLabel = (type: 'program' | 'general') => {
+    if (lang === 'uz') return type === 'program' ? "Yo'nalish sahifasi" : "Rasmiy manba";
+    if (lang === 'ru') return type === 'program' ? 'Страница программы' : 'Официальный источник';
+    return type === 'program' ? 'Program page' : 'Official source';
+  };
 
   return (
-    <div className="pb-64 relative z-10 bg-white">
+    <div className="pb-24 sm:pb-40 lg:pb-64 relative z-10 bg-white">
       {/* Hero Section */}
-      <div className="relative pt-64 pb-32 border-b border-black bg-neutral-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-           <Link href="/search" className="inline-flex items-center gap-2 mb-20 px-6 py-3 rounded-full border border-neutral-200 bg-white text-sm font-bold shadow-sm hover:shadow-md hover:bg-neutral-50 transition-all">
-              <ArrowLeft size={16} /> {t('uni.back')}
+      <div className="relative pt-40 sm:pt-52 lg:pt-64 pb-14 sm:pb-24 lg:pb-32 border-b border-black bg-neutral-50 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+           <Link href="/search" className="inline-flex items-center gap-2 mb-8 sm:mb-12 lg:mb-20 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-neutral-200 bg-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md hover:bg-neutral-50 transition-all">
+              <ArrowLeft size={16} /> {t('uni.back', lang)}
            </Link>
            
-          <div className="flex flex-col lg:flex-row items-center lg:items-end gap-12 text-center lg:text-left">
+          <div className="flex flex-col lg:flex-row items-center lg:items-end gap-8 sm:gap-10 lg:gap-12 text-center lg:text-left">
               <motion.div 
                 whileHover={{ scale: 1.02 }}
-                className="w-48 h-48 bg-white border border-neutral-200 rounded-2xl flex items-center justify-center p-6 flex-shrink-0 shadow-sm transition-transform"
+                className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 bg-white border border-neutral-200 rounded-2xl flex items-center justify-center p-4 sm:p-5 lg:p-6 shrink-0 shadow-sm transition-transform"
               >
                  <SmartImage 
                    src={logoSrc} 
@@ -65,22 +240,22 @@ export default function UniversityDetailView({ basicInfo, aiDetails, domain, log
                    className="w-full h-full object-scale-down"
                  />
               </motion.div>
-              <div className="space-y-6 flex-1">
-                <div className="flex items-center justify-center lg:justify-start gap-4">
-                   <div className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide">{t('uni.profile')}</div>
+              <div className="space-y-4 sm:space-y-6 flex-1 min-w-0">
+                <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-4 flex-wrap">
+                   <div className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide">{t('uni.profile', lang)}</div>
                    <div className="text-xs font-semibold text-neutral-500 flex items-center gap-2">
-                      <Shield size={14} className="text-blue-500" /> {t('uni.verified')}
+                      <Shield size={14} className="text-blue-500" /> {t('uni.verified', lang)}
                    </div>
                 </div>
-                <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] max-w-4xl">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-neutral-900 tracking-tight leading-[1.15] max-w-4xl wrap-break-word">
                    {basicInfo.name}
                 </h1>
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 mt-8">
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-6 mt-4 sm:mt-8">
                    <div className="flex items-center gap-2 text-neutral-600 font-semibold text-sm">
                       <MapPin size={16} className="text-neutral-400" /> {basicInfo.country}
                    </div>
-                   <div className="flex items-center gap-2 text-neutral-600 font-semibold text-sm">
-                      <Globe size={16} className="text-neutral-400" /> {domain}
+                   <div className="flex items-center gap-2 text-neutral-600 font-semibold text-sm min-w-0 max-w-full">
+                      <Globe size={16} className="text-neutral-400 shrink-0" /> <span className="truncate">{domain}</span>
                    </div>
                    <div className="px-4 py-1.5 rounded-md border border-neutral-200 bg-white text-xs font-bold text-neutral-500 uppercase">
                       {basicInfo.alpha_two_code}
@@ -91,109 +266,120 @@ export default function UniversityDetailView({ basicInfo, aiDetails, domain, log
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-32 grid grid-cols-1 lg:grid-cols-3 gap-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20 lg:py-32 grid grid-cols-1 lg:grid-cols-3 gap-10 sm:gap-16 lg:gap-24">
         {/* Content Data */}
-        <div className="lg:col-span-2 space-y-32">
-          <section className="space-y-8">
+        <div className="lg:col-span-2 space-y-12 sm:space-y-20 lg:space-y-32">
+          <section className="space-y-6 sm:space-y-8">
              <div className="flex items-center gap-4 border-b border-neutral-100 pb-6">
                 <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-600">
                    <Search size={20} />
                 </div>
-                <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.summary')}</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.summary', lang)}</h2>
              </div>
-             <div className="p-8 rounded-2xl border border-neutral-200 bg-white shadow-sm group">
-                <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-4">{t('uni.overview')}</div>
-                <p className="text-xl text-neutral-700 leading-relaxed font-medium transition-colors">
+             <div className="p-5 sm:p-8 rounded-2xl border border-neutral-200 bg-white shadow-sm group">
+                <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-4">{t('uni.overview', lang)}</div>
+                <p className="text-base sm:text-xl text-neutral-700 leading-relaxed font-medium transition-colors">
                    {aiDetails?.detailed_overview || "..."}
                 </p>
                 <div className="mt-8 pt-6 border-t border-neutral-100 flex flex-wrap items-center gap-4 text-xs text-neutral-500 font-medium">
                   <div className="inline-flex items-center gap-2">
                     <Clock3 size={14} className="text-neutral-400" />
-                    {t('uni.last_updated')}: {formattedLastUpdated || t('uni.not_specified')}
+                    {t('uni.last_updated', lang)}: {formattedLastUpdated || t('uni.not_specified', lang)}
                   </div>
                   {aiDetails?.refresh_status ? (
                     <div className="px-3 py-1 rounded-full border border-neutral-200 bg-neutral-50 text-[10px] uppercase tracking-wider font-bold">
-                      {t('uni.refresh_status')}: {aiDetails.refresh_status}
+                      {t('uni.refresh_status', lang)}: {aiDetails.refresh_status}
                     </div>
                   ) : null}
                   {formattedNextRefresh ? (
                     <div className="text-[11px] text-neutral-400">
-                      {t('uni.next_refresh')}: {formattedNextRefresh}
+                      {t('uni.next_refresh', lang)}: {formattedNextRefresh}
                     </div>
                   ) : null}
                 </div>
              </div>
           </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             <div className="p-8 rounded-2xl border border-neutral-200 space-y-6 bg-white relative overflow-hidden shadow-sm hover:border-blue-200 hover:shadow-md transition-all">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
+             <div className="p-5 sm:p-7 rounded-2xl border border-neutral-200 space-y-4 bg-white relative overflow-hidden shadow-sm hover:border-blue-200 hover:shadow-md transition-all min-h-[210px]">
                 <div className="absolute -top-4 -right-4 p-8 opacity-5">
                    <DollarSign size={80} className="text-blue-600" />
                 </div>
                  <div className="flex flex-col gap-2 relative z-10">
-                   <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('uni.tuition')}</span>
-                   <p className="text-3xl md:text-4xl font-extrabold text-neutral-900 tracking-tight leading-tight">
-                     {aiDetails?.tuition_fees || t('uni.not_specified')}
+                   <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('uni.tuition', lang)}</span>
+                   <p className="text-3xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight leading-[1.15] wrap-break-word">
+                     {aiDetails?.tuition_fees || t('uni.not_specified', lang)}
                    </p>
                 </div>
              </div>
 
-             <div className="p-8 rounded-2xl border border-neutral-200 space-y-6 bg-white relative overflow-hidden shadow-sm hover:border-blue-200 hover:shadow-md transition-all">
+             <div className="p-5 sm:p-7 rounded-2xl border border-neutral-200 space-y-4 bg-white relative overflow-hidden shadow-sm hover:border-blue-200 hover:shadow-md transition-all min-h-[210px]">
                 <div className="absolute -top-4 -right-4 p-8 opacity-5">
                    <ClipboardList size={80} className="text-blue-600" />
                 </div>
                 <div className="flex flex-col gap-2 relative z-10">
-                   <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('uni.deadline')}</span>
-                   <p className="text-3xl md:text-4xl font-extrabold text-neutral-900 tracking-tight leading-tight">
-                     {aiDetails?.admission_deadline || t('uni.varies')}
+                   <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('uni.deadline', lang)}</span>
+                   <p className="text-lg sm:text-2xl font-bold text-neutral-900 tracking-tight leading-snug wrap-break-word max-w-[30ch]">
+                     {aiDetails?.admission_deadline || t('uni.varies', lang)}
                    </p>
                 </div>
              </div>
           </div>
 
-          <section className="space-y-12">
-             <div className="flex items-center gap-4 border-b border-neutral-100 pb-8">
+          <section className="space-y-8 sm:space-y-12">
+             <div className="flex items-center gap-4 border-b border-neutral-100 pb-6 sm:pb-8">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                    <BookOpen size={20} />
                 </div>
-                <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.programs')}</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.programs', lang)}</h2>
              </div>
-             {(aiDetails?.programs && aiDetails.programs.length > 0) ? (
+             {normalizedPrograms.length > 0 ? (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {aiDetails.programs.map((program, i) => (
-                   <div key={`${program}-${i}`} className="px-5 py-4 rounded-2xl border border-neutral-200 bg-white text-sm font-semibold text-neutral-700 shadow-sm">
-                     {program}
-                   </div>
+                 {normalizedPrograms.map((program, i) => (
+                   <a
+                     key={`${program.name}-${i}`}
+                     href={program.link || undefined}
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className={`px-5 py-4 rounded-2xl border bg-white text-sm font-semibold shadow-sm transition-all flex items-center justify-between gap-3 ${
+                       program.link
+                         ? 'border-neutral-200 text-neutral-700 hover:border-blue-300 hover:shadow-md'
+                         : 'border-neutral-100 text-neutral-400 cursor-default pointer-events-none'
+                     }`}
+                   >
+                     <span className="wrap-break-word">{program.name}</span>
+                     {program.link ? <ExternalLink size={15} className="shrink-0 text-neutral-400" /> : null}
+                   </a>
                  ))}
                </div>
              ) : (
                <div className="p-10 text-center rounded-3xl border-2 border-dashed border-neutral-100 bg-neutral-50">
-                 <p className="text-sm font-medium text-neutral-400">{t('uni.not_specified')}</p>
+                 <p className="text-sm font-medium text-neutral-400">{t('uni.not_specified', lang)}</p>
                </div>
              )}
           </section>
 
-          <section className="space-y-12">
-             <div className="flex items-center gap-4 border-b border-neutral-100 pb-8">
+          <section className="space-y-8 sm:space-y-12">
+             <div className="flex items-center gap-4 border-b border-neutral-100 pb-6 sm:pb-8">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                    <Award size={20} />
                 </div>
-                <h2 className="text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.scholarships')}</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.scholarships', lang)}</h2>
              </div>
              <div className="grid grid-cols-1 gap-6">
                   {(aiDetails?.scholarships && aiDetails.scholarships.length > 0) ? (
                     aiDetails.scholarships.map((s, i) => (
-                      <div key={i} className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-8 rounded-3xl border border-neutral-100 bg-white shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
+                      <div key={i} className="p-5 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-8 rounded-3xl border border-neutral-100 bg-white shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
                          <div className="space-y-3">
                             <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Scholarship Opportunity</div>
-                            <h4 className="text-xl font-bold text-neutral-900 tracking-tight">{s.name}</h4>
+                            <h4 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight wrap-break-word">{s.name}</h4>
                          </div>
                          <a 
                           href={s.link} 
                           target="_blank" 
-                          className="px-6 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-bold hover:bg-black transition-colors flex items-center justify-center"
+                          className="w-full md:w-auto px-6 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-bold hover:bg-black transition-colors flex items-center justify-center"
                          >
-                           {t('uni.visit')} <ExternalLink size={14} className="ml-2" />
+                           {t('uni.visit', lang)} <ExternalLink size={14} className="ml-2" />
                          </a>
                       </div>
                     ))
@@ -207,14 +393,14 @@ export default function UniversityDetailView({ basicInfo, aiDetails, domain, log
         </div>
 
         {/* Action Interface */}
-        <div className="space-y-12">
-           <div className="p-10 rounded-[40px] bg-neutral-900 text-white space-y-12 relative overflow-hidden shadow-2xl">
+        <div className="space-y-8 sm:space-y-12">
+           <div className="p-5 sm:p-8 lg:p-10 rounded-3xl sm:rounded-[40px] bg-neutral-900 text-white space-y-8 sm:space-y-12 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 right-0 p-12 opacity-10">
                  <GraduationCap size={120} />
               </div>
               <div className="space-y-8 relative z-10">
-                 <div className="px-4 py-1 rounded-full bg-white/10 text-white text-[10px] font-bold inline-block border border-white/20 uppercase tracking-widest">{t('uni.website')}</div>
-                 <h3 className="text-4xl font-extrabold leading-tight tracking-tight">{t('uni.visit')}</h3>
+                 <div className="px-4 py-1 rounded-full bg-white/10 text-white text-[10px] font-bold inline-block border border-white/20 uppercase tracking-widest">{t('uni.website', lang)}</div>
+                 <h3 className="text-2xl sm:text-4xl font-extrabold leading-tight tracking-tight">{t('uni.visit', lang)}</h3>
                  <p className="text-neutral-400 font-medium text-sm leading-relaxed">
                    Visit the official university website for the most accurate and up-to-date admission information.
                  </p>
@@ -225,33 +411,50 @@ export default function UniversityDetailView({ basicInfo, aiDetails, domain, log
                      key={i} 
                      href={url} 
                      target="_blank"
+                     rel="noopener noreferrer"
                      className="w-full flex items-center justify-center gap-3 bg-white text-neutral-900 hover:bg-neutral-100 py-4 rounded-2xl text-sm font-bold transition-all shadow-lg"
                    >
-                      {t('uni.visit')} <ExternalLink size={16} />
+                      {t('uni.visit', lang)} <ExternalLink size={16} />
                    </a>
                  ))}
               </div>
               <div className="p-6 bg-white/5 rounded-3xl border border-white/10 space-y-4 relative z-10">
-                <div className="text-[10px] uppercase tracking-widest font-bold text-white/70">{t('uni.sources')}</div>
-                {(aiDetails?.source_links && aiDetails.source_links.length > 0) ? (
+                <div className="text-[10px] uppercase tracking-widest font-bold text-white/70">{t('uni.sources', lang)}</div>
+                {normalizedSources.length > 0 ? (
                   <div className="space-y-2">
-                    {aiDetails.source_links.slice(0, 4).map((source, i) => (
+                    {normalizedSources.map((source, i) => (
                       <a
-                        key={`${source}-${i}`}
-                        href={source}
+                        key={`${source.link}-${i}`}
+                        href={source.link}
                         target="_blank"
-                        className="block text-xs text-neutral-300 hover:text-white underline underline-offset-2 break-all"
+                        rel="noopener noreferrer"
+                        className="block rounded-xl border border-white/10 bg-white/5 px-3 py-3 hover:bg-white/10 transition-colors"
                       >
-                        {source}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-[10px] uppercase tracking-wide text-neutral-400 mb-1">{opensToLabel}</div>
+                            <div className="text-xs text-neutral-200 font-semibold leading-snug wrap-break-word">
+                              {source.title}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2 text-[10px] text-neutral-400">
+                              <span className="px-2 py-0.5 rounded-full border border-white/15 bg-white/5">{sourceTypeLabel(source.linkType)}</span>
+                              <span>{source.host}</span>
+                            </div>
+                          </div>
+                          <div className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white">
+                            {openLabel}
+                            <ExternalLink size={12} />
+                          </div>
+                        </div>
                       </a>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-neutral-400">{t('uni.not_specified')}</p>
+                  <p className="text-xs text-neutral-400">{t('uni.not_specified', lang)}</p>
                 )}
                 {typeof aiDetails?.data_confidence === 'number' ? (
                   <p className="text-[11px] text-neutral-400">
-                    {t('uni.confidence')}: {Math.round(aiDetails.data_confidence * 100)}%
+                    {t('uni.confidence', lang)}: {Math.round(aiDetails.data_confidence * 100)}%
                   </p>
                 ) : null}
               </div>

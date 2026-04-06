@@ -27,10 +27,10 @@ export default function UniversityCard({ university, index }: UniversityCardProp
       className="group"
     >
       <Link href={`/university/${encodeURIComponent(university.name)}?lang=${language}`}>
-        <div className="clean-card relative h-[420px] flex flex-col justify-between p-12 hover:bg-neutral-50 border-black/10 transition-all duration-300">
-           <div className="space-y-10">
+        <div className="clean-card relative min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex flex-col justify-between p-5 sm:p-8 lg:p-12 hover:bg-neutral-50 border-black/10 transition-all duration-300">
+           <div className="space-y-6 sm:space-y-8 lg:space-y-10">
               <div className="flex items-start justify-between">
-                 <div className="w-16 h-16 bg-white border border-neutral-100 flex items-center justify-center p-3 transition-all">
+                 <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white border border-neutral-100 flex items-center justify-center p-2.5 sm:p-3 transition-all">
                     <SmartImage 
                       src={logoSrc} 
                       fallback={fallbackSrc}
@@ -38,7 +38,7 @@ export default function UniversityCard({ university, index }: UniversityCardProp
                       className="w-full h-full object-contain"
                     />
                  </div>
-                 <div className="flex flex-col items-end">
+                 <div className="flex flex-col items-end shrink-0">
                     <div className="px-3 py-1 bg-black text-white text-[9px] font-bold uppercase tracking-widest rounded-full shadow-lg">
                        {t('uni.verified_tag')}
                     </div>
@@ -46,22 +46,22 @@ export default function UniversityCard({ university, index }: UniversityCardProp
                  </div>
               </div>
 
-              <h2 className="text-3xl font-black text-black leading-none tracking-tighter uppercase group-hover:underline underline-offset-8 decoration-neutral-200">
+              <h2 className="text-2xl sm:text-3xl font-black text-black leading-tight sm:leading-none tracking-tighter uppercase wrap-break-word group-hover:underline underline-offset-8 decoration-neutral-200">
                  {university.name}
               </h2>
            </div>
 
-           <div className="space-y-8">
+           <div className="space-y-6 sm:space-y-8">
               <div className="space-y-3">
                  <div className="flex items-center gap-3 text-neutral-400 font-bold text-[10px] uppercase tracking-widest group-hover:text-black transition-colors">
-                    <MapPin size={12} className="text-neutral-200 group-hover:text-black" /> {university.country}
+                    <MapPin size={12} className="text-neutral-200 group-hover:text-black shrink-0" /> <span className="truncate">{university.country}</span>
                  </div>
                  <div className="flex items-center gap-3 text-neutral-400 font-bold text-[10px] uppercase tracking-widest group-hover:text-black transition-colors">
-                    <Globe size={12} className="text-neutral-200 group-hover:text-black" /> {domain}
+                    <Globe size={12} className="text-neutral-200 group-hover:text-black shrink-0" /> <span className="truncate">{domain}</span>
                  </div>
               </div>
               
-              <div className="pt-8 border-t border-black/5 flex items-center justify-between group-hover:border-black transition-colors">
+              <div className="pt-6 sm:pt-8 border-t border-black/5 flex items-center justify-between group-hover:border-black transition-colors">
                  <span className="text-xs font-bold text-neutral-400 group-hover:text-black transition-colors">{t('uni.view')}</span>
                  <ArrowRight size={20} className="text-neutral-200 group-hover:text-black group-hover:translate-x-3 transition-all" />
               </div>

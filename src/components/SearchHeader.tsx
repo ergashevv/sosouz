@@ -52,24 +52,24 @@ function SearchHeaderContent() {
   };
 
   return (
-    <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-200 bg-white/90 backdrop-blur-md border-b ${scrolled ? 'border-neutral-200 py-4 shadow-sm' : 'border-neutral-100 py-6'
+    <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-200 bg-white/90 backdrop-blur-md border-b ${scrolled ? 'border-neutral-200 py-3 sm:py-4 shadow-sm' : 'border-neutral-100 py-4 sm:py-6'
       }`}>
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center justify-between gap-4">
             <div 
               className="flex flex-col cursor-pointer"
               onClick={() => router.push('/')}
             >
-              <span className={`text-3xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
+              <span className={`text-2xl sm:text-3xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
                 soso.
               </span>
             </div>
 
-            <div className="h-6 w-[1px] bg-neutral-100 hidden md:block"></div>
+            <div className="h-6 w-px bg-neutral-100 hidden sm:block"></div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {(['en', 'ru', 'uz'] as const).map((lang) => (
                 <button
                   key={lang}
@@ -85,32 +85,32 @@ function SearchHeaderContent() {
           </div>
 
           {/* Soft Search Interface */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl flex justify-end">
-             <div className="w-full flex items-center bg-white border border-neutral-200 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-neutral-200 focus-within:border-neutral-300 transition-all">
-                <div className="flex items-center gap-2 pl-6 pr-4 border-r border-neutral-200">
+          <form onSubmit={handleSearch} className="flex-1 max-w-2xl w-full lg:ml-auto">
+             <div className="w-full flex flex-col md:flex-row md:items-center bg-white border border-neutral-200 rounded-3xl md:rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-neutral-200 focus-within:border-neutral-300 transition-all">
+                <div className="flex items-center gap-2 pl-4 sm:pl-6 pr-4 border-b md:border-b-0 md:border-r border-neutral-200 min-h-11">
                   <MapPin size={16} className="text-neutral-400" />
                   <select
                     value={selectedCountry}
                     onChange={handleCountryChange}
-                    className="bg-transparent text-sm font-semibold text-neutral-700 outline-none cursor-pointer py-3.5"
+                    className="bg-transparent text-sm font-semibold text-neutral-700 outline-none cursor-pointer py-2.5 md:py-3.5 w-full"
                   >
                     {countries.map(c => <option key={c.code} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
 
-                <div className="flex-1 px-4 flex items-center gap-3">
+                <div className="flex-1 px-4 flex items-center gap-3 min-h-11">
                   <Search size={16} className="text-neutral-400" />
                   <input
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={t('home.search.placeholder')}
-                    className="bg-transparent w-full py-3.5 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
+                    className="bg-transparent w-full py-2.5 md:py-3.5 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
                   />
                 </div>
 
-                <div className="pr-2">
-                  <button type="submit" className="px-6 py-2 bg-neutral-900 text-white text-sm font-bold rounded-full hover:bg-black transition-colors shadow-sm">
+                <div className="px-2 pb-2 md:pb-0 md:pr-2">
+                  <button type="submit" className="w-full md:w-auto px-6 py-2.5 bg-neutral-900 text-white text-sm font-bold rounded-full hover:bg-black transition-colors shadow-sm">
                     {t('home.search.btn')}
                   </button>
                 </div>

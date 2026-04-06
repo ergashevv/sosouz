@@ -1,12 +1,13 @@
 import { prisma } from "./prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Prisma } from "@prisma/client";
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const CACHE_TTL_DAYS = 14;
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 interface ResearchSource {
   title: string;
@@ -14,10 +15,15 @@ interface ResearchSource {
   snippet: string;
 }
 
+interface ProgramLink {
+  name: string;
+  link: string;
+}
+
 export interface ResearchOutput {
   annual_tuition_usd: string;
   available_scholarships: { name: string; link: string }[];
-  programs: string[];
+  programs: ProgramLink[];
   admission_requirements: Record<string, string>;
   admission_deadline: string;
   detailed_overview: string;
@@ -36,15 +42,27 @@ function computeNextRefresh(ttlDays = CACHE_TTL_DAYS) {
   return next;
 }
 
-function hasMinimumDetails(
-  details: Awaited<ReturnType<typeof prisma.universityDetails.findUnique>>,
-) {
+function hasMinimumDetails(details: unknown) {
+  const payload = (details || {}) as {
+    detailed_overview?: unknown;
+    tuition_fees?: unknown;
+    admission_deadline?: unknown;
+    scholarships?: unknown;
+    programs?: unknown;
+  };
+
   return Boolean(
-    details?.detailed_overview &&
-      details?.tuition_fees &&
-      details?.admission_deadline &&
-      details?.scholarships &&
-      details?.programs,
+    payload.detailed_overview &&
+      payload.tuition_fees &&
+      payload.admission_deadline &&
+      payload.scholarships &&
+      Array.isArray(payload.programs) &&
+      payload.programs.length > 0 &&
+      payload.programs.some((program) => {
+        if (!program || typeof program !== "object") return false;
+        const candidate = program as { link?: unknown };
+        return typeof candidate.link === "string" && candidate.link.trim().length > 0;
+      }),
   );
 }
 
@@ -112,8 +130,28 @@ function normalizeResearchOutput(
 
   const rawPrograms = Array.isArray(safeRaw.programs) ? safeRaw.programs : [];
   const programs = rawPrograms
-    .map((program) => (typeof program === "string" ? program.trim() : ""))
-    .filter(Boolean)
+    .map((program) => {
+      if (typeof program === "string") {
+        const name = program.trim();
+        if (!name) return null;
+        return {
+          name,
+          link: `https://${fallbackDomain || "google.com"}`,
+        };
+      }
+
+      if (!program || typeof program !== "object") return null;
+      const candidate = program as Record<string, unknown>;
+      const name = typeof candidate.name === "string" ? candidate.name.trim() : "";
+      const link = typeof candidate.link === "string" ? candidate.link.trim() : "";
+      if (!name) return null;
+
+      return {
+        name,
+        link: link || `https://${fallbackDomain || "google.com"}`,
+      };
+    })
+    .filter((program): program is ProgramLink => Boolean(program))
     .slice(0, 12);
 
   const requirementsRaw =
@@ -153,7 +191,10 @@ function normalizeResearchOutput(
       scholarships.length > 0
         ? scholarships
         : [{ name: "International Excellence Award", link: `https://${fallbackDomain || "google.com"}` }],
-    programs: programs.length > 0 ? programs : ["Information not specified by official sources"],
+    programs:
+      programs.length > 0
+        ? programs
+        : [{ name: "Information not specified by official sources", link: `https://${fallbackDomain || "google.com"}` }],
     admission_requirements:
       Object.keys(admissionRequirements).length > 0
         ? admissionRequirements
@@ -170,15 +211,112 @@ function normalizeResearchOutput(
   };
 }
 
+function isMissingColumnError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { code?: unknown };
+  return candidate.code === "P2022";
+}
+
+async function findCachedDetails(university: string) {
+  try {
+    return await prisma.universityDetails.findUnique({
+      where: { university_name: university },
+      select: {
+        id: true,
+        university_name: true,
+        domain: true,
+        country: true,
+        tuition_fees: true,
+        scholarships: true,
+        admission_requirements: true,
+        admission_deadline: true,
+        detailed_overview: true,
+        last_updated: true,
+        programs: true,
+        source_links: true,
+        data_confidence: true,
+        refresh_status: true,
+        next_refresh_at: true,
+      },
+    });
+  } catch (error) {
+    if (isMissingColumnError(error)) {
+      return await prisma.universityDetails.findUnique({
+        where: { university_name: university },
+        select: {
+          id: true,
+          university_name: true,
+          domain: true,
+          country: true,
+          tuition_fees: true,
+          scholarships: true,
+          admission_requirements: true,
+          admission_deadline: true,
+          detailed_overview: true,
+          last_updated: true,
+        },
+      });
+    }
+    throw error;
+  }
+}
+
+async function generateWithGemini(prompt: string) {
+  const modelCandidates = Array.from(
+    new Set([GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"]),
+  );
+
+  let lastError: unknown = null;
+  for (const modelName of modelCandidates) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const aiResult = await model.generateContent(prompt);
+      return aiResult.response.text();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError;
+}
+
+async function upsertLegacyResearch(
+  university: string,
+  country: string | undefined,
+  domain: string | undefined,
+  structuredData: ResearchOutput,
+) {
+  return prisma.universityDetails.upsert({
+    where: { university_name: university },
+    update: {
+      tuition_fees: structuredData.annual_tuition_usd,
+      scholarships: structuredData.available_scholarships,
+      admission_requirements: structuredData.admission_requirements,
+      admission_deadline: structuredData.admission_deadline,
+      detailed_overview: structuredData.detailed_overview,
+      domain: domain || null,
+      country: country || null,
+    },
+    create: {
+      university_name: university,
+      tuition_fees: structuredData.annual_tuition_usd,
+      scholarships: structuredData.available_scholarships,
+      admission_requirements: structuredData.admission_requirements,
+      admission_deadline: structuredData.admission_deadline,
+      detailed_overview: structuredData.detailed_overview,
+      domain: domain || null,
+      country: country || null,
+    },
+  });
+}
+
 export async function performResearch(
   university: string,
   country?: string,
   domain?: string,
   lang = "en",
 ) {
-  const cachedDetails = await prisma.universityDetails.findUnique({
-    where: { university_name: university },
-  });
+  const cachedDetails = await findCachedDetails(university);
 
   if (cachedDetails && isFresh(cachedDetails.last_updated) && hasMinimumDetails(cachedDetails)) {
     return cachedDetails;
@@ -233,7 +371,7 @@ Return ONLY valid JSON with this exact schema:
 {
   "annual_tuition_usd": "string",
   "available_scholarships": [{ "name": "string", "link": "string" }],
-  "programs": ["string"],
+  "programs": [{ "name": "string", "link": "string" }],
   "admission_requirements": { "requirement": "value" },
   "admission_deadline": "string",
   "detailed_overview": "string",
@@ -242,7 +380,7 @@ Return ONLY valid JSON with this exact schema:
 
 Constraints:
 - detailed_overview must be 4-5 sentences in ${lang.toUpperCase()}.
-- Include 4-8 programs.
+- Include 4-8 programs, and every program must include a direct official URL for that specific program page (same university domain).
 - Include 2-5 scholarships if available.
 - confidence_score must be between 0 and 1.
 - Do not use markdown.
@@ -250,50 +388,60 @@ Constraints:
 Sources:
 ${snippetBlock || "No external snippets available."}`;
 
-    const aiResult = await model.generateContent(prompt);
-    const text = aiResult.response.text();
+    const text = await generateWithGemini(prompt);
     const parsed = JSON.parse(extractJsonObject(text));
     const structuredData = normalizeResearchOutput(parsed, university, domain);
 
-    return await prisma.universityDetails.upsert({
-      where: { university_name: university },
-      update: {
-        tuition_fees: structuredData.annual_tuition_usd,
-        scholarships: structuredData.available_scholarships,
-        programs: structuredData.programs,
-        admission_requirements: structuredData.admission_requirements,
-        admission_deadline: structuredData.admission_deadline,
-        detailed_overview: structuredData.detailed_overview,
-        source_links: sources.map((source) => source.link),
-        data_confidence: structuredData.confidence_score,
-        refresh_status: "fresh",
-        next_refresh_at: computeNextRefresh(),
-        domain: domain || null,
-        country: country || null,
-      },
-      create: {
-        university_name: university,
-        tuition_fees: structuredData.annual_tuition_usd,
-        scholarships: structuredData.available_scholarships,
-        programs: structuredData.programs,
-        admission_requirements: structuredData.admission_requirements,
-        admission_deadline: structuredData.admission_deadline,
-        detailed_overview: structuredData.detailed_overview,
-        source_links: sources.map((source) => source.link),
-        data_confidence: structuredData.confidence_score,
-        refresh_status: "fresh",
-        next_refresh_at: computeNextRefresh(),
-        domain: domain || null,
-        country: country || null,
-      },
-    });
+    try {
+      return await prisma.universityDetails.upsert({
+        where: { university_name: university },
+        update: {
+          tuition_fees: structuredData.annual_tuition_usd,
+          scholarships: structuredData.available_scholarships,
+          programs: structuredData.programs as unknown as Prisma.InputJsonValue,
+          admission_requirements: structuredData.admission_requirements,
+          admission_deadline: structuredData.admission_deadline,
+          detailed_overview: structuredData.detailed_overview,
+          source_links: sources as unknown as Prisma.InputJsonValue,
+          data_confidence: structuredData.confidence_score,
+          refresh_status: "fresh",
+          next_refresh_at: computeNextRefresh(),
+          domain: domain || null,
+          country: country || null,
+        },
+        create: {
+          university_name: university,
+          tuition_fees: structuredData.annual_tuition_usd,
+          scholarships: structuredData.available_scholarships,
+          programs: structuredData.programs as unknown as Prisma.InputJsonValue,
+          admission_requirements: structuredData.admission_requirements,
+          admission_deadline: structuredData.admission_deadline,
+          detailed_overview: structuredData.detailed_overview,
+          source_links: sources as unknown as Prisma.InputJsonValue,
+          data_confidence: structuredData.confidence_score,
+          refresh_status: "fresh",
+          next_refresh_at: computeNextRefresh(),
+          domain: domain || null,
+          country: country || null,
+        },
+      });
+    } catch (error) {
+      if (isMissingColumnError(error)) {
+        return await upsertLegacyResearch(university, country, domain, structuredData);
+      }
+      throw error;
+    }
   } catch (error) {
     console.error("Research logic error:", error);
     if (cachedDetails) {
-      return await prisma.universityDetails.update({
-        where: { university_name: university },
-        data: { refresh_status: "stale" },
-      });
+      try {
+        return await prisma.universityDetails.update({
+          where: { university_name: university },
+          data: { refresh_status: "stale" },
+        });
+      } catch {
+        return cachedDetails;
+      }
     }
     return null;
   }

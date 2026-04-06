@@ -11,31 +11,27 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en');
+export function LanguageProvider({
+  children,
+  initialLanguage = 'en',
+}: {
+  children: React.ReactNode;
+  initialLanguage?: Language;
+}) {
+  const [language, setLanguage] = useState<Language>(initialLanguage);
 
   useEffect(() => {
-    // Determine initial language from cookie or localStorage
-    const getInitialLang = (): Language => {
-      const match = document.cookie.match(new RegExp('(^| )soso_lang=([^;]+)'));
-      if (match && (match[2] === 'uz' || match[2] === 'ru' || match[2] === 'en')) return match[2] as Language;
-      
-      const saved = localStorage.getItem('soso_lang');
-      if (saved === 'uz' || saved === 'ru' || saved === 'en') return saved as Language;
-      
-      return 'en';
-    };
-
-    setLanguage(getInitialLang());
-  }, []);
+    const saved = localStorage.getItem('soso_lang');
+    if (saved !== 'uz' && saved !== 'ru' && saved !== 'en') {
+      localStorage.setItem('soso_lang', language);
+    }
+  }, [language]);
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('soso_lang', lang);
     // Set cookie for server components (expires in 1 year)
     document.cookie = `soso_lang=${lang}; path=/; max-age=31536000`;
-    // Force a router refresh to sync server components if needed
-    window.location.reload(); 
   };
 
   const t = (key: string): string => {
