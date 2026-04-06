@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Globe, MapPin, ExternalLink, GraduationCap, DollarSign, Award, ClipboardList, Info, ArrowLeft, Shield, Search, Clock3, BookOpen } from 'lucide-react';
+import { Globe, MapPin, ExternalLink, DollarSign, Award, ClipboardList, Info, ArrowLeft, Shield, Search, Clock3, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import SmartImage from '@/components/SmartImage';
 import { University } from '@/lib/api';
@@ -366,6 +366,24 @@ export default function UniversityDetailView({
   const localizedDeadline = localizeStructuredValue(aiDetails?.admission_deadline, lang, 'deadline');
   const openLinkLabel = lang === 'uz' ? "Havolani ochish" : lang === 'ru' ? 'Открыть ссылку' : 'Open link';
   const opensToLabel = lang === 'uz' ? "Ochiladigan sahifa" : lang === 'ru' ? 'Откроется страница' : 'Opens page';
+  const officialWebsiteTitle =
+    lang === 'uz'
+      ? "Universitetning rasmiy sayti"
+      : lang === 'ru'
+        ? 'Официальный сайт университета'
+        : 'Official university website';
+  const officialWebsiteDescription =
+    lang === 'uz'
+      ? "Aniq ma'lumot olish uchun universitetning rasmiy saytiga tashrif buyuring."
+      : lang === 'ru'
+        ? 'Для получения точной информации посетите официальный сайт университета.'
+        : 'For accurate information, visit the official university website.';
+  const heroOfficialNotice =
+    lang === 'uz'
+      ? "Aniq ma'lumot olish uchun rasmiy veb-saytga tashrif buyuring."
+      : lang === 'ru'
+        ? 'Для получения точной информации посетите официальный сайт.'
+        : 'For accurate information, visit the official website.';
   const sourceTypeLabel = (type: 'program' | 'general') => {
     if (lang === 'uz') return type === 'program' ? "Yo'nalish sahifasi" : "Rasmiy manba";
     if (lang === 'ru') return type === 'program' ? 'Страница программы' : 'Официальный источник';
@@ -443,12 +461,37 @@ export default function UniversityDetailView({
                       <MapPin size={16} className="text-neutral-400" /> {basicInfo.country}
                    </div>
                    <div className="flex items-center gap-2 text-neutral-600 font-semibold text-sm min-w-0 max-w-full">
-                      <Globe size={16} className="text-neutral-400 shrink-0" /> <span className="truncate">{domain}</span>
+                      <Globe size={16} className="text-neutral-400 shrink-0" />
+                      {websiteFallback ? (
+                        <a
+                          href={websiteFallback}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate text-neutral-700 hover:text-blue-700 transition-colors"
+                        >
+                          {domain}
+                        </a>
+                      ) : (
+                        <span className="truncate">{domain}</span>
+                      )}
                    </div>
                    <div className="px-4 py-1.5 rounded-md border border-neutral-200 bg-white text-xs font-bold text-neutral-500 uppercase">
                       {basicInfo.alpha_two_code}
                    </div>
                 </div>
+                {websiteFallback ? (
+                  <a
+                    href={websiteFallback}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center lg:justify-start gap-2 mt-2 text-sm sm:text-base font-semibold text-blue-700 hover:text-blue-800 transition-colors"
+                  >
+                    <span className="wrap-break-word">{heroOfficialNotice}</span>
+                    <ExternalLink size={15} className="shrink-0" />
+                  </a>
+                ) : (
+                  <p className="mt-2 text-sm sm:text-base font-semibold text-blue-700">{heroOfficialNotice}</p>
+                )}
               </div>
            </div>
         </div>
@@ -472,7 +515,10 @@ export default function UniversityDetailView({
                 <div className="mt-8 pt-6 border-t border-neutral-100 flex flex-wrap items-center gap-4 text-xs text-neutral-500 font-medium">
                   <div className="inline-flex items-center gap-2">
                     <Clock3 size={14} className="text-neutral-400" />
-                    {t('uni.last_updated', lang)}: {formattedLastUpdated || t('uni.not_specified', lang)}
+                    {t('uni.last_updated', lang)}:{' '}
+                    <span suppressHydrationWarning>
+                      {formattedLastUpdated || t('uni.not_specified', lang)}
+                    </span>
                   </div>
                   {aiDetails?.refresh_status ? (
                     <div className="px-3 py-1 rounded-full border border-neutral-200 bg-neutral-50 text-[10px] uppercase tracking-wider font-bold">
@@ -481,7 +527,8 @@ export default function UniversityDetailView({
                   ) : null}
                   {formattedNextRefresh ? (
                     <div className="text-[11px] text-neutral-400">
-                      {t('uni.next_refresh', lang)}: {formattedNextRefresh}
+                      {t('uni.next_refresh', lang)}:{' '}
+                      <span suppressHydrationWarning>{formattedNextRefresh}</span>
                     </div>
                   ) : null}
                 </div>
@@ -584,123 +631,148 @@ export default function UniversityDetailView({
 
         {/* Action Interface */}
         <div className="space-y-8 sm:space-y-12">
-           <div className="p-5 sm:p-8 lg:p-10 rounded-3xl sm:rounded-[40px] bg-neutral-900 text-white space-y-8 sm:space-y-12 relative overflow-hidden shadow-2xl">
-              <div className="absolute top-0 right-0 p-12 opacity-10">
-                 <GraduationCap size={120} />
+          <div className="p-6 sm:p-9 lg:p-10 rounded-3xl sm:rounded-[38px] bg-neutral-900 text-white space-y-8 sm:space-y-10 relative overflow-hidden shadow-[0_24px_55px_-30px_rgba(15,23,42,0.85)]">
+            <div className="absolute -top-20 -right-16 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" />
+            <div className="relative z-10 space-y-5">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white/90">
+                <Globe size={12} />
+                {t('uni.website', lang)}
               </div>
-              <div className="space-y-8 relative z-10">
-                 <div className="px-4 py-1 rounded-full bg-white/10 text-white text-[10px] font-bold inline-block border border-white/20 uppercase tracking-widest">{t('uni.website', lang)}</div>
-                 <h3 className="text-2xl sm:text-4xl font-extrabold leading-tight tracking-tight">{t('uni.visit', lang)}</h3>
-                 <p className="text-neutral-400 font-medium text-sm leading-relaxed">
-                   Visit the official university website for the most accurate and up-to-date admission information.
-                 </p>
+              <h3 className="text-2xl sm:text-3xl lg:text-[2rem] font-extrabold leading-tight tracking-tight">{t('uni.visit', lang)}</h3>
+              <div className="rounded-2xl bg-white/12 px-5 py-4 sm:px-6 sm:py-5 space-y-2">
+                <p className="text-lg sm:text-xl font-extrabold leading-tight text-white">
+                  {officialWebsiteTitle}
+                </p>
+                <p className="text-sm sm:text-base font-medium leading-7 text-white/75 max-w-[46ch]">
+                  {officialWebsiteDescription}
+                </p>
               </div>
-              <div className="space-y-3 relative z-10">
-                 {basicInfo.web_pages?.map((url, i) => (
-                   <a 
-                     key={i} 
-                     href={url} 
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     className="w-full flex items-center justify-center gap-3 bg-white text-neutral-900 hover:bg-neutral-100 py-4 rounded-2xl text-sm font-bold transition-all shadow-lg"
-                   >
-                      {t('uni.visit', lang)} <ExternalLink size={16} />
-                   </a>
-                 ))}
-              </div>
-              <div className="p-6 bg-white/5 rounded-3xl border border-white/10 space-y-4 relative z-10">
-                <div className="text-[10px] uppercase tracking-widest font-bold text-white/70">
-                  {t('uni.important_links', lang)}
-                </div>
-                <div className="space-y-3">
-                  {primaryLinks.map((item) =>
-                    item.link ? (
-                      <a
-                        key={item.id}
-                        href={item.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block rounded-2xl border border-white/15 bg-white/5 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-white wrap-break-word">{item.title}</p>
-                            <p className="mt-1 text-xs text-neutral-400 leading-relaxed">{item.description}</p>
-                            {item.host ? (
-                              <p className="mt-2 text-[11px] text-neutral-500">{item.host}</p>
-                            ) : null}
-                          </div>
-                          <div className="shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white whitespace-nowrap">
-                            {openLinkLabel}
-                            <ExternalLink size={12} />
-                          </div>
-                        </div>
-                      </a>
-                    ) : (
-                      <div
-                        key={item.id}
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 opacity-60"
-                      >
-                        <p className="text-sm font-semibold text-white wrap-break-word">{item.title}</p>
-                        <p className="mt-1 text-xs text-neutral-400 leading-relaxed">{item.description}</p>
-                        <p className="mt-2 text-[11px] text-neutral-500">{t('uni.not_specified', lang)}</p>
+              <p className="text-xs font-semibold text-white/55">{domain}</p>
+            </div>
+
+            <div className="relative z-10 space-y-3 sm:space-y-4">
+              {(basicInfo.web_pages?.length || 0) > 0 ? (
+                basicInfo.web_pages?.map((url, i) => (
+                  <a
+                    key={i}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group block w-full rounded-2xl bg-white/10 px-5 py-4 sm:py-5 transition-colors hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm sm:text-base font-semibold text-white">
+                          {i === 0 ? t('uni.visit', lang) : `${t('uni.visit', lang)} ${i + 1}`}
+                        </p>
+                        <p className="mt-1 text-xs text-white/60 truncate">{toShortLink(url)}</p>
                       </div>
-                    ),
-                  )}
-                </div>
+                      <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white/90 whitespace-nowrap">
+                        {openLinkLabel}
+                        <ExternalLink size={13} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                      </div>
+                    </div>
+                  </a>
+                ))
+              ) : (
+                <p className="rounded-2xl bg-white/10 px-5 py-4 text-xs text-white/60">
+                  {t('uni.not_specified', lang)}
+                </p>
+              )}
+            </div>
+
+            <div className="relative z-10 space-y-4 sm:space-y-5 pt-2">
+              <div className="text-[10px] uppercase tracking-widest font-bold text-white/55">
+                {t('uni.important_links', lang)}
               </div>
-              <div className="p-6 bg-white/5 rounded-3xl border border-white/10 space-y-4 relative z-10">
-                <div className="text-[10px] uppercase tracking-widest font-bold text-white/70">{t('uni.sources', lang)}</div>
-                {normalizedSources.length > 0 ? (
-                  <div className="space-y-2">
-                    {normalizedSources.map((source, i) => (
-                      <a
-                        key={`${source.link}-${i}`}
-                        href={source.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block rounded-xl border border-white/10 bg-white/5 px-3 py-3 hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-[10px] uppercase tracking-wide text-neutral-400 mb-1">{opensToLabel}</div>
-                            <div className="text-xs text-neutral-200 font-semibold leading-snug wrap-break-word">
-                              {source.title}
-                            </div>
-                            {source.snippet ? (
-                              <p className="mt-2 text-[11px] text-neutral-400 leading-relaxed wrap-break-word">
-                                {source.snippet}
-                              </p>
-                            ) : null}
-                            <div className="mt-2 flex items-center gap-2 text-[10px] text-neutral-400">
-                              <span className="px-2 py-0.5 rounded-full border border-white/15 bg-white/5">{sourceTypeLabel(source.linkType)}</span>
-                              <span>{source.host}</span>
-                            </div>
+              <div className="space-y-2.5 sm:space-y-3">
+                {primaryLinks.map((item) =>
+                  item.link ? (
+                    <a
+                      key={item.id}
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-2xl bg-white/8 px-4 py-3.5 hover:bg-white/14 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white wrap-break-word">{item.title}</p>
+                          <p className="mt-1.5 text-xs text-white/65 leading-relaxed">{item.description}</p>
+                          {item.host ? (
+                            <p className="mt-2 text-[11px] text-white/45">{item.host}</p>
+                          ) : null}
+                        </div>
+                        <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white/85 whitespace-nowrap">
+                          {openLinkLabel}
+                          <ExternalLink size={12} />
+                        </div>
+                      </div>
+                    </a>
+                  ) : (
+                    <div key={item.id} className="rounded-2xl bg-white/6 px-4 py-3.5 opacity-70">
+                      <p className="text-sm font-semibold text-white wrap-break-word">{item.title}</p>
+                      <p className="mt-1.5 text-xs text-white/60 leading-relaxed">{item.description}</p>
+                      <p className="mt-2 text-[11px] text-white/45">{t('uni.not_specified', lang)}</p>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+
+            <div className="relative z-10 space-y-4 sm:space-y-5 pt-2">
+              <div className="text-[10px] uppercase tracking-widest font-bold text-white/55">{t('uni.sources', lang)}</div>
+              {normalizedSources.length > 0 ? (
+                <div className="space-y-2.5 sm:space-y-3">
+                  {normalizedSources.map((source, i) => (
+                    <a
+                      key={`${source.link}-${i}`}
+                      href={source.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-2xl bg-white/7 px-4 py-3.5 hover:bg-white/13 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                        <div className="min-w-0">
+                          <div className="text-[10px] uppercase tracking-wide text-white/45 mb-1">{opensToLabel}</div>
+                          <div className="text-xs text-white/90 font-semibold leading-snug wrap-break-word">
+                            {source.title}
                           </div>
-                          <div className="shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white whitespace-nowrap">
-                            {openLinkLabel}
-                            <ExternalLink size={12} />
+                          {source.snippet ? (
+                            <p className="mt-2 text-[11px] text-white/60 leading-relaxed wrap-break-word">
+                              {source.snippet}
+                            </p>
+                          ) : null}
+                          <div className="mt-2 flex items-center gap-2 text-[10px] text-white/45">
+                            <span className="px-2 py-0.5 rounded-full bg-white/10">{sourceTypeLabel(source.linkType)}</span>
+                            <span>{source.host}</span>
                           </div>
                         </div>
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-neutral-400">{t('uni.not_specified', lang)}</p>
-                )}
-                {typeof aiDetails?.data_confidence === 'number' ? (
-                  <p className="text-[11px] text-neutral-400">
-                    {t('uni.confidence', lang)}: {Math.round(aiDetails.data_confidence * 100)}%
-                  </p>
-                ) : null}
-              </div>
-              <div className="p-6 bg-white/5 rounded-3xl border border-white/10 flex gap-4 items-start relative z-10">
-                 <Info size={18} className="text-neutral-400 shrink-0 mt-0.5" />
-                 <p className="text-[11px] text-neutral-400 leading-relaxed">
-                    Note: While we strive for accuracy, please verify all specific program details and deadlines on the official university website.
-                 </p>
-              </div>
-           </div>
+                        <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white/85 whitespace-nowrap">
+                          {openLinkLabel}
+                          <ExternalLink size={12} />
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-white/60">{t('uni.not_specified', lang)}</p>
+              )}
+              {typeof aiDetails?.data_confidence === 'number' ? (
+                <p className="text-[11px] text-white/50">
+                  {t('uni.confidence', lang)}: {Math.round(aiDetails.data_confidence * 100)}%
+                </p>
+              ) : null}
+            </div>
+
+            <div className="relative z-10 flex gap-3 items-start rounded-2xl bg-white/7 px-4 py-3.5">
+              <Info size={17} className="text-white/65 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-white/62 leading-relaxed">
+                Note: While we strive for accuracy, please verify all specific program details and deadlines on the official university website.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
