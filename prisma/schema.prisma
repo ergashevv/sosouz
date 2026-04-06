@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model UniversityDetails {
+  id                    String   @id @default(uuid())
+  university_name        String   @unique
+  domain                String?
+  country               String?
+  tuition_fees          String?
+  scholarships          Json?    // Array of objects with { name, link }
+  admission_requirements Json?    // Structured data
+  detailed_overview     String?  @db.Text
+  last_updated          DateTime @updatedAt
+}
+
+model SearchCache {
+  id           String   @id @default(uuid())
+  query        String   @unique
+  results      Json
+  last_updated DateTime @updatedAt
+}

@@ -1,0 +1,162 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Search, MapPin, Shield, Database, LayoutGrid } from 'lucide-react';
+import { countries } from '@/lib/countries';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Outfit } from 'next/font/google';
+
+const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
+
+export default function Home() {
+  const router = useRouter();
+  const [query, setQuery] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('United Kingdom');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push(`/search?country=${selectedCountry}${query ? `&q=${query}` : ''}`);
+  };
+
+  return (
+    <main className="min-h-screen bg-white flex flex-col">
+      {/* Modern Soft Navbar */}
+      <nav className="flex items-center justify-between px-8 py-6 border-b border-neutral-100 bg-white relative z-50">
+        <div className="flex items-center cursor-pointer" onClick={() => router.push('/')}>
+          <span className={`text-4xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
+            soso.
+          </span>
+        </div>
+        <div className="hidden md:flex items-center gap-8">
+          <Link href="/search" className="text-[13px] font-semibold text-neutral-600 hover:text-black transition-colors">Search & Discover</Link>
+          <Link href="/about" className="text-[13px] font-semibold text-neutral-600 hover:text-black transition-colors">About Us</Link>
+          <Link href="/students" className="text-[13px] font-semibold text-neutral-600 hover:text-black transition-colors">For Students</Link>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="flex-1 flex flex-col justify-center relative py-32 px-6">
+        <div className="max-w-4xl mx-auto w-full text-center space-y-12 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-8"
+          >
+            <div className="mx-auto w-fit inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white border border-neutral-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] mb-8 hover:scale-105 transition-transform cursor-default">
+              <span className="flex h-1.5 w-1.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neutral-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-neutral-800"></span>
+              </span>
+              <span className="text-xs font-semibold text-neutral-600 tracking-wide">
+                Explore 25,000+ Universities Worldwide
+              </span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1]">
+              Find the perfect university <br />
+              <span className="text-neutral-400 italic">for your future.</span>
+            </h1>
+            <p className="max-w-2xl mx-auto text-neutral-500 text-lg leading-relaxed mt-6">
+              Search through our verified global database to explore tuition fees, admission deadlines, and scholarship opportunities anywhere in the world.
+            </p>
+          </motion.div>
+
+          {/* Centralized Search Bar */}
+          <motion.form
+            onSubmit={handleSearch}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="max-w-2xl mx-auto mt-16 p-2 bg-white border border-neutral-200 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:ring-2 focus-within:ring-neutral-200 transition-all"
+          >
+            <div className="flex flex-col md:flex-row items-stretch h-14">
+              <div className="flex items-center gap-2 pl-6 pr-4 border-b md:border-b-0 md:border-r border-neutral-200">
+                <MapPin size={18} className="text-neutral-400" />
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  className="bg-transparent text-sm font-semibold text-neutral-700 outline-none cursor-pointer py-2 w-full md:w-auto"
+                >
+                  {countries.map(c => <option key={c.code} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="flex-1 px-4 flex items-center gap-3 bg-transparent">
+                <Search size={18} className="text-neutral-400" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Ask for a university..."
+                  className="bg-transparent w-full py-2 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
+                />
+              </div>
+              <button type="submit" className="px-8 h-full bg-neutral-900 text-white text-sm font-bold rounded-full hover:bg-black transition-colors w-full md:w-auto flex items-center justify-center shadow-md">
+                Search
+              </button>
+            </div>
+          </motion.form>
+        </div>
+      </section>
+
+      {/* Trust & Categories Section */}
+      <section className="py-24 px-6 border-t border-black/5 bg-neutral-50">
+        <div className="max-w-5xl mx-auto space-y-24">
+          {/* Trust Counters */}
+          <div className="flex flex-wrap items-center justify-between md:justify-center gap-12 md:gap-32 border-b border-black/10 pb-24">
+            <div className="flex flex-col items-center gap-4">
+              <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">25.4K</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><Shield size={12} /> Verified Universities</span>
+            </div>
+            <div className="flex flex-col items-center gap-4">
+              <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">195+</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><Database size={12} /> Countries</span>
+            </div>
+            <div className="flex flex-col items-center gap-4">
+              <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">100%</span>
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><LayoutGrid size={12} /> Free Platform</span>
+            </div>
+          </div>
+
+          {/* Quick Access Tiles */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { name: 'United Kingdom', label: 'UK REGISTRY', color: 'bg-black text-white border-black' },
+              { name: 'United States', label: 'US REGISTRY', color: 'bg-white text-black border-black/10 hover:border-black' },
+              { name: 'Germany', label: 'DE REGISTRY', color: 'bg-white text-black border-black/10 hover:border-black' }
+            ].map(dest => (
+              <Link
+                key={dest.name}
+                href={`/search?country=${dest.name}`}
+                className={`p-10 border transition-all flex flex-col justify-between h-48 group ${dest.color}`}
+              >
+                <MapPin size={24} className={dest.name === 'United Kingdom' ? 'text-white/50' : 'text-black/20'} />
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-tighter">{dest.label}</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">View Universities &rarr;</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-6 border-t border-black/10 bg-white flex flex-col justify-center">
+        <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.4em] flex-1">
+            &copy; 2026 SOSO
+          </div>
+          <div className="flex flex-1 justify-center items-center gap-8">
+            <Link href="/about" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">About</Link>
+            <Link href="/terms" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">Terms of Service</Link>
+          </div>
+          <div className="flex flex-1 justify-end items-center gap-2 text-black font-bold text-[10px] uppercase tracking-widest">
+            All systems operational
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
+}
