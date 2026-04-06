@@ -8,6 +8,7 @@ import UniversityDetailView, { AIResearchData } from '@/components/UniversityDet
 
 interface UniversityPageProps {
   params: Promise<{ name: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }
 
 function LoadingState() {
@@ -29,7 +30,7 @@ function LoadingState() {
   );
 }
 
-async function UniversityContent({ name }: { name: string }) {
+async function UniversityContent({ name, lang = 'en' }: { name: string, lang?: string }) {
   const decodedName = decodeURIComponent(name);
   const basicInfo = await fetchUniversityByName(decodedName);
   
@@ -44,7 +45,7 @@ async function UniversityContent({ name }: { name: string }) {
   }
 
   const domain = (basicInfo.domains && basicInfo.domains.length > 0) ? basicInfo.domains[0] : (basicInfo.web_pages && basicInfo.web_pages[0] ? new URL(basicInfo.web_pages[0]).hostname : 'unknown');
-  const aiDetails = await performResearch(decodedName, basicInfo.country, domain);
+  const aiDetails = await performResearch(decodedName, basicInfo.country, domain, lang);
   const logoSrc = getLogoUrl(domain);
   const fallbackSrc = getFallbackLogoUrl(domain);
 
@@ -59,14 +60,19 @@ async function UniversityContent({ name }: { name: string }) {
   );
 }
 
-export default async function UniversityDetail({ params }: UniversityPageProps) {
+import { cookies } from "next/headers";
+
+export default async function UniversityDetail({ params, searchParams }: UniversityPageProps) {
   const { name } = await params;
+  const sParams = await searchParams;
+  const cookieStore = await cookies();
+  const lang = sParams.lang || cookieStore.get('soso_lang')?.value || 'en';
   
   return (
     <main className="min-h-screen bg-white">
       <SearchHeader />
       <Suspense fallback={<LoadingState />}>
-        <UniversityContent name={name} />
+        <UniversityContent name={name} lang={lang} />
       </Suspense>
     </main>
   );

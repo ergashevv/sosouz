@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -16,8 +17,6 @@ export const metadata: Metadata = {
   title: "SOSO | Global University Discovery Engine",
   description: "Real-time, live-fetched global university search engine for the modern expert.",
 };
-
-import { LanguageProvider } from "@/contexts/LanguageContext";
 
 export default function RootLayout({
   children,
@@ -37,4 +36,3 @@ export default function RootLayout({
     </html>
   );
 }
-

@@ -4,9 +4,10 @@ import useSWR from 'swr';
 import { fetchUniversities } from '@/lib/api';
 import UniversityCard from '@/components/UniversityCard';
 import { use } from 'react';
-import { Database, ChevronLeft, ChevronRight, Activity, Shield, Info } from 'lucide-react';
+import { Activity, Shield, Info, Database } from 'lucide-react';
 import Link from 'next/link';
 import SearchHeader from '@/components/SearchHeader';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const PAGE_SIZE = 12;
 
@@ -15,6 +16,7 @@ const fetcher = async ([country, query]: [string, string | undefined]) => {
 };
 
 function ResultsGrid({ country, q, page }: { country: string, q?: string, page: number }) {
+  const { t } = useLanguage();
   const { data: universities, error, isLoading } = useSWR(
     [country, q],
     fetcher,
@@ -40,8 +42,8 @@ function ResultsGrid({ country, q, page }: { country: string, q?: string, page: 
       <div className="p-40 border border-black/10 text-center relative z-10 bg-neutral-50 shadow-sm">
         <Database size={80} className="mx-auto text-neutral-200 mb-10" />
         <div className="space-y-6">
-          <h3 className="text-6xl font-black text-black uppercase tracking-tighter italic">Error Loading Data.</h3>
-          <p className="text-neutral-500 font-bold uppercase tracking-widest text-[10px]">Status: connection failed.</p>
+          <h3 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Error Loading Data</h3>
+          <p className="text-neutral-500 font-medium">Status: connection failed.</p>
         </div>
       </div>
     );
@@ -49,11 +51,11 @@ function ResultsGrid({ country, q, page }: { country: string, q?: string, page: 
 
   if (universities.length === 0) {
     return (
-      <div className="p-40 border border-black/10 text-center relative z-10 bg-neutral-50 shadow-sm">
+      <div className="p-40 border border-neutral-100 text-center relative z-10 bg-neutral-50 shadow-sm rounded-3xl">
         <Database size={80} className="mx-auto text-neutral-200 mb-10" />
         <div className="space-y-6">
-          <h3 className="text-6xl font-black text-black uppercase tracking-tighter italic">Zero Results.</h3>
-          <p className="text-neutral-500 font-bold uppercase tracking-widest text-[10px]">Status: no universities matching Query: {q || 'None'} in Country: {country}.</p>
+          <h3 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Zero Results</h3>
+          <p className="text-neutral-500 font-medium">No universities matching &quot;{q || 'None'}&quot; in {country}.</p>
         </div>
       </div>
     );
@@ -73,12 +75,12 @@ function ResultsGrid({ country, q, page }: { country: string, q?: string, page: 
 
       {/* Pagination Interface */}
       {totalPages > 1 && (
-        <div className="flex flex-col md:flex-row items-center justify-between gap-12 py-20 border-t border-black">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-12 py-20 border-t border-neutral-100 mt-20">
           <Link
             href={`/search?country=${country}${q ? `&q=${q}` : ''}&page=${Math.max(1, page - 1)}`}
-            className={`btn-secondary !py-4 px-12 ${page === 1 ? 'opacity-20 pointer-events-none' : ''}`}
+            className={`px-8 py-3 rounded-full border border-neutral-200 text-sm font-bold transition-all hover:bg-neutral-50 ${page === 1 ? 'opacity-20 pointer-events-none' : ''}`}
           >
-            <ChevronLeft size={16} /> PREVIOUS
+            PREVIOUS
           </Link>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -89,23 +91,22 @@ function ResultsGrid({ country, q, page }: { country: string, q?: string, page: 
                   <Link
                     key={p}
                     href={`/search?country=${country}${q ? `&q=${q}` : ''}&page=${p}`}
-                    className={`w-12 h-12 flex items-center justify-center text-[10px] font-black border border-black/10 transition-all ${page === p ? 'bg-black text-white border-black' : 'bg-white text-neutral-400 hover:text-black hover:border-black'
-                      }`}
+                    className={`w-10 h-10 flex items-center justify-center text-xs font-bold rounded-full transition-all ${page === p ? 'bg-black text-white' : 'text-neutral-400 hover:text-black hover:bg-neutral-50'}`}
                   >
                     {p}
                   </Link>
                 );
               }
-              if (p === page - 2 || p === page + 2) return <span key={p} className="text-neutral-200 font-black px-2">...</span>;
+              if (p === page - 2 || p === page + 2) return <span key={p} className="text-neutral-300">...</span>;
               return null;
             })}
           </div>
 
           <Link
             href={`/search?country=${country}${q ? `&q=${q}` : ''}&page=${Math.min(totalPages, page + 1)}`}
-            className={`btn-secondary !py-4 px-12 ${page === totalPages ? 'opacity-20 pointer-events-none' : ''}`}
+            className={`px-8 py-3 rounded-full border border-neutral-200 text-sm font-bold transition-all hover:bg-neutral-50 ${page === totalPages ? 'opacity-20 pointer-events-none' : ''}`}
           >
-            NEXT <ChevronRight size={16} />
+            NEXT
           </Link>
         </div>
       )}
@@ -114,6 +115,7 @@ function ResultsGrid({ country, q, page }: { country: string, q?: string, page: 
 }
 
 export default function SearchPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const { t } = useLanguage();
   const params = use(searchParams);
   const country = (params.country as string) || 'United Kingdom';
   const query = (params.q as string) || undefined;
@@ -128,7 +130,7 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-12 border-b border-neutral-100 pb-16">
           <div className="space-y-6 max-w-3xl">
             <div className="flex items-center gap-2 text-neutral-400 font-bold text-xs uppercase tracking-widest mb-4">
-              <Shield size={14} /> Search Results For
+              <Shield size={14} /> {t('search.header.country')}
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] capitalize">
               {country} Universities.
@@ -136,17 +138,17 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mt-6">
                <div className="px-4 py-1.5 rounded-full bg-white text-neutral-600 text-[10px] font-bold uppercase tracking-widest border border-neutral-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2">
                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-800 animate-pulse"></span>
-                 Live Data Search
+                 {t('search.header.live')}
                </div>
                <div className="text-sm font-medium text-neutral-500 flex items-center gap-2">
-                 <Info size={16} className="text-neutral-400" /> Browsing verified academic directory
+                 <Info size={16} className="text-neutral-400" /> {t('search.header.browsing')}
                </div>
             </div>
           </div>
 
           <div className="flex flex-col lg:items-end gap-10">
             <div className="text-xs font-semibold text-neutral-500 border border-neutral-200 py-3 px-6 rounded-full bg-white flex items-center gap-3 shadow-sm">
-              <Activity size={16} className="text-neutral-400" /> Query: <span className="text-neutral-900 font-bold">{query || 'ALL UNIVERSITIES'}</span>
+              <Activity size={16} className="text-neutral-400" /> {t('search.header.query')} <span className="text-neutral-900 font-bold">{query || t('search.header.all')}</span>
             </div>
           </div>
         </div>
@@ -157,12 +159,12 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
       <footer className="mt-20 py-12 border-t border-neutral-100 bg-white">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="text-sm font-medium text-neutral-500">
-            &copy; 2026 SOSO Education
+            {t('footer.copyright')}
           </div>
           <div className="flex items-center gap-8">
-            <Link href="/about" className="text-sm font-semibold text-neutral-600 hover:text-blue-600 transition-colors">About Us</Link>
-            <Link href="/students" className="text-sm font-semibold text-neutral-600 hover:text-blue-600 transition-colors">For Students</Link>
-            <Link href="/terms" className="text-sm font-semibold text-neutral-600 hover:text-blue-600 transition-colors">Terms of Service</Link>
+            <Link href="/about" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.about')}</Link>
+            <Link href="/students" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.students')}</Link>
+            <Link href="/terms" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.terms')}</Link>
           </div>
         </div>
       </footer>

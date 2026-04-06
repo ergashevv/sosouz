@@ -47,4 +47,13 @@ export const translations: InternalDict = {
   
   // Footer
   "footer.copyright": { en: "© 2026 SOSO Education", ru: "© 2026 SOSO Образование", uz: "© 2026 SOSO Ta'lim" },
+
+  // About Page
+  "about.title": { en: "About Us", ru: "О Нас", uz: "Biz Haqimizda" },
+  "about.subtitle": { en: "Building the most comprehensive and verified academic database for students globally.", ru: "Создание наиболее полной и проверенной базы данных для студентов по всему миру.", uz: "Butun dunyo talabalari uchun eng to'liq va tasdiqlangan akademik ma'lumotlar bazasini yaratish." },
+  "about.desc1": { en: "SOSO is a sophisticated university discovery platform designed to connect ambitious students with top-tier global institutions. Our verified data pipeline integrates directly with international institutional metadata to provide accurate, real-time insights into academic nodes across 195+ countries.", ru: "SOSO — это сложная платформа для поиска университетов, созданная для связи амбициозных студентов с ведущими мировыми институтами.", uz: "SOSO - bu intiluvchan talabalarni dunyoning eng nufuzli oliygohlari bilan bog'lash uchun mo'ljallangan zamonaviy universitet qidiruv platformasi." },
+  "about.desc2": { en: "We believe in absolute transparency and accessibility in academic research. By standardizing diverse institutional registries into a single, high-performance interface, we eliminate the friction typically associated with researching international education.", ru: "Мы верим в абсолютную прозрачность и доступность академических исследований. Стандартизируя различные институциональные реестры в единый высокопроизводительный интерфейс, мы устраняем трения.", uz: "Biz akademik tadqiqotlarda mutlaq shaffoflik va ochiqlikka ishonamiz. Turli xil oliygohlar ma'lumotlarini yagona tizimga jamlash orqali biz xalqaro ta'limni o'rganishdagi barcha to'siqlarni olib tashlaymiz." },
+  "about.back": { en: "Back to Home", ru: "На Главную", uz: "Bosh sahifaga qaytish" },
+  "uni.view": { en: "View Details", ru: "Подробнее", uz: "Batafsil" },
+  "uni.verified_tag": { en: "Verified", ru: "Проверено", uz: "Tasdiqlangan" },
 };

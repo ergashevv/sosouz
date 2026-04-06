@@ -1,52 +1,69 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Target, Eye, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function AboutPage() {
+  const { t } = useLanguage();
+
   return (
-    <main className="min-h-screen bg-white flex flex-col">
-      <nav className="flex items-center px-6 py-8 border-b border-black/5 bg-white">
-        <Link href="/" className="text-xl font-black text-black tracking-tighter uppercase leading-none">
-          SOSO
+    <main className="min-h-screen bg-white">
+      {/* Header */}
+      <nav className="flex items-center justify-between px-6 py-8 border-b border-neutral-100 bg-white sticky top-0 z-50 transition-all">
+        <Link href="/" className="text-2xl font-black text-neutral-900 tracking-tighter">
+          soso.
         </Link>
       </nav>
 
-      <section className="flex-1 flex flex-col pt-32 px-6">
-        <div className="max-w-4xl mx-auto w-full space-y-12">
-          <Link href="/" className="btn-secondary inline-flex !py-4 !px-8 hover:bg-black hover:text-white transition-all w-fit">
-            <ArrowLeft size={16} /> BACK TO HOME
+      {/* Hero */}
+      <section className="pt-32 pb-40 px-6">
+        <div className="max-w-4xl mx-auto w-full space-y-20">
+          <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-neutral-200 bg-white text-sm font-bold shadow-sm hover:shadow-md hover:bg-neutral-50 transition-all">
+            <ArrowLeft size={16} /> {t('about.back')}
           </Link>
 
-          <div>
-            <h1 className="text-5xl md:text-7xl font-black text-black tracking-tighter uppercase italic underline decoration-neutral-100">
-              About Us.
+          <div className="space-y-8">
+            <h1 className="text-5xl md:text-8xl font-extrabold text-neutral-900 tracking-tight leading-tight">
+              {t('about.title')}
             </h1>
+            <p className="text-2xl md:text-3xl font-medium text-neutral-500 leading-snug">
+              {t('about.subtitle')}
+            </p>
           </div>
 
-          <div className="prose prose-lg max-w-none text-black leading-relaxed">
-            <p className="text-2xl font-bold uppercase tracking-tight text-neutral-400">
-              Building the most comprehensive and verified academic database for students globally.
-            </p>
-            
-            <div className="space-y-8 mt-12 text-sm font-bold uppercase tracking-widest leading-loose text-neutral-600">
-               <p>
-                 SOSO is a sophisticated university discovery platform designed to connect ambitious students with top-tier global institutions. Our verified data pipeline integrates directly with international institutional metadata to provide accurate, real-time insights into academic nodes across 195+ countries.
-               </p>
-               <p>
-                 We believe in absolute transparency and accessibility in academic research. By standardizing diverse institutional registries into a single, high-performance interface, we eliminate the friction typically associated with researching international education.
-               </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t border-neutral-100">
+             <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                   <Target size={24} />
+                </div>
+                <p className="text-lg text-neutral-600 leading-relaxed font-medium">
+                  {t('about.desc1')}
+                </p>
+             </div>
+             <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                   <ShieldCheck size={24} />
+                </div>
+                <p className="text-lg text-neutral-600 leading-relaxed font-medium">
+                  {t('about.desc2')}
+                </p>
+             </div>
           </div>
         </div>
       </section>
 
-      <footer className="py-12 px-6 border-t border-black/10 bg-white mt-32">
-         <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.4em]">
-               &copy; 2026 SOSO 
-            </div>
-         </div>
+      {/* Footer */}
+      <footer className="py-12 border-t border-neutral-100 bg-white">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="text-sm font-medium text-neutral-400">
+            {t('footer.copyright')}
+          </div>
+          <div className="flex items-center gap-8">
+            <Link href="/students" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.students')}</Link>
+            <Link href="/terms" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.terms')}</Link>
+          </div>
+        </div>
       </footer>
     </main>
   );

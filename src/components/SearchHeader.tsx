@@ -2,9 +2,10 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, Globe } from 'lucide-react';
 import { countries } from '@/lib/countries';
 import { Outfit } from 'next/font/google';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
@@ -13,7 +14,7 @@ function SearchHeaderContent() {
   const searchParams = useSearchParams();
   const initialCountry = searchParams?.get('country') || 'United Kingdom';
   const initialQuery = searchParams?.get('q') || '';
-
+  const { t, language, setLanguage } = useLanguage();
   const [query, setQuery] = useState(initialQuery);
   const [selectedCountry, setSelectedCountry] = useState(initialCountry);
   const [scrolled, setScrolled] = useState(false);
@@ -48,14 +49,31 @@ function SearchHeaderContent() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
 
-          {/* Soft Modern Branding */}
-          <div 
-            className="flex flex-col cursor-pointer"
-            onClick={() => router.push('/')}
-          >
-            <span className={`text-3xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
-              soso.
-            </span>
+          <div className="flex items-center gap-6">
+            <div 
+              className="flex flex-col cursor-pointer"
+              onClick={() => router.push('/')}
+            >
+              <span className={`text-3xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
+                soso.
+              </span>
+            </div>
+
+            <div className="h-6 w-[1px] bg-neutral-100 hidden md:block"></div>
+
+            <div className="flex items-center gap-3">
+              {(['en', 'ru', 'uz'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`text-[10px] font-black uppercase tracking-widest transition-all ${
+                    language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Soft Search Interface */}
@@ -78,14 +96,14 @@ function SearchHeaderContent() {
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search university name..."
+                    placeholder={t('home.search.placeholder')}
                     className="bg-transparent w-full py-3.5 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
                   />
                 </div>
 
                 <div className="pr-2">
                   <button type="submit" className="px-6 py-2 bg-neutral-900 text-white text-sm font-bold rounded-full hover:bg-black transition-colors shadow-sm">
-                    Search
+                    {t('home.search.btn')}
                   </button>
                 </div>
             </div>

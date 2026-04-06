@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Globe, ArrowRight, Shield } from 'lucide-react';
 import Link from 'next/link';
 import SmartImage from './SmartImage';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface UniversityCardProps {
   university: University;
@@ -12,6 +13,7 @@ interface UniversityCardProps {
 }
 
 export default function UniversityCard({ university, index }: UniversityCardProps) {
+  const { t, language } = useLanguage();
   const domain = university.domains?.[0] || 'unknown';
   const logoSrc = getLogoUrl(domain);
   const fallbackSrc = getFallbackLogoUrl(domain);
@@ -24,7 +26,7 @@ export default function UniversityCard({ university, index }: UniversityCardProp
       transition={{ delay: index * 0.05, duration: 0.6 }}
       className="group"
     >
-      <Link href={`/university/${encodeURIComponent(university.name)}`}>
+      <Link href={`/university/${encodeURIComponent(university.name)}?lang=${language}`}>
         <div className="clean-card relative h-[420px] flex flex-col justify-between p-12 hover:bg-neutral-50 border-black/10 transition-all duration-300">
            <div className="space-y-10">
               <div className="flex items-start justify-between">
@@ -37,10 +39,10 @@ export default function UniversityCard({ university, index }: UniversityCardProp
                     />
                  </div>
                  <div className="flex flex-col items-end">
-                    <div className="tag-pill text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 bg-black text-white border-black">
-                       VERIFIED
+                    <div className="px-3 py-1 bg-black text-white text-[9px] font-bold uppercase tracking-widest rounded-full shadow-lg">
+                       {t('uni.verified_tag')}
                     </div>
-                    <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest mt-2">CODE: {university.alpha_two_code}</span>
+                    <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest mt-2">{university.alpha_two_code}</span>
                  </div>
               </div>
 
@@ -60,7 +62,7 @@ export default function UniversityCard({ university, index }: UniversityCardProp
               </div>
               
               <div className="pt-8 border-t border-black/5 flex items-center justify-between group-hover:border-black transition-colors">
-                 <span className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-300 group-hover:text-black">VIEW DETAILS</span>
+                 <span className="text-xs font-bold text-neutral-400 group-hover:text-black transition-colors">{t('uni.view')}</span>
                  <ArrowRight size={20} className="text-neutral-200 group-hover:text-black group-hover:translate-x-3 transition-all" />
               </div>
            </div>

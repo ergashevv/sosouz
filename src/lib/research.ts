@@ -16,7 +16,7 @@ export interface ResearchOutput {
   detailed_overview: string;
 }
 
-export async function performResearch(university: string, country?: string, domain?: string) {
+export async function performResearch(university: string, country?: string, domain?: string, lang: string = 'en') {
   try {
     // Step A: Cache Check (fresh data)
     const cachedDetails = await prisma.universityDetails.findUnique({
@@ -50,20 +50,22 @@ export async function performResearch(university: string, country?: string, doma
     let structuredData: ResearchOutput;
     try {
       const snippets = searchResults.slice(0, 5).map((r: any) => `${r.title}: ${r.snippet}`).join("\n\n");
-      const prompt = `You are a professional educational consultant and leading academic researcher with extensive internal knowledge about global universities. I need official, highly detailed, and accurate academic data about ${university} (Location: ${country || 'unknown'}, Domain: ${domain || 'unknown'}). 
+      const prompt = `You are a professional educational consultant and leading academic researcher. I need official, highly detailed, and accurate academic data about ${university} (Location: ${country || 'unknown'}, Domain: ${domain || 'unknown'}). 
 
-Combine your vast internal database with the following recent search snippets to construct a rich, authoritative academic profile.
+COMBINE your internal knowledge with the snippets below. 
+
+CRITICAL: All descriptive text (overview, scholarship names, requirement descriptions, and deadlines) MUST BE WRITTEN IN ${lang.toUpperCase()} LANGUAGE.
 
 Requirements for the output:
-1. "annual_tuition_usd": Specific average tuition fee ranges for international students. Do not say "varies". Give an official estimate in USD (e.g., "$25,000 - $40,000/year").
-2. "available_scholarships": List 2-4 known official scholarships for international students at this university (e.g., "Global Excellence Scholarship") and their official links (if link unknown, provide the domain).
-3. "admission_requirements": An object describing concrete requirements (e.g., {"IELTS": "Overall 6.5 minimum", "GPA": "Minimum 3.0/4.0", "Documents": "Statement of Purpose, 2 LORs"}).
-4. "admission_deadline": Provide specific application months or periods (e.g., "Fall: January 15, Spring: September 1"). If rolling, say so.
-5. "detailed_overview": A rich, highly professional 4-5 sentence summary. Mention specific global rankings, major facilities, strong faculties, major achievements, and why international students choose this university specifically. Make it sound like a premium official directory overview.
+1. "annual_tuition_usd": Specific average tuition fee ranges for international students in USD (e.g., "$25,000 - $40,000/year").
+2. "available_scholarships": List 2-4 known official scholarships for international students at this university and their official links.
+3. "admission_requirements": An object describing concrete requirements (e.g., {"IELTS": "Overall 6.5 minimum", "GPA": "Minimum 3.0/4.0"}).
+4. "admission_deadline": Provide specific application months or periods.
+5. "detailed_overview": A rich, professional 4-5 sentence summary in ${lang.toUpperCase()} covering rankings, facilities, and why students choose this place.
 
 Return ONLY a valid JSON object matching the keys: annual_tuition_usd, available_scholarships, admission_requirements, admission_deadline, detailed_overview. Do not wrap it in markdown.
 
-Recent Search Snippets for extra context:
+Snippets:
 ${snippets}`;
 
       const aiResult = await model.generateContent(prompt);
