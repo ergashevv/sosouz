@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Prisma } from "@prisma/client";
+import type { Language } from "@/lib/i18n";
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -8,6 +9,15 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const CACHE_TTL_DAYS = 14;
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
+
+function coerceLanguage(value: string | undefined): Language {
+  if (value === "uz" || value === "ru" || value === "en") return value;
+  return "en";
+}
+
+function toLocalizedCacheKey(university: string, lang: Language): string {
+  return `${university}::${lang}`;
+}
 
 interface ResearchSource {
   title: string;
@@ -217,10 +227,10 @@ function isMissingColumnError(error: unknown) {
   return candidate.code === "P2022";
 }
 
-async function findCachedDetails(university: string) {
+async function findCachedDetails(cacheKey: string) {
   try {
     return await prisma.universityDetails.findUnique({
-      where: { university_name: university },
+      where: { university_name: cacheKey },
       select: {
         id: true,
         university_name: true,
@@ -242,7 +252,7 @@ async function findCachedDetails(university: string) {
   } catch (error) {
     if (isMissingColumnError(error)) {
       return await prisma.universityDetails.findUnique({
-        where: { university_name: university },
+        where: { university_name: cacheKey },
         select: {
           id: true,
           university_name: true,
@@ -281,13 +291,13 @@ async function generateWithGemini(prompt: string) {
 }
 
 async function upsertLegacyResearch(
-  university: string,
+  cacheKey: string,
   country: string | undefined,
   domain: string | undefined,
   structuredData: ResearchOutput,
 ) {
   return prisma.universityDetails.upsert({
-    where: { university_name: university },
+    where: { university_name: cacheKey },
     update: {
       tuition_fees: structuredData.annual_tuition_usd,
       scholarships: structuredData.available_scholarships,
@@ -298,7 +308,7 @@ async function upsertLegacyResearch(
       country: country || null,
     },
     create: {
-      university_name: university,
+      university_name: cacheKey,
       tuition_fees: structuredData.annual_tuition_usd,
       scholarships: structuredData.available_scholarships,
       admission_requirements: structuredData.admission_requirements,
@@ -314,11 +324,13 @@ export async function performResearch(
   university: string,
   country?: string,
   domain?: string,
-  lang = "en",
+  lang: Language = "en",
 ) {
+  const safeLang = coerceLanguage(lang);
+  const cacheKey = toLocalizedCacheKey(university, safeLang);
   let cachedDetails = null;
   try {
-    cachedDetails = await findCachedDetails(university);
+    cachedDetails = await findCachedDetails(cacheKey);
   } catch (error) {
     console.error("Cache lookup failed:", error);
   }
@@ -368,7 +380,7 @@ export async function performResearch(
 University: ${university}
 Country: ${country || "unknown"}
 Official domain: ${domain || "unknown"}
-Target language for descriptive text: ${lang.toUpperCase()}
+Target language for descriptive text: ${safeLang.toUpperCase()}
 
 Use the provided sources first. If data is missing, make conservative estimates and label uncertainty through confidence_score.
 
@@ -384,7 +396,7 @@ Return ONLY valid JSON with this exact schema:
 }
 
 Constraints:
-- detailed_overview must be 4-5 sentences in ${lang.toUpperCase()}.
+- detailed_overview must be 4-5 sentences in ${safeLang.toUpperCase()}.
 - Include 4-8 programs, and every program must include a direct official URL for that specific program page (same university domain).
 - Include 2-5 scholarships if available.
 - confidence_score must be between 0 and 1.
@@ -399,7 +411,7 @@ ${snippetBlock || "No external snippets available."}`;
 
     try {
       return await prisma.universityDetails.upsert({
-        where: { university_name: university },
+        where: { university_name: cacheKey },
         update: {
           tuition_fees: structuredData.annual_tuition_usd,
           scholarships: structuredData.available_scholarships,
@@ -415,7 +427,7 @@ ${snippetBlock || "No external snippets available."}`;
           country: country || null,
         },
         create: {
-          university_name: university,
+          university_name: cacheKey,
           tuition_fees: structuredData.annual_tuition_usd,
           scholarships: structuredData.available_scholarships,
           programs: structuredData.programs as unknown as Prisma.InputJsonValue,
@@ -432,7 +444,7 @@ ${snippetBlock || "No external snippets available."}`;
       });
     } catch (error) {
       if (isMissingColumnError(error)) {
-        return await upsertLegacyResearch(university, country, domain, structuredData);
+        return await upsertLegacyResearch(cacheKey, country, domain, structuredData);
       }
       throw error;
     }
@@ -441,7 +453,7 @@ ${snippetBlock || "No external snippets available."}`;
     if (cachedDetails) {
       try {
         return await prisma.universityDetails.update({
-          where: { university_name: university },
+          where: { university_name: cacheKey },
           data: { refresh_status: "stale" },
         });
       } catch {
