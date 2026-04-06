@@ -15,20 +15,22 @@ interface UniversityPageProps {
 
 function LoadingState() {
   return (
-    <div className="h-[70vh] sm:h-[80vh] w-full flex items-center justify-center flex-col gap-8 sm:gap-10 px-4 relative z-10 bg-white">
-       <div className="relative">
-         <div className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-slate-100 border-t-primary rounded-full animate-spin shadow-sm" />
-         <div className="absolute inset-0 flex items-center justify-center">
+    <section className="bg-white pt-[calc(var(--search-header-height,12rem)+1rem)] sm:pt-[calc(var(--search-header-height,12rem)+1.5rem)]">
+      <div className="min-h-[calc(100vh-var(--search-header-height,12rem)-2rem)] sm:min-h-[calc(100vh-var(--search-header-height,12rem)-2.5rem)] w-full flex items-center justify-center flex-col gap-8 sm:gap-10 px-4 relative z-10">
+        <div className="relative">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-slate-100 border-t-primary rounded-full animate-spin shadow-sm" />
+          <div className="absolute inset-0 flex items-center justify-center">
             <GraduationCap size={28} className="text-primary" />
-         </div>
-       </div>
-       <div className="text-center space-y-3 mt-2 sm:mt-4">
-         <p className="text-lg sm:text-xl font-bold text-neutral-800 tracking-tight">Gathering university details...</p>
-         <div className="text-sm text-neutral-500 animate-pulse font-medium">
-           Loading tuition, admission, and scholarship data
-         </div>
-       </div>
-    </div>
+          </div>
+        </div>
+        <div className="text-center space-y-3 mt-2 sm:mt-4">
+          <p className="text-lg sm:text-xl font-bold text-neutral-800 tracking-tight">Gathering university details...</p>
+          <div className="text-sm text-neutral-500 animate-pulse font-medium">
+            Loading tuition, admission, and scholarship data
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -88,7 +90,7 @@ async function UniversityContent({
     const searchHref = `/search?lang=${lang}`;
 
     return (
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-28 relative z-10">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-[calc(var(--search-header-height,12rem)+2rem)] sm:pt-[calc(var(--search-header-height,12rem)+2.5rem)] pb-16 sm:pb-24 lg:pb-28 relative z-10">
         <div className="mx-auto max-w-3xl rounded-3xl border border-neutral-200 bg-neutral-50/70 p-8 sm:p-12 lg:p-16 text-center shadow-sm">
           <div className="mx-auto mb-6 sm:mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
             <GraduationCap size={26} />

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, MapPin, Shield, Database, LayoutGrid } from 'lucide-react';
+import { Search, MapPin, Shield, Database, LayoutGrid, Menu, X } from 'lucide-react';
 import { countries } from '@/lib/countries';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -17,6 +17,7 @@ export default function Home() {
   const { t, language, setLanguage } = useLanguage();
   const [query, setQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('United Kingdom');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const buildSearchHref = (country: string, searchQuery?: string) => {
     const params = new URLSearchParams({ country });
@@ -31,39 +32,100 @@ export default function Home() {
     window.location.assign(buildSearchHref(selectedCountry, query));
   };
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const onEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, [mobileMenuOpen]);
+
   return (
     <main className="min-h-screen bg-white flex flex-col">
       {/* Modern Soft Navbar */}
-      <nav className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-neutral-100 bg-white relative z-50">
-        <div className="flex items-center cursor-pointer" onClick={() => router.push('/')}>
-          <span className={`text-3xl sm:text-4xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
-            soso.
-          </span>
-        </div>
-        
-        <div className="flex items-center flex-wrap justify-center sm:justify-end gap-3 sm:gap-5">
-          <Link href="/search" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
-          <Link href="/about" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
-          <Link href="/students" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
-          
-          <div className="hidden sm:block h-4 w-px bg-neutral-200 mx-1"></div>
-          
-          <div className="flex items-center gap-3 sm:gap-4">
-            {(['en', 'ru', 'uz'] as const).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => setLanguage(lang)}
-                className={`text-[10px] font-black uppercase tracking-widest transition-all ${
-                  language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
-                }`}
-              >
-                {lang}
-              </button>
-            ))}
+      <nav className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-neutral-100 bg-white relative z-50">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center cursor-pointer" onClick={() => router.push('/')}>
+            <span className={`text-3xl sm:text-4xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
+              soso.
+            </span>
           </div>
 
-          <HeaderAccountActions />
+          <button
+            type="button"
+            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:text-black transition-colors"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
+          </button>
+
+          <div className="hidden md:flex items-center flex-wrap justify-end gap-3 sm:gap-5">
+            <Link href="/search" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
+            <Link href="/about" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
+            <Link href="/students" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
+
+            <div className="h-4 w-px bg-neutral-200 mx-1"></div>
+
+            <div className="flex items-center gap-3 sm:gap-4">
+              {(['en', 'ru', 'uz'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`text-[10px] font-black uppercase tracking-widest transition-all ${
+                    language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+
+            <HeaderAccountActions />
+          </div>
         </div>
+
+        {mobileMenuOpen ? (
+          <div className="md:hidden mt-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm space-y-4">
+            <div className="grid grid-cols-1 gap-3">
+              <Link href="/search" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
+              <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
+              <Link href="/students" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
+            </div>
+
+            <div className="border-t border-neutral-100 pt-4">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
+                Language
+              </div>
+              <div className="flex items-center gap-4">
+                {(['en', 'ru', 'uz'] as const).map((lang) => (
+                  <button
+                    key={`mobile-${lang}`}
+                    onClick={() => {
+                      setLanguage(lang);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`text-[10px] font-black uppercase tracking-widest transition-all ${
+                      language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
+                    }`}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-neutral-100 pt-4">
+              <HeaderAccountActions />
+            </div>
+          </div>
+        ) : null}
       </nav>
 
       {/* Hero Section */}

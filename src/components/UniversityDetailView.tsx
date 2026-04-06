@@ -410,7 +410,7 @@ export default function UniversityDetailView({
   return (
     <div className="pb-24 sm:pb-40 lg:pb-64 relative z-10 bg-white">
       {/* Hero Section */}
-      <div className="relative pt-40 sm:pt-52 lg:pt-64 pb-14 sm:pb-24 lg:pb-32 border-b border-black bg-neutral-50 overflow-hidden">
+      <div className="relative pt-[calc(var(--search-header-height,12rem)+1rem)] sm:pt-[calc(var(--search-header-height,12rem)+1.5rem)] lg:pt-[calc(var(--search-header-height,12rem)+2rem)] pb-14 sm:pb-24 lg:pb-32 border-b border-black bg-neutral-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
            <Link href="/search" className="inline-flex items-center gap-2 mb-8 sm:mb-12 lg:mb-20 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-neutral-200 bg-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md hover:bg-neutral-50 transition-all">
               <ArrowLeft size={16} /> {t('uni.back', lang)}
@@ -495,7 +495,7 @@ export default function UniversityDetailView({
                 </div>
                  <div className="flex flex-col gap-2 relative z-10">
                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('uni.tuition', lang)}</span>
-                   <p className="text-3xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight leading-[1.15] wrap-break-word">
+                  <p className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight leading-snug wrap-break-word max-w-[26ch]">
                      {localizedTuition || t('uni.not_specified', lang)}
                    </p>
                 </div>
@@ -630,7 +630,7 @@ export default function UniversityDetailView({
                               <p className="mt-2 text-[11px] text-neutral-500">{item.host}</p>
                             ) : null}
                           </div>
-                          <div className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white">
+                          <div className="shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white whitespace-nowrap">
                             {openLinkLabel}
                             <ExternalLink size={12} />
                           </div>
@@ -677,7 +677,7 @@ export default function UniversityDetailView({
                               <span>{source.host}</span>
                             </div>
                           </div>
-                          <div className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white">
+                          <div className="shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white whitespace-nowrap">
                             {openLinkLabel}
                             <ExternalLink size={12} />
                           </div>

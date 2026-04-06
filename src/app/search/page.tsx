@@ -3,11 +3,12 @@
 import useSWR from 'swr';
 import { fetchUniversities } from '@/lib/api';
 import UniversityCard from '@/components/UniversityCard';
-import { use } from 'react';
-import { Activity, Shield, Info, Database } from 'lucide-react';
+import { use, useEffect, useState } from 'react';
+import { Activity, Shield, Info, Database, Search, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import SearchHeader from '@/components/SearchHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countries } from '@/lib/countries';
 
 const PAGE_SIZE = 12;
 
@@ -128,19 +129,76 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
   const country = (params.country as string) || 'United Kingdom';
   const query = (params.q as string) || undefined;
   const page = parseInt((params.page as string)) || 1;
+  const [searchCountry, setSearchCountry] = useState(country);
+  const [searchQuery, setSearchQuery] = useState(query || '');
+
+  useEffect(() => {
+    setSearchCountry(country);
+    setSearchQuery(query || '');
+  }, [country, query]);
+
+  const handleRefineSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    window.location.assign(buildSearchHref(searchCountry, 1, searchQuery || undefined));
+  };
 
   return (
     <main className="min-h-screen bg-white pb-24 sm:pb-40">
-      <SearchHeader />
+      <SearchHeader fixed={false} showSearchForm={false} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-44 sm:pt-56 lg:pt-64 pb-14 sm:pb-20 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-14 sm:pb-20 relative z-10">
+        <section className="mb-8 sm:mb-12">
+          <div className="rounded-3xl border border-neutral-200 bg-neutral-50/70 p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3 sm:mb-4">
+              <Search size={13} className="text-neutral-400" />
+              Search Universities
+            </div>
+
+            <form onSubmit={handleRefineSearch} className="w-full">
+              <div className="w-full flex flex-col md:flex-row md:items-center bg-white border border-neutral-200 rounded-3xl md:rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-neutral-200 focus-within:border-neutral-300 transition-all">
+                <div className="flex items-center gap-2 pl-4 sm:pl-6 pr-4 border-b md:border-b-0 md:border-r border-neutral-200 min-h-11 min-w-0">
+                  <MapPin size={16} className="text-neutral-400" />
+                  <select
+                    value={searchCountry}
+                    onChange={(e) => setSearchCountry(e.target.value)}
+                    className="bg-transparent text-sm font-semibold text-neutral-700 outline-none cursor-pointer py-2.5 md:py-3.5 w-full min-w-0"
+                  >
+                    {countries.map((c) => (
+                      <option key={c.code} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex-1 px-4 flex items-center gap-3 min-h-11">
+                  <Search size={16} className="text-neutral-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('home.search.placeholder')}
+                    className="bg-transparent w-full py-2.5 md:py-3.5 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
+                  />
+                </div>
+
+                <div className="px-2 pb-2 md:pb-0 md:pr-2">
+                  <button type="submit" className="w-full md:w-auto px-6 py-2.5 bg-neutral-900 text-white text-sm font-bold rounded-full hover:bg-black transition-colors shadow-sm">
+                    {t('home.search.btn')}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
         {/* Page Header */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 sm:mb-16 gap-8 sm:gap-12 border-b border-neutral-100 pb-10 sm:pb-16">
           <div className="space-y-6 max-w-3xl">
             <div className="flex items-center gap-2 text-neutral-400 font-bold text-xs uppercase tracking-widest mb-4">
               <Shield size={14} /> {t('search.header.country')}
             </div>
-            <h1 className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] capitalize">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] capitalize wrap-break-word">
               {country} Universities.
             </h1>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mt-4 sm:mt-6">
@@ -155,8 +213,8 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
           </div>
 
           <div className="flex flex-col lg:items-end gap-6 sm:gap-10">
-            <div className="text-xs font-semibold text-neutral-500 border border-neutral-200 py-3 px-6 rounded-full bg-white flex items-center gap-3 shadow-sm">
-              <Activity size={16} className="text-neutral-400" /> {t('search.header.query')} <span className="text-neutral-900 font-bold">{query || t('search.header.all')}</span>
+            <div className="text-xs font-semibold text-neutral-500 border border-neutral-200 py-3 px-4 sm:px-6 rounded-full bg-white flex items-center gap-3 shadow-sm max-w-full min-w-0">
+              <Activity size={16} className="text-neutral-400 shrink-0" /> {t('search.header.query')} <span className="text-neutral-900 font-bold break-all">{query || t('search.header.all')}</span>
             </div>
           </div>
         </div>
