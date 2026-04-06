@@ -43,6 +43,18 @@ interface ChatMessage {
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
+function normalizeAssistantText(content: string): string {
+  return content
+    .replace(/\r\n/g, '\n')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s*[-*]\s+/gm, '• ')
+    .replace(/\*\*/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 async function fileToDataUrl(file: File): Promise<string> {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -321,7 +333,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                           : 'ml-auto bg-black text-white border-black'
                       }`}
                     >
-                      {message.content}
+                      {message.role === 'assistant' ? normalizeAssistantText(message.content) : message.content}
                     </div>
                   ))}
                   {sending ? (
