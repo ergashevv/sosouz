@@ -11,8 +11,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
-const INDEX_START_VALUE = 1;
-const INDEX_CLOCK_START_MS = Date.UTC(2026, 0, 1, 0, 0, 0);
+const INDEX_START_VALUE = 0;
+// 2026-04-07 09:00 (Uzbekistan, UTC+5)
+const INDEX_CLOCK_START_MS = new Date('2026-04-07T09:00:00+05:00').getTime();
 
 function formatBadgeIndex(nowMs: number): string {
   const elapsedHours = Math.max(0, Math.floor((nowMs - INDEX_CLOCK_START_MS) / (1000 * 60 * 60)));
@@ -25,7 +26,7 @@ export default function Home() {
   const [query, setQuery] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('United Kingdom');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dynamicIndex, setDynamicIndex] = useState('01');
+  const [dynamicIndex, setDynamicIndex] = useState('00');
 
   const buildSearchHref = (country: string, searchQuery?: string) => {
     const params = new URLSearchParams({ country });
@@ -152,50 +153,34 @@ export default function Home() {
             transition={{ duration: 0.8 }}
             className="space-y-6 sm:space-y-8"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55 }}
-              className="mx-auto mb-8 w-fit"
-            >
+            <div className="mx-auto mb-8 w-fit">
               <div className="relative overflow-hidden border border-neutral-300 bg-white px-3 py-2.5 shadow-[0_8px_18px_rgba(0,0,0,0.05)]">
-                <motion.span
+                <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-0 top-0 h-px w-full bg-black/80"
-                  animate={{ scaleX: [0, 1, 0], opacity: [0, 1, 0] }}
-                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ transformOrigin: 'left' }}
+                  className="pointer-events-none absolute left-0 top-0 h-px w-full bg-black/80 origin-left animate-[scanline_2.6s_ease-in-out_infinite]"
                 />
-                <motion.span
+                <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute bottom-0 left-0 h-px w-full bg-black/40"
-                  animate={{ scaleX: [0, 1, 0], opacity: [0, 0.7, 0] }}
-                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: 0.35 }}
-                  style={{ transformOrigin: 'right' }}
+                  className="pointer-events-none absolute bottom-0 left-0 h-px w-full bg-black/40 origin-right animate-[scanline_2.6s_ease-in-out_infinite_0.35s]"
                 />
                 <div className="relative z-10 inline-flex items-center gap-3 sm:gap-4">
-                  <span className="inline-flex items-center gap-2 border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-600">
-                    <motion.span
-                      className="inline-block h-1.5 w-1.5 bg-black"
-                      animate={{ opacity: [0.35, 1, 0.35] }}
-                      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                    />
+                  <span
+                    className="inline-flex items-center gap-2 border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-600"
+                    suppressHydrationWarning
+                  >
+                    <span className="inline-block h-1.5 w-1.5 bg-black animate-pulse" />
                     {`Index ${dynamicIndex}`}
                   </span>
                   <span className="h-5 w-px bg-neutral-200" />
                   <span className="text-sm sm:text-base font-semibold text-neutral-800 tracking-[0.01em]">
                     {t('home.hero.badge')}
                   </span>
-                  <motion.span
-                    className="border border-neutral-300 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-700"
-                    animate={{ y: [0, -1.5, 0] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                  >
+                  <span className="border border-neutral-300 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-700 animate-[microfloat_2.2s_ease-in-out_infinite]">
                     25K+
-                  </motion.span>
+                  </span>
                 </div>
               </div>
-            </motion.div>
+            </div>
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1]">
               {t('home.hero.title')} <br />
               <span className="text-neutral-400 italic">{t('home.hero.subtitle')}</span>

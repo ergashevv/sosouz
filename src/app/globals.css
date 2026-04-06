@@ -77,3 +77,28 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-neutral-200 hover:bg-neutral-300;
 }
+
+@keyframes scanline {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+}
+
+@keyframes microfloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
