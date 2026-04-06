@@ -47,6 +47,30 @@ function deriveDomain(basicInfo: { domains?: string[]; web_pages?: string[] }): 
   }
 }
 
+function getNotFoundCopy(lang: Language): { title: string; message: string; action: string } {
+  if (lang === 'uz') {
+    return {
+      title: 'Universitet topilmadi',
+      message: 'Bizning bazamizda ushbu nomga mos universitet topilmadi',
+      action: "Qidiruvga qaytish",
+    };
+  }
+
+  if (lang === 'ru') {
+    return {
+      title: 'Университет не найден',
+      message: 'В нашей базе не найден университет с таким названием',
+      action: 'Вернуться к поиску',
+    };
+  }
+
+  return {
+    title: 'University Not Found',
+    message: 'We could not find a university matching this name in our database',
+    action: 'Return to Search',
+  };
+}
+
 async function UniversityContent({
   name,
   lang = 'en',
@@ -60,12 +84,29 @@ async function UniversityContent({
   const basicInfo = await fetchUniversityByName(decodedName, apiOrigin);
   
   if (!basicInfo) {
+    const copy = getNotFoundCopy(lang);
+    const searchHref = `/search?lang=${lang}`;
+
     return (
-      <div className="max-w-4xl mx-auto my-16 sm:my-28 lg:my-40 p-6 sm:p-10 lg:p-16 clean-card text-center relative z-10 border-border-light shadow-2xl shadow-black/5">
-         <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-4 sm:mb-6 tracking-tight">University Not Found</h2>
-         <p className="text-neutral-500 font-medium text-base sm:text-lg wrap-break-word">We couldn&apos;t find an institution matching &quot;{decodedName}&quot; in our database.</p>
-         <Link href="/search" className="btn-primary mt-12 inline-flex items-center rounded-full bg-blue-600 text-white px-8 py-3">Return to Search</Link>
-      </div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-28 relative z-10">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-neutral-200 bg-neutral-50/70 p-8 sm:p-12 lg:p-16 text-center shadow-sm">
+          <div className="mx-auto mb-6 sm:mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+            <GraduationCap size={26} />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
+            {copy.title}
+          </h2>
+          <p className="mt-4 text-base sm:text-lg text-neutral-600 font-medium leading-relaxed wrap-break-word">
+            {copy.message} <span className="text-neutral-900">&quot;{decodedName}&quot;</span>.
+          </p>
+          <Link
+            href={searchHref}
+            className="mt-10 inline-flex items-center justify-center rounded-full bg-neutral-900 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-black"
+          >
+            {copy.action}
+          </Link>
+        </div>
+      </section>
     );
   }
 

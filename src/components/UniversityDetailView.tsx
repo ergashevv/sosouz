@@ -364,7 +364,7 @@ export default function UniversityDetailView({
       : null;
   const localizedTuition = localizeStructuredValue(aiDetails?.tuition_fees, lang, 'tuition');
   const localizedDeadline = localizeStructuredValue(aiDetails?.admission_deadline, lang, 'deadline');
-  const openLabel = lang === 'uz' ? "Ochish" : lang === 'ru' ? 'Открыть' : 'Open';
+  const openLinkLabel = lang === 'uz' ? "Havolani ochish" : lang === 'ru' ? 'Открыть ссылку' : 'Open link';
   const opensToLabel = lang === 'uz' ? "Ochiladigan sahifa" : lang === 'ru' ? 'Откроется страница' : 'Opens page';
   const sourceTypeLabel = (type: 'program' | 'general') => {
     if (lang === 'uz') return type === 'program' ? "Yo'nalish sahifasi" : "Rasmiy manba";
@@ -529,14 +529,16 @@ export default function UniversityDetailView({
                      href={program.link || undefined}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className={`px-5 py-4 rounded-2xl border bg-white text-sm font-semibold shadow-sm transition-all flex items-center justify-between gap-3 ${
+                    className={`group px-5 py-4 rounded-2xl border bg-white text-sm font-semibold shadow-sm transition-all flex items-center justify-between gap-3 ${
                        program.link
-                         ? 'border-neutral-200 text-neutral-700 hover:border-blue-300 hover:shadow-md'
+                        ? 'border-neutral-200 text-neutral-700 cursor-pointer hover:border-blue-300 hover:shadow-md hover:bg-blue-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 focus-visible:ring-offset-2'
                          : 'border-neutral-100 text-neutral-400 cursor-default pointer-events-none'
                      }`}
                    >
-                     <span className="wrap-break-word">{program.name}</span>
-                     {program.link ? <ExternalLink size={15} className="shrink-0 text-neutral-400" /> : null}
+                    <span className={`wrap-break-word ${program.link ? 'text-blue-700 underline decoration-blue-300 underline-offset-4 group-hover:decoration-blue-600' : ''}`}>
+                      {program.name}
+                    </span>
+                    {program.link ? <ExternalLink size={15} className="shrink-0 text-blue-500 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /> : null}
                    </a>
                  ))}
                </div>
@@ -618,7 +620,7 @@ export default function UniversityDetailView({
                         href={item.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block rounded-2xl border border-white/15 bg-white/5 px-4 py-3 hover:bg-white/10 transition-colors"
+                        className="block rounded-2xl border border-white/15 bg-white/5 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -629,7 +631,7 @@ export default function UniversityDetailView({
                             ) : null}
                           </div>
                           <div className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white">
-                            {openLabel}
+                            {openLinkLabel}
                             <ExternalLink size={12} />
                           </div>
                         </div>
@@ -657,7 +659,7 @@ export default function UniversityDetailView({
                         href={source.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block rounded-xl border border-white/10 bg-white/5 px-3 py-3 hover:bg-white/10 transition-colors"
+                        className="block rounded-xl border border-white/10 bg-white/5 px-3 py-3 hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -676,7 +678,7 @@ export default function UniversityDetailView({
                             </div>
                           </div>
                           <div className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white">
-                            {openLabel}
+                            {openLinkLabel}
                             <ExternalLink size={12} />
                           </div>
                         </div>
