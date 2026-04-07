@@ -13,8 +13,6 @@ interface UniversityPageProps {
   searchParams: Promise<{ lang?: string }>;
 }
 
-const RESEARCH_TIMEOUT_MS = 7000;
-
 function LoadingState() {
   return (
     <section className="bg-white pt-[calc(var(--search-header-height,12rem)+1rem)] sm:pt-[calc(var(--search-header-height,12rem)+1.5rem)]">
@@ -92,16 +90,6 @@ function toSafeHost(value: string | null): string | null {
   return /^[a-zA-Z0-9.-]+(?::\d+)?$/.test(normalized) ? normalized : null;
 }
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallbackValue: T): Promise<T> {
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => resolve(fallbackValue), timeoutMs);
-    promise
-      .then((value) => resolve(value))
-      .catch(() => resolve(fallbackValue))
-      .finally(() => clearTimeout(timer));
-  });
-}
-
 async function UniversityContent({
   name,
   lang = 'en',
@@ -144,11 +132,7 @@ async function UniversityContent({
   const domain = deriveDomain(basicInfo);
   let aiDetails: Awaited<ReturnType<typeof performResearch>> = null;
   try {
-    aiDetails = await withTimeout(
-      performResearch(decodedName, basicInfo.country, domain, lang),
-      RESEARCH_TIMEOUT_MS,
-      null,
-    );
+    aiDetails = await performResearch(decodedName, basicInfo.country, domain, lang);
   } catch (error) {
     console.error("Research fetch failed:", error);
   }
