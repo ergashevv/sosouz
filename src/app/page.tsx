@@ -22,6 +22,7 @@ import { motion } from 'framer-motion';
 import { Outfit } from 'next/font/google';
 import { useLanguage } from '@/contexts/LanguageContext';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
+import TopRankingsSection from '@/components/TopRankingsSection';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 const INDEX_START_VALUE = 0;
@@ -404,6 +405,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <TopRankingsSection language={language} />
 
       {/* Trust & Categories Section */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-black/5 bg-neutral-50">
