@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:baseline": "prisma migrate resolve --applied 20260407100000_baseline",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:sync-nuu-tuition": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/sync-nuu-tuition.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -40,6 +41,7 @@
     "eslint-config-next": "16.2.2",
     "prisma": "^7.6.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

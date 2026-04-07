@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Prisma } from "@prisma/client";
 import type { Language } from "@/lib/i18n";
+import { getResearchTuitionOverride } from "@/lib/university-research-overrides";
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -22,6 +23,18 @@ function coerceLanguage(value: string | undefined): Language {
 
 function toLocalizedCacheKey(university: string, lang: Language): string {
   return `${university}::${lang}`;
+}
+
+/** Apply curated tuition text on read so stale cache rows do not show withdrawn figures. */
+function withTuitionOverride<T extends { tuition_fees?: string | null }>(
+  uni: string,
+  language: Language,
+  row: T | null,
+): T | null {
+  if (!row) return row;
+  const override = getResearchTuitionOverride(uni, language);
+  if (!override) return row;
+  return { ...row, tuition_fees: override };
 }
 
 interface ResearchSource {
@@ -370,14 +383,14 @@ export async function performResearch(
   }
 
   if (cachedDetails && isFresh(cachedDetails.last_updated) && hasMinimumDetails(cachedDetails)) {
-    return cachedDetails;
+    return withTuitionOverride(university, safeLang, cachedDetails);
   }
 
   if (!SERPER_API_KEY || !GEMINI_API_KEY) {
     if (cachedDetails && hasMinimumDetails(cachedDetails)) {
-      return cachedDetails;
+      return withTuitionOverride(university, safeLang, cachedDetails);
     }
-    if (cachedDetails) return cachedDetails;
+    if (cachedDetails) return withTuitionOverride(university, safeLang, cachedDetails);
     console.error("Missing SERPER_API_KEY or GEMINI_API_KEY.");
     return null;
   }
@@ -386,13 +399,13 @@ export async function performResearch(
     !cachedDetails || !hasMinimumDetails(cachedDetails) || !isFresh(cachedDetails.last_updated);
 
   if (!needsRemoteFetch) {
-    return cachedDetails;
+    return withTuitionOverride(university, safeLang, cachedDetails);
   }
 
   if (cachedDetails) {
     const claimed = await tryClaimAiRefresh(cacheKey);
     if (!claimed) {
-      return cachedDetails;
+      return withTuitionOverride(university, safeLang, cachedDetails);
     }
   }
 
@@ -459,12 +472,17 @@ ${snippetBlock || "No external snippets available."}`;
     const text = await generateWithGemini(prompt);
     const parsed = JSON.parse(extractJsonObject(text));
     const structuredData = normalizeResearchOutput(parsed, university, domain);
+    const tuitionForStorage =
+      getResearchTuitionOverride(university, safeLang) ?? structuredData.annual_tuition_usd;
 
     try {
-      return await prisma.universityDetails.upsert({
+      return withTuitionOverride(
+        university,
+        safeLang,
+        await prisma.universityDetails.upsert({
         where: { university_name: cacheKey },
         update: {
-          tuition_fees: structuredData.annual_tuition_usd,
+          tuition_fees: tuitionForStorage,
           scholarships: structuredData.available_scholarships,
           programs: structuredData.programs as unknown as Prisma.InputJsonValue,
           admission_requirements: structuredData.admission_requirements,
@@ -480,7 +498,7 @@ ${snippetBlock || "No external snippets available."}`;
         },
         create: {
           university_name: cacheKey,
-          tuition_fees: structuredData.annual_tuition_usd,
+          tuition_fees: tuitionForStorage,
           scholarships: structuredData.available_scholarships,
           programs: structuredData.programs as unknown as Prisma.InputJsonValue,
           admission_requirements: structuredData.admission_requirements,
@@ -494,10 +512,18 @@ ${snippetBlock || "No external snippets available."}`;
           domain: domain || null,
           country: country || null,
         },
-      });
+      }),
+      );
     } catch (error) {
       if (isMissingColumnError(error)) {
-        return await upsertLegacyResearch(cacheKey, country, domain, structuredData);
+        return withTuitionOverride(
+          university,
+          safeLang,
+          await upsertLegacyResearch(cacheKey, country, domain, {
+            ...structuredData,
+            annual_tuition_usd: tuitionForStorage,
+          }),
+        );
       }
       throw error;
     }
@@ -527,11 +553,11 @@ ${snippetBlock || "No external snippets available."}`;
       }
       try {
         const again = await findCachedDetails(cacheKey);
-        if (again) return again;
+        if (again) return withTuitionOverride(university, safeLang, again);
       } catch {
         /* ignore */
       }
-      return cachedDetails;
+      return withTuitionOverride(university, safeLang, cachedDetails);
     }
     return null;
   }

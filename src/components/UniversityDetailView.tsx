@@ -352,6 +352,11 @@ export default function UniversityDetailView({
       : null;
   const localizedTuition = localizeStructuredValue(aiDetails?.tuition_fees, lang, 'tuition');
   const localizedDeadline = localizeStructuredValue(aiDetails?.admission_deadline, lang, 'deadline');
+  const tuitionDisplay = localizedTuition || t('uni.not_specified', lang);
+  const tuitionBodyClass =
+    tuitionDisplay.length > 90
+      ? 'text-base sm:text-lg font-bold text-neutral-900 tracking-tight leading-relaxed wrap-break-word'
+      : 'text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight leading-snug wrap-break-word max-w-[26ch]';
   const openLinkLabel = lang === 'uz' ? "Havolani ochish" : lang === 'ru' ? 'Открыть ссылку' : 'Open link';
   const opensToLabel = lang === 'uz' ? "Ochiladigan sahifa" : lang === 'ru' ? 'Откроется страница' : 'Opens page';
   const officialWebsiteTitle =
@@ -526,8 +531,8 @@ export default function UniversityDetailView({
                 </div>
                  <div className="flex flex-col gap-2 relative z-10">
                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('uni.tuition', lang)}</span>
-                  <p className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight leading-snug wrap-break-word max-w-[26ch]">
-                     {localizedTuition || t('uni.not_specified', lang)}
+                  <p className={tuitionBodyClass}>
+                     {tuitionDisplay}
                    </p>
                 </div>
              </div>
