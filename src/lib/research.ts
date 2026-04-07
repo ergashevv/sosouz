@@ -303,33 +303,35 @@ async function tryClaimAiRefresh(cacheKey: string): Promise<boolean> {
   }
 }
 
+/** Use `findFirst` (not `findUnique`) so lookups by name work even if the generated client’s unique constraints are out of sync with `schema.prisma`. */
 async function findCachedDetails(cacheKey: string) {
+  const fullSelect = {
+    id: true,
+    university_name: true,
+    domain: true,
+    country: true,
+    tuition_fees: true,
+    scholarships: true,
+    admission_requirements: true,
+    admission_deadline: true,
+    detailed_overview: true,
+    last_updated: true,
+    programs: true,
+    source_links: true,
+    data_confidence: true,
+    refresh_status: true,
+    next_refresh_at: true,
+    last_ai_refresh_attempt_at: true,
+  };
+
   try {
-    return await prisma.universityDetails.findUnique({
+    return await prisma.universityDetails.findFirst({
       where: { university_name: cacheKey },
-      select: {
-        id: true,
-        university_name: true,
-        domain: true,
-        country: true,
-        tuition_fees: true,
-        scholarships: true,
-        admission_requirements: true,
-        admission_deadline: true,
-        detailed_overview: true,
-        last_updated: true,
-        programs: true,
-        source_links: true,
-        data_confidence: true,
-        refresh_status: true,
-        next_refresh_at: true,
-        last_ai_refresh_attempt_at: true,
-        youtube_channel_id: true,
-      },
+      select: fullSelect,
     });
   } catch (error) {
     if (isMissingColumnError(error)) {
-      return await prisma.universityDetails.findUnique({
+      return await prisma.universityDetails.findFirst({
         where: { university_name: cacheKey },
         select: {
           id: true,

@@ -76,14 +76,14 @@ function heroTrustMeta(
   if (s === 'fresh') {
     return {
       label: t('uni.hero_trust_verified', lang),
-      textClass: 'text-blue-600',
-      iconClass: 'text-blue-500',
+      textClass: 'text-neutral-800',
+      iconClass: 'text-neutral-600',
     };
   }
   return {
     label: t('uni.hero_trust_general', lang),
     textClass: 'text-neutral-600',
-    iconClass: 'text-blue-500',
+    iconClass: 'text-neutral-500',
   };
 }
 
@@ -505,7 +505,7 @@ export default function UniversityDetailView({
   return (
     <div className="pb-24 sm:pb-40 lg:pb-64 relative z-10 bg-white">
       {/* Hero Section */}
-      <div className="relative pt-[calc(var(--search-header-height,12rem)+1rem)] sm:pt-[calc(var(--search-header-height,12rem)+1.5rem)] lg:pt-[calc(var(--search-header-height,12rem)+2rem)] pb-14 sm:pb-24 lg:pb-32 border-b border-black bg-neutral-50 overflow-hidden">
+      <div className="relative pt-[calc(var(--search-header-height,12rem)+1rem)] sm:pt-[calc(var(--search-header-height,12rem)+1.5rem)] lg:pt-[calc(var(--search-header-height,12rem)+2rem)] pb-14 sm:pb-24 lg:pb-32 border-b border-neutral-100 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
            <Link href="/search" className="inline-flex items-center gap-2 mb-8 sm:mb-12 lg:mb-20 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-neutral-200 bg-white text-xs sm:text-sm font-bold shadow-sm hover:shadow-md hover:bg-neutral-50 transition-all">
               <ArrowLeft size={16} /> {t('uni.back', lang)}
@@ -525,7 +525,9 @@ export default function UniversityDetailView({
               </motion.div>
               <div className="space-y-4 sm:space-y-6 flex-1 min-w-0">
                 <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-4 flex-wrap">
-                   <div className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide">{t('uni.profile', lang)}</div>
+                   <div className="inline-flex items-center rounded-full border border-neutral-300 bg-neutral-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-600">
+                     {t('uni.profile', lang)}
+                   </div>
                    <div
                      className={`text-xs font-semibold flex items-center gap-2 ${heroTrust.textClass}`}
                    >
@@ -533,7 +535,7 @@ export default function UniversityDetailView({
                       <span className="text-left">{heroTrust.label}</span>
                    </div>
                 </div>
-                <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-neutral-900 tracking-tight leading-[1.15] max-w-4xl wrap-break-word">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-neutral-900 tracking-tight leading-[1.15] max-w-4xl wrap-break-word">
                    {basicInfo.name}
                 </h1>
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-6 mt-4 sm:mt-8">
@@ -547,7 +549,7 @@ export default function UniversityDetailView({
                           href={websiteFallback}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="truncate text-neutral-700 hover:text-blue-700 transition-colors"
+                          className="truncate text-neutral-800 hover:text-black transition-colors"
                         >
                           {domain}
                         </a>
@@ -564,13 +566,13 @@ export default function UniversityDetailView({
                     href={websiteFallback}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center lg:justify-start gap-2 mt-2 text-sm sm:text-base font-semibold text-blue-700 hover:text-blue-800 transition-colors"
+                    className="inline-flex items-center justify-center lg:justify-start gap-2 mt-2 text-sm sm:text-base font-semibold text-neutral-900 hover:text-black transition-colors"
                   >
                     <span className="wrap-break-word">{heroOfficialNotice}</span>
                     <ExternalLink size={15} className="shrink-0" />
                   </a>
                 ) : (
-                  <p className="mt-2 text-sm sm:text-base font-semibold text-blue-700">{heroOfficialNotice}</p>
+                  <p className="mt-2 text-sm sm:text-base font-semibold text-neutral-900">{heroOfficialNotice}</p>
                 )}
               </div>
            </div>
@@ -582,13 +584,13 @@ export default function UniversityDetailView({
         <div className="lg:col-span-2 space-y-12 sm:space-y-20 lg:space-y-32">
           <section className="space-y-6 sm:space-y-8">
              <div className="flex items-center gap-4 border-b border-neutral-100 pb-6">
-                <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-neutral-50 text-neutral-700">
                    <Search size={20} />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.summary', lang)}</h2>
+                <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight">{t('uni.summary', lang)}</h2>
              </div>
-             <div className="p-5 sm:p-8 rounded-2xl border border-neutral-200 bg-white shadow-sm group">
-                <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-4">{t('uni.overview', lang)}</div>
+             <div className="group rounded-2xl border border-neutral-200 bg-white p-5 sm:p-8 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+                <div className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-700">{t('uni.overview', lang)}</div>
                 {overviewBody ? (
                   <p className="text-base sm:text-xl text-neutral-700 leading-relaxed font-medium transition-colors">
                     {overviewBody}
@@ -609,7 +611,7 @@ export default function UniversityDetailView({
                       role="presentation"
                     >
                       <div
-                        className="h-full rounded-full bg-blue-600 transition-[width] duration-500"
+                        className="h-full rounded-full bg-neutral-900 transition-[width] duration-500"
                         style={{ width: `${confidencePct}%` }}
                       />
                     </div>
@@ -638,9 +640,9 @@ export default function UniversityDetailView({
           </section>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
-             <div className="p-5 sm:p-7 rounded-2xl border border-neutral-200 space-y-4 bg-white relative overflow-hidden shadow-sm hover:border-blue-200 hover:shadow-md transition-all min-h-[210px]">
-                <div className="absolute -top-4 -right-4 p-8 opacity-5">
-                   <DollarSign size={80} className="text-blue-600" />
+             <div className="p-5 sm:p-7 rounded-2xl border border-neutral-200 space-y-4 bg-white relative overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:border-neutral-300 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-all min-h-[210px]">
+                <div className="absolute -top-4 -right-4 p-8 opacity-[0.06]">
+                   <DollarSign size={80} className="text-neutral-700" />
                 </div>
                  <div className="flex flex-col gap-2 relative z-10">
                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('uni.tuition', lang)}</span>
@@ -650,9 +652,9 @@ export default function UniversityDetailView({
                 </div>
              </div>
 
-             <div className="p-5 sm:p-7 rounded-2xl border border-neutral-200 space-y-4 bg-white relative overflow-hidden shadow-sm hover:border-blue-200 hover:shadow-md transition-all min-h-[210px]">
-                <div className="absolute -top-4 -right-4 p-8 opacity-5">
-                   <ClipboardList size={80} className="text-blue-600" />
+             <div className="p-5 sm:p-7 rounded-2xl border border-neutral-200 space-y-4 bg-white relative overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:border-neutral-300 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition-all min-h-[210px]">
+                <div className="absolute -top-4 -right-4 p-8 opacity-[0.06]">
+                   <ClipboardList size={80} className="text-neutral-700" />
                 </div>
                 <div className="flex flex-col gap-2 relative z-10">
                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{t('uni.deadline', lang)}</span>
@@ -666,11 +668,11 @@ export default function UniversityDetailView({
           {youtubeVideos && youtubeVideos.length > 0 ? (
             <section className="space-y-6 sm:space-y-8" aria-label={t('uni.youtube.title', lang)}>
               <div className="flex items-center gap-4 border-b border-neutral-100 pb-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-neutral-50 text-red-600">
                   <Play size={20} aria-hidden />
                 </div>
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900">
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-neutral-900">
                     {t('uni.youtube.title', lang)}
                   </h2>
                   <p className="mt-1 text-sm text-neutral-500">{t('uni.youtube.subtitle', lang)}</p>
@@ -709,10 +711,10 @@ export default function UniversityDetailView({
 
           <section className="space-y-8 sm:space-y-12">
              <div className="flex items-center gap-4 border-b border-neutral-100 pb-6 sm:pb-8">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-neutral-50 text-neutral-700">
                    <BookOpen size={20} />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.programs', lang)}</h2>
+                <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight">{t('uni.programs', lang)}</h2>
              </div>
              {normalizedPrograms.length > 0 ? (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -722,16 +724,16 @@ export default function UniversityDetailView({
                      href={program.link || undefined}
                      target="_blank"
                      rel="noopener noreferrer"
-                    className={`group px-5 py-4 rounded-2xl border bg-white text-sm font-semibold shadow-sm transition-all flex items-center justify-between gap-3 ${
+                    className={`group px-5 py-4 rounded-2xl border bg-white text-sm font-semibold shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all flex items-center justify-between gap-3 ${
                        program.link
-                        ? 'border-neutral-200 text-neutral-700 cursor-pointer hover:border-blue-300 hover:shadow-md hover:bg-blue-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 focus-visible:ring-offset-2'
+                        ? 'border-neutral-200 text-neutral-800 cursor-pointer hover:border-neutral-300 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 focus-visible:ring-offset-2'
                          : 'border-neutral-100 text-neutral-400 cursor-default pointer-events-none'
                      }`}
                    >
-                    <span className={`wrap-break-word ${program.link ? 'text-blue-700 underline decoration-blue-300 underline-offset-4 group-hover:decoration-blue-600' : ''}`}>
+                    <span className={`wrap-break-word ${program.link ? 'text-neutral-900 underline decoration-neutral-300 underline-offset-4 group-hover:decoration-neutral-500' : ''}`}>
                       {program.name}
                     </span>
-                    {program.link ? <ExternalLink size={15} className="shrink-0 text-blue-500 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /> : null}
+                    {program.link ? <ExternalLink size={15} className="shrink-0 text-neutral-500 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /> : null}
                    </a>
                  ))}
                </div>
@@ -744,17 +746,17 @@ export default function UniversityDetailView({
 
           <section className="space-y-8 sm:space-y-12">
              <div className="flex items-center gap-4 border-b border-neutral-100 pb-6 sm:pb-8">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-neutral-50 text-neutral-700">
                    <Award size={20} />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">{t('uni.scholarships', lang)}</h2>
+                <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight">{t('uni.scholarships', lang)}</h2>
              </div>
              <div className="grid grid-cols-1 gap-6">
                   {(aiDetails?.scholarships && aiDetails.scholarships.length > 0) ? (
                     aiDetails.scholarships.map((s, i) => (
-                      <div key={i} className="p-5 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-8 rounded-3xl border border-neutral-100 bg-white shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
+                      <div key={i} className="p-5 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-8 rounded-2xl border border-neutral-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] hover:border-neutral-300 transition-all">
                          <div className="space-y-3">
-                            <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+                            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-600">
                               {t('uni.scholarship_tag', lang)}
                             </div>
                             <h4 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight wrap-break-word">{s.name}</h4>
@@ -784,25 +786,24 @@ export default function UniversityDetailView({
           </section>
         </div>
 
-        {/* Action Interface */}
-        <div className="space-y-8 sm:space-y-12">
-          <div className="p-6 sm:p-9 lg:p-10 rounded-3xl sm:rounded-[38px] bg-neutral-900 text-white space-y-8 sm:space-y-10 relative overflow-hidden shadow-[0_24px_55px_-30px_rgba(15,23,42,0.85)]">
-            <div className="absolute -top-20 -right-16 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" />
+        {/* Sidebar — matches home `home-intent-shell` light cards */}
+        <div className="space-y-8 sm:space-y-12 lg:pt-2">
+          <div className="home-intent-shell relative space-y-8 sm:space-y-10">
             <div className="relative z-10 space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white/90">
-                <Globe size={12} />
+              <div className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-neutral-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-600">
+                <Globe size={12} className="text-neutral-500" aria-hidden />
                 {t('uni.website', lang)}
               </div>
-              <h3 className="text-2xl sm:text-3xl lg:text-[2rem] font-extrabold leading-tight tracking-tight">{t('uni.visit', lang)}</h3>
-              <div className="rounded-2xl bg-white/12 px-5 py-4 sm:px-6 sm:py-5 space-y-2">
-                <p className="text-lg sm:text-xl font-extrabold leading-tight text-white">
-                  {officialWebsiteTitle}
-                </p>
-                <p className="text-sm sm:text-base font-medium leading-7 text-white/75 max-w-[46ch]">
+              <h3 className="text-2xl sm:text-3xl lg:text-[2rem] font-black leading-tight tracking-tight text-neutral-900">
+                {t('uni.visit', lang)}
+              </h3>
+              <div className="space-y-2 rounded-2xl border border-neutral-200 bg-neutral-50/70 px-5 py-4 sm:px-6 sm:py-5">
+                <p className="text-lg sm:text-xl font-black leading-tight text-neutral-900">{officialWebsiteTitle}</p>
+                <p className="text-sm sm:text-base font-medium leading-7 text-neutral-600 max-w-[46ch]">
                   {officialWebsiteDescription}
                 </p>
               </div>
-              <p className="text-xs font-semibold text-white/55">{domain}</p>
+              <p className="text-xs font-semibold text-neutral-500">{domain}</p>
             </div>
 
             <div className="relative z-10 space-y-3 sm:space-y-4">
@@ -813,16 +814,16 @@ export default function UniversityDetailView({
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group block w-full rounded-2xl bg-white/10 px-5 py-4 sm:py-5 transition-colors hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+                    className="group block w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 sm:py-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all hover:border-neutral-300 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 focus-visible:ring-offset-2"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                       <div className="min-w-0">
-                        <p className="text-sm sm:text-base font-semibold text-white">
+                        <p className="text-sm sm:text-base font-semibold text-neutral-900">
                           {i === 0 ? t('uni.visit', lang) : `${t('uni.visit', lang)} ${i + 1}`}
                         </p>
-                        <p className="mt-1 text-xs text-white/60 truncate">{toShortLink(url)}</p>
+                        <p className="mt-1 text-xs text-neutral-500 truncate">{toShortLink(url)}</p>
                       </div>
-                      <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-white/90 whitespace-nowrap">
+                      <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-600 whitespace-nowrap">
                         {openLinkLabel}
                         <ExternalLink size={13} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                       </div>
@@ -830,14 +831,14 @@ export default function UniversityDetailView({
                   </a>
                 ))
               ) : (
-                <p className="rounded-2xl bg-white/10 px-5 py-4 text-xs text-white/60">
+                <p className="rounded-2xl border border-neutral-200 bg-neutral-50/80 px-5 py-4 text-xs text-neutral-500">
                   {t('uni.not_specified', lang)}
                 </p>
               )}
             </div>
 
             <div className="relative z-10 space-y-4 sm:space-y-5 pt-2">
-              <div className="text-[10px] uppercase tracking-widest font-bold text-white/55">
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-500">
                 {t('uni.important_links', lang)}
               </div>
               <div className="space-y-2.5 sm:space-y-3">
@@ -848,27 +849,27 @@ export default function UniversityDetailView({
                       href={item.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block rounded-2xl bg-white/8 px-4 py-3.5 hover:bg-white/14 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+                      className="block cursor-pointer rounded-2xl border border-neutral-200 bg-neutral-50/80 px-4 py-3.5 shadow-[0_4px_16px_rgba(0,0,0,0.03)] transition-all hover:border-neutral-300 hover:bg-white hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 focus-visible:ring-offset-2"
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-white wrap-break-word">{item.title}</p>
-                          <p className="mt-1.5 text-xs text-white/65 leading-relaxed">{item.description}</p>
+                          <p className="text-sm font-semibold text-neutral-900 wrap-break-word">{item.title}</p>
+                          <p className="mt-1.5 text-xs text-neutral-600 leading-relaxed">{item.description}</p>
                           {item.host ? (
-                            <p className="mt-2 text-[11px] text-white/45">{item.host}</p>
+                            <p className="mt-2 text-[11px] text-neutral-500">{item.host}</p>
                           ) : null}
                         </div>
-                        <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white/85 whitespace-nowrap">
+                        <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-neutral-600 whitespace-nowrap">
                           {openLinkLabel}
                           <ExternalLink size={12} />
                         </div>
                       </div>
                     </a>
                   ) : (
-                    <div key={item.id} className="rounded-2xl bg-white/6 px-4 py-3.5 opacity-70">
-                      <p className="text-sm font-semibold text-white wrap-break-word">{item.title}</p>
-                      <p className="mt-1.5 text-xs text-white/60 leading-relaxed">{item.description}</p>
-                      <p className="mt-2 text-[11px] text-white/45">{t('uni.not_specified', lang)}</p>
+                    <div key={item.id} className="rounded-2xl border border-neutral-100 bg-neutral-50/50 px-4 py-3.5 opacity-80">
+                      <p className="text-sm font-semibold text-neutral-800 wrap-break-word">{item.title}</p>
+                      <p className="mt-1.5 text-xs text-neutral-500 leading-relaxed">{item.description}</p>
+                      <p className="mt-2 text-[11px] text-neutral-400">{t('uni.not_specified', lang)}</p>
                     </div>
                   ),
                 )}
@@ -876,7 +877,7 @@ export default function UniversityDetailView({
             </div>
 
             <div className="relative z-10 space-y-4 sm:space-y-5 pt-2">
-              <div className="text-[10px] uppercase tracking-widest font-bold text-white/55">{t('uni.sources', lang)}</div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-500">{t('uni.sources', lang)}</div>
               {normalizedSources.length > 0 ? (
                 <div className="space-y-2.5 sm:space-y-3">
                   {normalizedSources.map((source, i) => (
@@ -885,25 +886,23 @@ export default function UniversityDetailView({
                       href={source.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block rounded-2xl bg-white/7 px-4 py-3.5 hover:bg-white/13 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+                      className="block cursor-pointer rounded-2xl border border-neutral-200 bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all hover:border-neutral-300 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 focus-visible:ring-offset-2"
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                         <div className="min-w-0">
-                          <div className="text-[10px] uppercase tracking-wide text-white/45 mb-1">{opensToLabel}</div>
-                          <div className="text-xs text-white/90 font-semibold leading-snug wrap-break-word">
-                            {source.title}
-                          </div>
+                          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">{opensToLabel}</div>
+                          <div className="text-xs font-semibold leading-snug text-neutral-900 wrap-break-word">{source.title}</div>
                           {source.snippet ? (
-                            <p className="mt-2 text-[11px] text-white/60 leading-relaxed wrap-break-word">
-                              {source.snippet}
-                            </p>
+                            <p className="mt-2 text-[11px] text-neutral-600 leading-relaxed wrap-break-word">{source.snippet}</p>
                           ) : null}
-                          <div className="mt-2 flex items-center gap-2 text-[10px] text-white/45">
-                            <span className="px-2 py-0.5 rounded-full bg-white/10">{sourceTypeLabel(source.linkType)}</span>
+                          <div className="mt-2 flex items-center gap-2 text-[10px] text-neutral-500">
+                            <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-neutral-600">
+                              {sourceTypeLabel(source.linkType)}
+                            </span>
                             <span>{source.host}</span>
                           </div>
                         </div>
-                        <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white/85 whitespace-nowrap">
+                        <div className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-neutral-600 whitespace-nowrap">
                           {openLinkLabel}
                           <ExternalLink size={12} />
                         </div>
@@ -912,15 +911,13 @@ export default function UniversityDetailView({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-white/60">{t('uni.not_specified', lang)}</p>
+                <p className="text-xs text-neutral-500">{t('uni.not_specified', lang)}</p>
               )}
             </div>
 
-            <div className="relative z-10 flex gap-3 items-start rounded-2xl bg-white/7 px-4 py-3.5">
-              <Info size={17} className="text-white/65 shrink-0 mt-0.5" aria-hidden />
-              <p className="text-[11px] text-white/62 leading-relaxed">
-                {t('uni.disclaimer_official', lang)}
-              </p>
+            <div className="relative z-10 flex items-start gap-3 rounded-2xl border border-neutral-200 bg-neutral-50/70 px-4 py-3.5">
+              <Info size={17} className="mt-0.5 shrink-0 text-neutral-500" aria-hidden />
+              <p className="text-[11px] leading-relaxed text-neutral-600">{t('uni.disclaimer_official', lang)}</p>
             </div>
           </div>
         </div>

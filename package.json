@@ -9,6 +9,7 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
+    "db:sync-migration-checksums": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/sync-migration-checksums.ts",
     "db:baseline": "prisma migrate resolve --applied 20260407100000_baseline",
     "db:push": "prisma db push",
     "db:sync-nuu-tuition": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/sync-nuu-tuition.ts"

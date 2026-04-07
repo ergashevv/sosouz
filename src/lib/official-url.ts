@@ -55,15 +55,16 @@ export function collectOfficialBases(args: {
   return Array.from(out);
 }
 
-export function urlMatchesOfficialBases(url: string, bases: string[]): boolean {
-  if (!bases.length) return false;
+export function urlMatchesOfficialBases(url: string, bases: string[] | null | undefined): boolean {
+  const list = bases ?? [];
+  if (!list.length) return false;
   const host = tryParseHostname(url);
   if (!host) return false;
-  return bases.some((base) => hostUnderBase(host, base));
+  return list.some((base) => hostUnderBase(host, base));
 }
 
 /** First usable origin from `web_pages`, else `https://{firstBase}/`. */
-export function officialHomeUrl(bases: string[], web_pages?: string[] | null): string {
+export function officialHomeUrl(bases: string[] | null | undefined, web_pages?: string[] | null): string {
   if (Array.isArray(web_pages)) {
     for (const p of web_pages) {
       try {
@@ -74,7 +75,8 @@ export function officialHomeUrl(bases: string[], web_pages?: string[] | null): s
       }
     }
   }
-  const b = bases[0];
+  const list = bases ?? [];
+  const b = list[0];
   if (b) return `https://${b}/`;
   return "";
 }
@@ -82,9 +84,10 @@ export function officialHomeUrl(bases: string[], web_pages?: string[] | null): s
 /** Lenient: if `bases` is empty, keep any valid absolute URL (e.g. legacy rows / odd API data). */
 export function clampHttpUrlToOfficial(
   raw: string | null | undefined,
-  bases: string[],
+  bases: string[] | null | undefined,
   fallbackHome: string,
 ): string {
+  const list = bases ?? [];
   const s = typeof raw === "string" ? raw.trim() : "";
   if (!s) return fallbackHome;
   const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
@@ -93,16 +96,17 @@ export function clampHttpUrlToOfficial(
   } catch {
     return fallbackHome;
   }
-  if (bases.length === 0) return withProto;
-  return urlMatchesOfficialBases(withProto, bases) ? withProto : fallbackHome;
+  if (list.length === 0) return withProto;
+  return urlMatchesOfficialBases(withProto, list) ? withProto : fallbackHome;
 }
 
 /** Strict: used when saving research — unknown host without bases list becomes homepage only. */
 export function clampResearchUrlToOfficial(
   raw: string | null | undefined,
-  bases: string[],
+  bases: string[] | null | undefined,
   fallbackHome: string,
 ): string {
+  const list = bases ?? [];
   const s = typeof raw === "string" ? raw.trim() : "";
   if (!s) return fallbackHome;
   const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
@@ -111,6 +115,6 @@ export function clampResearchUrlToOfficial(
   } catch {
     return fallbackHome;
   }
-  if (bases.length === 0) return fallbackHome;
-  return urlMatchesOfficialBases(withProto, bases) ? withProto : fallbackHome;
+  if (list.length === 0) return fallbackHome;
+  return urlMatchesOfficialBases(withProto, list) ? withProto : fallbackHome;
 }
