@@ -96,36 +96,17 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { language, setLanguage, t } = useLanguage();
-  const [conversations, setConversations] = useState<ConversationItem[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [country, setCountry] = useState('United Kingdom');
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
-  const [screenshotName, setScreenshotName] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
-  const [isDragActive, setIsDragActive] = useState(false);
-  const dragDepthRef = useRef(0);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
-
-  useEffect(() => {
-    const raw = searchParams.get('advisorContext');
-    if (!raw) return;
+/** Supports single- or double-encoded query values (e.g. %257B…). */
+function parseAdvisorContextParam(raw: string | null): ClientAdvisorContextPayload | null {
+  if (!raw?.trim()) return null;
+  let candidate = raw.trim();
+  for (let attempt = 0; attempt < 8; attempt++) {
     try {
-      const parsed = JSON.parse(decodeURIComponent(raw)) as unknown;
-      if (!parsed || typeof parsed !== 'object') return;
-      const o = parsed as Record<string, unknown>;
+      const data = JSON.parse(candidate) as unknown;
+      if (!data || typeof data !== 'object') return null;
+      const o = data as Record<string, unknown>;
       const name = typeof o.name === 'string' ? o.name.trim() : '';
-      if (!name) return;
+      if (!name) return null;
       const country = typeof o.country === 'string' ? o.country.trim() : undefined;
       const officialWebsite =
         o.officialWebsite === null
@@ -148,7 +129,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             ? o.rankingSourceUrl.trim() || null
             : undefined;
       const domain = typeof o.domain === 'string' ? o.domain.trim() : undefined;
-      setAdvisorContext({
+      return {
         name,
         country,
         officialWebsite: officialWebsite ?? undefined,
@@ -156,12 +137,40 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
         worldRank,
         rankingSourceUrl: rankingSourceUrl ?? undefined,
         domain,
-      });
-      if (country) setCountry(country);
+      };
     } catch {
-      /* ignore malformed advisorContext */
+      try {
+        const decoded = decodeURIComponent(candidate.replace(/\+/g, ' '));
+        if (decoded === candidate) return null;
+        candidate = decoded;
+      } catch {
+        return null;
+      }
     }
-  }, [searchParams]);
+  }
+  return null;
+}
+
+export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { language, setLanguage, t } = useLanguage();
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [country, setCountry] = useState('United Kingdom');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
+  const [screenshotName, setScreenshotName] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const dragDepthRef = useRef(0);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -230,16 +239,44 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const initialize = async () => {
       setLoading(true);
       setError(null);
       try {
+        const deepRaw = searchParams.get('advisorContext');
+        const deepParsed = parseAdvisorContextParam(deepRaw);
         const list = await refreshConversations();
+        if (cancelled) return;
+
+        if (deepParsed) {
+          setAdvisorContext(deepParsed);
+          if (deepParsed.country) setCountry(deepParsed.country);
+
+          const create = await authFetch('/api/chat/conversations', { method: 'POST' });
+          if (!create.ok) throw new Error('Failed to create a conversation.');
+          const createdPayload = (await create.json()) as { conversation: ConversationItem };
+          const createdConversation = createdPayload.conversation;
+          if (cancelled) return;
+
+          setConversations((prev) => {
+            const rest = prev.filter((c) => c.id !== createdConversation.id);
+            return [createdConversation, ...rest];
+          });
+          setActiveConversationId(createdConversation.id);
+          setMessages([]);
+
+          router.replace('/chat', { scroll: false });
+          return;
+        }
+
         if (list.length === 0) {
           const create = await authFetch('/api/chat/conversations', { method: 'POST' });
           if (!create.ok) throw new Error('Failed to create a conversation.');
           const createdPayload = (await create.json()) as { conversation: ConversationItem };
           const createdConversation = createdPayload.conversation;
+          if (cancelled) return;
           setConversations([createdConversation]);
           setActiveConversationId(createdConversation.id);
           setMessages([]);
@@ -248,17 +285,23 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
           await loadMessages(list[0].id);
         }
       } catch (initError: unknown) {
-        setError(initError instanceof Error ? initError.message : 'Failed to initialize chat.');
+        if (!cancelled) {
+          setError(initError instanceof Error ? initError.message : 'Failed to initialize chat.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     void initialize();
-  }, [loadMessages, refreshConversations]);
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, loadMessages, refreshConversations, router]);
 
   const startNewChat = async () => {
     setError(null);
+    setAdvisorContext(null);
     try {
       const response = await authFetch('/api/chat/conversations', { method: 'POST' });
       if (!response.ok) throw new Error('Could not create a new chat.');
@@ -267,6 +310,9 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
       setConversations((prev) => [createdConversation, ...prev]);
       setActiveConversationId(createdConversation.id);
       setMessages([]);
+      if (searchParams.get('advisorContext')) {
+        router.replace('/chat', { scroll: false });
+      }
     } catch (createError: unknown) {
       setError(createError instanceof Error ? createError.message : 'New chat failed.');
     }
