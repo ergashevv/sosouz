@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft, Target, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import ContactMailtoLink from '@/components/ContactMailtoLink';
 
 export default function AboutPage() {
   const { t } = useLanguage();
@@ -62,6 +63,7 @@ export default function AboutPage() {
           <div className="flex items-center gap-6 sm:gap-8 flex-wrap justify-center">
             <Link href="/students" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.students')}</Link>
             <Link href="/terms" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.terms')}</Link>
+            <ContactMailtoLink className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors" />
           </div>
         </div>
       </footer>

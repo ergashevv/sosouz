@@ -23,6 +23,7 @@ import { Outfit } from 'next/font/google';
 import { useLanguage } from '@/contexts/LanguageContext';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import TopRankingsSection from '@/components/TopRankingsSection';
+import ContactMailtoLink from '@/components/ContactMailtoLink';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 const INDEX_START_VALUE = 0;
@@ -461,6 +462,7 @@ export default function Home() {
           <div className="flex flex-1 justify-center items-center gap-6 sm:gap-8 flex-wrap">
             <Link href="/about" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">{t('nav.about')}</Link>
             <Link href="/terms" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">{t('nav.terms')}</Link>
+            <ContactMailtoLink className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black" />
           </div>
           <div className="flex flex-1 justify-center md:justify-end items-center gap-2 text-black font-bold text-[10px] uppercase tracking-widest">
             {t('footer.status')}

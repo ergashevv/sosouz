@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import ContactMailtoLink from '@/components/ContactMailtoLink';
 
 export default function TermsPage() {
   return (
@@ -56,6 +57,7 @@ export default function TermsPage() {
             <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left">
                &copy; 2026 SOSO 
             </div>
+            <ContactMailtoLink className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black" />
          </div>
       </footer>
     </main>

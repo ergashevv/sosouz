@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, Search, Compass } from 'lucide-react';
 import { Outfit } from 'next/font/google';
 import { useLanguage } from '@/contexts/LanguageContext';
+import ContactMailtoLink from '@/components/ContactMailtoLink';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
@@ -85,6 +86,7 @@ export default function NotFound() {
           <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">
             {t('footer.copyright')}
           </span>
+          <ContactMailtoLink className="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] hover:text-black" />
         </div>
       </footer>
     </main>

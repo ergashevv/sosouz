@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import ContactMailtoLink from '@/components/ContactMailtoLink';
 
 export default function ForStudentsPage() {
   const { t } = useLanguage();
@@ -55,6 +56,7 @@ export default function ForStudentsPage() {
             <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left">
                {t('footer.copyright')}
             </div>
+            <ContactMailtoLink className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black" />
          </div>
       </footer>
     </main>

@@ -9,6 +9,7 @@ import { Loader2, MessageCircle, Plus, Send, Paperclip, X, Search, Menu } from '
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
+import ContactMailtoLink from '@/components/ContactMailtoLink';
 
 interface ChatWorkspaceProps {
   user: {
@@ -838,6 +839,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             <Link href="/terms" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">
               {t('nav.terms')}
             </Link>
+            <ContactMailtoLink className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black" />
           </div>
           <div className="flex flex-1 justify-center md:justify-end items-center gap-2 text-black font-bold text-[10px] uppercase tracking-widest">
             {t('footer.status')}

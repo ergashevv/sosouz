@@ -211,9 +211,9 @@ export const translations: InternalDict = {
     uz: "Analitika va statistika",
   },
   "cookie.analytics.body": {
-    en: "We use Google Tag Manager / Google Analytics 4 to understand how the site is used, only if you opt in. Essential cookies are always on.",
-    ru: "Мы используем Google Tag Manager / Google Analytics 4 для понимания использования сайта — только с вашего согласия. Обязательные cookies всегда включены.",
-    uz: "Saytdan qanday foydalanishni tushunish uchun Google Tag Manager / Google Analytics 4 dan rozi bo‘lsangiz foydalanamiz. Zarur cookie’lar doim yoqiladi.",
+    en: "With your permission, we collect anonymous usage statistics to improve SOSO. You can decline; only cookies required for the site to work stay on.",
+    ru: "С вашего согласия мы собираем обезличенную статистику, чтобы улучшать SOSO. Вы можете отказаться — останутся только cookies, необходимые для работы сайта.",
+    uz: "Roziligingiz bilan SOSO’ni yaxshilash uchun anonim statistikani yozib olamiz. Rad etsangiz ham bo‘ladi — faqat sayt ishlashi uchun kerak bo‘lgan cookie’lar qoladi.",
   },
   "cookie.analytics.accept": { en: "Accept analytics", ru: "Разрешить аналитику", uz: "Analitikaga rozilik" },
   "cookie.analytics.reject": { en: "Essential only", ru: "Только необходимые", uz: "Faqat zarur" },

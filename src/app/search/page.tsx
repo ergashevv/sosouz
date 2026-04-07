@@ -9,6 +9,7 @@ import Link from 'next/link';
 import SearchHeader from '@/components/SearchHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { countries } from '@/lib/countries';
+import ContactMailtoLink from '@/components/ContactMailtoLink';
 
 const PAGE_SIZE = 12;
 
@@ -233,6 +234,7 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
             <Link href="/about" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.about')}</Link>
             <Link href="/students" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.students')}</Link>
             <Link href="/terms" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">{t('nav.terms')}</Link>
+            <ContactMailtoLink className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors" />
           </div>
         </div>
       </footer>

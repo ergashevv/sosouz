@@ -1,4 +1,14 @@
 /**
+ * Public contact email (footer, terms, etc.).
+ * Override with NEXT_PUBLIC_CONTACT_EMAIL when needed.
+ */
+export function getContactEmail(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
+  if (fromEnv) return fromEnv;
+  return 'info@soso.uz';
+}
+
+/**
  * Canonical site origin for metadata, sitemap, and JSON-LD.
  * Set NEXT_PUBLIC_SITE_URL in production (e.g. https://soso.example.com).
  */
