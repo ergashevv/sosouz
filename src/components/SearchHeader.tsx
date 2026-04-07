@@ -145,7 +145,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
           isLogoStickyElevated ? 'bg-(--bg-surface) shadow-none' : 'bg-(--bg-surface)'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-[max(env(safe-area-inset-top),0px)] py-4 sm:py-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-3 pt-[max(calc(env(safe-area-inset-top)+12px),12px)] sm:pb-4 sm:pt-[max(calc(env(safe-area-inset-top)+16px),16px)]">
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between gap-3">
             <div 
@@ -177,12 +177,12 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
 
             <button
               type="button"
-              className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-none border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-black transition-colors"
+              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-none border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-black transition-colors"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
+              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
             </div>
 

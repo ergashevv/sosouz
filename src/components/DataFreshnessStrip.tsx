@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Database } from "lucide-react";
+import { Clock3 } from "lucide-react";
 import type { Language } from "@/lib/i18n";
 import { translations } from "@/lib/i18n";
 
@@ -114,56 +114,40 @@ export default function DataFreshnessStrip({
 
   return (
     <aside
-      className={`rounded-none border border-neutral-200 bg-neutral-50/90 px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2 sm:gap-2.5 text-xs text-neutral-600 ${className}`}
+      className={`rounded-none border border-neutral-200 bg-neutral-50/90 px-4 py-2.5 sm:px-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-600 ${className}`}
     >
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-x-6 sm:gap-y-1">
-        <div className="flex items-center gap-2 font-semibold text-neutral-800">
-          <Clock3 size={15} className="text-neutral-400 shrink-0" aria-hidden />
-          <span>{tr("dataFreshness.badge", language)}</span>
-        </div>
-
-        {gen ? (
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-neutral-500">{tr("dataFreshness.profileBuilt", language)}</span>
-            <time
-              dateTime={gen.toISOString()}
-              suppressHydrationWarning
-              className="font-mono tabular-nums text-neutral-900"
-            >
-              {formatAbsolute(gen, language)}
-            </time>
-            {relative ? (
-              <span suppressHydrationWarning className="text-neutral-400">
-                ({relative})
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-
-        {periodLabel ? (
-          <div className="text-neutral-500">
-            {tr("dataFreshness.snapshotPeriod", language)}:{" "}
-            <span className="font-medium text-neutral-800">{periodLabel}</span>
-          </div>
-        ) : null}
-
-        {db ? (
-          <div className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-neutral-500">
-            <Database size={13} className="text-neutral-400 shrink-0" aria-hidden />
-            <span>{tr("dataFreshness.dbCached", language)}</span>
-            <time
-              dateTime={db.toISOString()}
-              suppressHydrationWarning
-              className="font-mono tabular-nums text-neutral-700"
-            >
-              {formatAbsolute(db, language)}
-            </time>
-          </div>
-        ) : null}
+      <div className="flex items-center gap-1.5 font-semibold text-neutral-700 shrink-0">
+        <Clock3 size={13} className="text-neutral-400 shrink-0" aria-hidden />
+        <span>{tr("dataFreshness.badge", language)}</span>
       </div>
 
+      {gen ? (
+        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-neutral-500">
+          <span>{tr("dataFreshness.profileBuilt", language)}</span>
+          <time
+            dateTime={gen.toISOString()}
+            suppressHydrationWarning
+            className="tabular-nums text-neutral-800 font-medium"
+          >
+            {formatAbsolute(gen, language)}
+          </time>
+          {relative ? (
+            <span suppressHydrationWarning className="text-neutral-400">
+              ({relative})
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {periodLabel ? (
+        <div className="text-neutral-500 shrink-0">
+          {tr("dataFreshness.snapshotPeriod", language)}:{" "}
+          <span className="font-medium text-neutral-800">{periodLabel}</span>
+        </div>
+      ) : null}
+
       {yearFallbackNote ? (
-        <p className="text-[11px] leading-snug text-neutral-800 bg-white border border-neutral-200 rounded-none px-2.5 py-2">
+        <p className="w-full text-[11px] leading-snug text-neutral-700 mt-0.5">
           {tr("dataFreshness.yearFallback", language)}
         </p>
       ) : null}

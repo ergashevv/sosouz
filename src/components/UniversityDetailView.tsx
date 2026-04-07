@@ -417,8 +417,9 @@ export default function UniversityDetailView({
   lang = 'en',
   youtubeVideos = null,
 }: UniversityDetailsProps) {
-  const [heroTuitionExpanded, setHeroTuitionExpanded] = useState(false);
-  const [heroDeadlineExpanded, setHeroDeadlineExpanded] = useState(false);
+  const [summaryExpandedMobile, setSummaryExpandedMobile] = useState(false);
+  const [programsExpandedMobile, setProgramsExpandedMobile] = useState(false);
+  const [sourcesExpandedMobile, setSourcesExpandedMobile] = useState(false);
   const websiteFallback = basicInfo.web_pages?.[0] || null;
   const officialBases = collectOfficialBases({
     primaryDomain: domain,
@@ -542,183 +543,452 @@ export default function UniversityDetailView({
   const showHeroChips = programCount > 0 || hasHeroTuition || hasHeroDeadline;
   const heroTuitionLine = hasHeroTuition && localizedTuition ? clipHeroLine(localizedTuition, 130) : '';
   const heroDeadlineLine = hasHeroDeadline && localizedDeadline ? clipHeroLine(localizedDeadline, 130) : '';
-  const heroTuitionTruncated = hasHeroTuition && localizedTuition ? localizedTuition.trim().length > 130 : false;
-  const heroDeadlineTruncated = hasHeroDeadline && localizedDeadline ? localizedDeadline.trim().length > 130 : false;
-  const heroTuitionDisplay =
-    heroTuitionExpanded && localizedTuition ? localizedTuition : heroTuitionLine;
-  const heroDeadlineDisplay =
-    heroDeadlineExpanded && localizedDeadline ? localizedDeadline : heroDeadlineLine;
+  const shouldClampSummaryOnMobile = overviewBody.length > 520;
+  const maxProgramsOnMobile = 8;
+  const visiblePrograms = programsExpandedMobile
+    ? normalizedPrograms
+    : normalizedPrograms.slice(0, maxProgramsOnMobile);
+  const maxSourcesOnMobile = 3;
+  const visibleSourcesMobile = sourcesExpandedMobile
+    ? normalizedSources
+    : normalizedSources.slice(0, maxSourcesOnMobile);
 
   return (
-    <div className="relative z-10 flex min-h-0 flex-1 flex-col bg-(--bg-main) pb-24 sm:pb-40 lg:pb-64">
-      {/* Hero Section — header stack is already in document flow; avoid duplicating its height in padding-top */}
-      <div className="relative border-b border-neutral-200 bg-(--bg-surface) pt-3 pb-6 sm:pt-4 sm:pb-8 lg:pt-5 lg:pb-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-           <Link href="/search" className="edge-btn-secondary mb-4 px-4 py-2 text-[11px] sm:mb-5 sm:px-5 sm:py-2.5 sm:text-xs lg:mb-6">
-              <ArrowLeft size={16} /> {t('uni.back', lang)}
-           </Link>
-           
-          <div className="flex flex-row items-start gap-3 sm:gap-4 md:gap-6 lg:gap-10 text-left">
-              <motion.div 
-                whileHover={{ scale: 1.02 }}
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-none border border-neutral-300 bg-white p-2 transition-transform sm:h-24 sm:w-24 sm:p-3 md:h-28 md:w-28 lg:h-36 lg:w-36 lg:p-4"
-              >
-                 <SmartImage 
-                   src={logoSrc} 
-                   fallback={fallbackSrc}
-                   alt={basicInfo.name} 
-                   className="h-full w-full object-contain"
-                 />
-              </motion.div>
-              <div className="min-w-0 flex-1 space-y-2 sm:space-y-3 lg:space-y-5">
-                <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-3">
-                   <div className="edge-eyebrow">
-                     {t('uni.profile', lang)}
-                   </div>
-                   <div
-                     className={`text-xs font-semibold flex items-center gap-2 ${heroTrust.textClass}`}
-                   >
-                      <Shield size={14} className={`shrink-0 ${heroTrust.iconClass}`} aria-hidden />{' '}
-                      <span className="text-left">{heroTrust.label}</span>
-                   </div>
-                </div>
-                <h1
-                  className="text-role-name-display text-xl leading-[1.2] wrap-break-word sm:text-3xl md:text-4xl lg:text-5xl max-w-4xl"
-                  data-text-role="name"
-                >
-                   {basicInfo.name}
+    <div className="relative z-10 flex min-h-0 flex-1 flex-col bg-(--bg-main) pb-16 sm:pb-32 lg:pb-64">
+      {/* Mobile redesign */}
+      <div className="sm:hidden border-b border-neutral-200 bg-(--bg-surface)">
+        <div className="mx-auto w-full max-w-7xl px-4 py-4">
+          <Link href="/search" className="edge-btn-secondary mb-3 w-full px-3 py-2 text-[11px]">
+            <ArrowLeft size={14} /> {t('uni.back', lang)}
+          </Link>
+
+          <div className="edge-panel p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-none border border-neutral-300 bg-white p-2">
+                <SmartImage
+                  src={logoSrc}
+                  fallback={fallbackSrc}
+                  alt={basicInfo.name}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="edge-eyebrow">{t('uni.profile', lang)}</div>
+                <h1 className="text-role-name-display text-[1.6rem] leading-tight wrap-break-word" data-text-role="name">
+                  {basicInfo.name}
                 </h1>
-                <div className="mt-2 flex flex-wrap items-center justify-start gap-2 sm:mt-3 sm:gap-4 md:gap-6">
-                   <div className="flex items-center gap-2 text-role-body-sm font-semibold">
-                      <MapPin size={16} className="text-neutral-400" />
-                      <span>
-                        {basicInfo.country}
-                        {basicInfo.state_province ? (
-                          <span className="text-neutral-500 font-medium">
-                            {`, ${basicInfo.state_province}`}
-                          </span>
-                        ) : null}
-                      </span>
-                   </div>
-                   <div className="flex items-center gap-2 text-role-body-sm font-semibold min-w-0 max-w-full">
-                      <Globe size={16} className="text-neutral-400 shrink-0" />
-                      {websiteFallback ? (
-                        <a
-                          href={websiteFallback}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-role-link-quiet truncate"
-                        >
-                          {domain}
-                        </a>
-                      ) : (
-                        <span className="truncate text-role-body">{domain}</span>
-                      )}
-                   </div>
-                   <div className="px-4 py-1.5 rounded-md border border-neutral-200 bg-white text-xs font-bold text-neutral-500 uppercase">
-                      {basicInfo.alpha_two_code}
-                   </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-700">
+                  <div className="inline-flex items-center gap-1.5">
+                    <MapPin size={14} className="text-neutral-400" />
+                    <span>{basicInfo.country}</span>
+                  </div>
+                  <div className="inline-flex min-w-0 items-center gap-1.5">
+                    <Globe size={14} className="text-neutral-400 shrink-0" />
+                    {websiteFallback ? (
+                      <a
+                        href={websiteFallback}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-role-link-quiet truncate max-w-[170px]"
+                      >
+                        {domain}
+                      </a>
+                    ) : (
+                      <span className="truncate text-neutral-500">{domain}</span>
+                    )}
+                  </div>
                 </div>
                 {websiteFallback ? (
                   <a
                     href={websiteFallback}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-role-link-surface mt-1 inline-flex items-center justify-start gap-2 sm:mt-2"
+                    className="text-role-link-surface inline-flex items-center gap-1.5 text-sm"
                   >
-                    <span className="wrap-break-word">{heroOfficialNotice}</span>
-                    <ExternalLink size={15} className="shrink-0" />
+                    <span className="line-clamp-2">{heroOfficialNotice}</span>
+                    <ExternalLink size={13} className="shrink-0" />
                   </a>
-                ) : (
-                  <p className="text-role-name mt-2 text-sm sm:text-base">{heroOfficialNotice}</p>
-                )}
-                {showHeroChips ? (
-                  <div
-                    className="mt-3 flex flex-nowrap items-stretch gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] sm:mt-4 sm:flex-wrap sm:overflow-visible sm:pb-0"
-                    aria-label={t('uni.hero_at_a_glance', lang)}
-                  >
-                    {programCount > 0 ? (
-                      <div className="inline-flex max-w-[min(100%,18rem)] shrink-0 items-center gap-2 rounded-none border border-neutral-200 bg-white px-3 py-2 text-left sm:max-w-full">
-                        <BookOpen size={16} className="shrink-0 text-neutral-500" aria-hidden />
-                        <span className="text-xs sm:text-sm text-neutral-800">
-                          <span className="font-bold tabular-nums">{programCount}</span>{' '}
-                          {t('uni.hero_programs_listed', lang)}
-                        </span>
-                      </div>
-                    ) : null}
-                    {hasHeroTuition ? (
-                      <div className="inline-flex max-w-[min(100%,24rem)] items-start gap-2 rounded-none border border-neutral-200 bg-white px-3 py-2 text-left">
-                        <DollarSign size={16} className="mt-0.5 shrink-0 text-neutral-500" aria-hidden />
-                        <span className="min-w-0 text-xs sm:text-sm text-neutral-800">
-                          <span className="font-bold text-neutral-600">{t('uni.tuition', lang)}</span>
-                          <span className="mt-0.5 block text-neutral-800 leading-snug">
-                            {highlightInlinePrices(heroTuitionDisplay)}
-                          </span>
-                          {heroTuitionTruncated ? (
-                            <button
-                              type="button"
-                              onClick={() => setHeroTuitionExpanded((prev) => !prev)}
-                              className="mt-1 inline-block text-[11px] font-semibold text-neutral-700 underline underline-offset-2 hover:text-black"
-                            >
-                              {heroTuitionExpanded ? showLessLabel : t('uni.view', lang)}
-                            </button>
-                          ) : null}
-                        </span>
-                      </div>
-                    ) : null}
-                    {hasHeroDeadline ? (
-                      <div className="inline-flex max-w-[min(100%,20rem)] shrink-0 items-start gap-2 rounded-none border border-neutral-200 bg-white px-3 py-2 text-left sm:max-w-[min(100%,24rem)]">
-                        <ClipboardList
-                          size={16}
-                          className="mt-0.5 shrink-0 text-neutral-500"
-                          aria-hidden
-                        />
-                        <span className="min-w-0 text-xs sm:text-sm text-neutral-800">
-                          <span className="font-bold text-neutral-600">{t('uni.deadline', lang)}</span>
-                          <span className="mt-0.5 block text-neutral-800 leading-snug">
-                            {heroDeadlineDisplay}
-                          </span>
-                          {heroDeadlineTruncated ? (
-                            <button
-                              type="button"
-                              onClick={() => setHeroDeadlineExpanded((prev) => !prev)}
-                              className="mt-1 inline-block text-[11px] font-semibold text-neutral-700 underline underline-offset-2 hover:text-black"
-                            >
-                              {heroDeadlineExpanded ? showLessLabel : t('uni.view', lang)}
-                            </button>
-                          ) : null}
-                        </span>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-                {heroExcerpt?.excerpt && heroExcerpt.truncated ? (
-                  <div className="mt-3 max-w-3xl space-y-2 text-left sm:mt-4">
-                    <p className="text-role-body line-clamp-4 text-sm leading-relaxed sm:line-clamp-none sm:text-base">
-                      {highlightInlinePrices(heroExcerpt.excerpt)}
-                    </p>
-                    <a href="#executive-summary" className="text-role-link inline-flex text-sm">
-                      {t('uni.hero_read_full', lang)}
-                    </a>
-                  </div>
-                ) : null}
-                {!overviewBody ? (
-                  <p className="text-role-body-muted mt-3 max-w-3xl text-left text-sm leading-relaxed sm:mt-4 sm:text-base">
-                    {t('uni.hero_whats_below', lang)}
-                  </p>
-                ) : overviewBody && !heroExcerpt?.truncated && !showHeroChips ? (
-                  <p className="text-role-body-muted mt-3 max-w-3xl text-left text-sm leading-relaxed sm:mt-4 sm:text-base">
-                    {t('uni.hero_more_below', lang)}
-                  </p>
                 ) : null}
               </div>
-           </div>
+            </div>
+
+            {websiteFallback ? (
+              <a
+                href={websiteFallback}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="edge-btn-primary mt-4 w-full px-4 py-2.5 text-[10px]"
+              >
+                {t('uni.visit', lang)}
+                <ExternalLink size={13} className="shrink-0" />
+              </a>
+            ) : null}
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <a href="#executive-summary-mobile" className="edge-btn-secondary w-full px-3 py-2 text-[10px]">
+              {t('uni.summary', lang)}
+            </a>
+            <a href="#tuition-mobile" className="edge-btn-secondary w-full px-3 py-2 text-[10px]">
+              {t('uni.tuition', lang)}
+            </a>
+            {programCount > 0 ? (
+              <div className="col-span-2 flex items-center gap-2 rounded-none border border-neutral-200 bg-white px-3 py-2.5">
+                <BookOpen size={14} className="shrink-0 text-neutral-500" aria-hidden />
+                <span className="text-xs text-neutral-800">
+                  <span className="font-bold tabular-nums">{programCount}</span> {t('uni.hero_programs_listed', lang)}
+                </span>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-8 sm:gap-14 sm:px-6 sm:py-12 lg:grid-cols-3 lg:gap-20 lg:py-16">
+      <div className="sm:hidden mx-auto w-full max-w-7xl px-4 py-5 space-y-5">
+        <section id="executive-summary-mobile" className="space-y-3">
+          <h2 className="text-role-name-display text-2xl tracking-tight">{t('uni.summary', lang)}</h2>
+          <div className="edge-panel p-4">
+            <div className="text-role-label mb-3">{t('uni.overview', lang)}</div>
+            {overviewBody ? (
+              <p
+                className={`text-role-body text-base ${shouldClampSummaryOnMobile && !summaryExpandedMobile ? 'line-clamp-8' : ''}`}
+                data-text-role="body"
+              >
+                {highlightInlinePrices(overviewBody)}
+              </p>
+            ) : (
+              <p className="text-role-body-muted text-base">{t('uni.overview_empty', lang)}</p>
+            )}
+            {overviewBody && shouldClampSummaryOnMobile ? (
+              <button
+                type="button"
+                onClick={() => setSummaryExpandedMobile((prev) => !prev)}
+                className="mt-3 inline-flex text-[11px] font-bold uppercase tracking-wider text-neutral-600 underline underline-offset-4"
+              >
+                {summaryExpandedMobile ? showLessLabel : t('uni.view', lang)}
+              </button>
+            ) : null}
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 gap-3">
+          <section id="tuition-mobile" className="rounded-none border border-neutral-200 bg-white p-4">
+            <div className="text-role-label-wide mb-2">{t('uni.tuition', lang)}</div>
+            <p className={`text-neutral-800 ${tuitionSizeClass} font-medium leading-relaxed`} data-text-role="price">
+              {highlightInlinePrices(tuitionDisplay)}
+            </p>
+          </section>
+
+          <section className="rounded-none border border-neutral-200 bg-white p-4">
+            <div className="text-role-label-wide mb-2">{t('uni.deadline', lang)}</div>
+            <p className="text-role-body text-sm leading-relaxed wrap-break-word" data-text-role="body">
+              {localizedDeadline || t('uni.varies', lang)}
+            </p>
+          </section>
+        </div>
+
+        <section className="space-y-3">
+          <h3 className="text-role-name-display text-xl tracking-tight">{t('uni.programs', lang)}</h3>
+          {normalizedPrograms.length > 0 ? (
+            <div className="space-y-2.5">
+              {visiblePrograms.map((program, i) => (
+                <a
+                  key={`${program.name}-${i}`}
+                  href={program.link || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`group block rounded-none border px-4 py-3 text-sm font-semibold ${
+                    program.link
+                      ? 'border-neutral-200 bg-white text-neutral-800'
+                      : 'border-neutral-100 bg-neutral-50 text-neutral-400 pointer-events-none'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="wrap-break-word">{program.name}</span>
+                    {program.link ? <ExternalLink size={14} className="mt-0.5 shrink-0 text-neutral-400" /> : null}
+                  </div>
+                </a>
+              ))}
+              {normalizedPrograms.length > maxProgramsOnMobile ? (
+                <button
+                  type="button"
+                  onClick={() => setProgramsExpandedMobile((prev) => !prev)}
+                  className="w-full rounded-none border border-neutral-300 bg-neutral-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-neutral-700"
+                >
+                  {programsExpandedMobile ? showLessLabel : t('uni.view', lang)}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <p className="rounded-none border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm text-neutral-500">
+              {t('uni.not_specified', lang)}
+            </p>
+          )}
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-role-name-display text-xl tracking-tight">{t('uni.important_links', lang)}</h3>
+          <div className="space-y-2.5">
+            {primaryLinks.map((item) =>
+              item.link ? (
+                <a
+                  key={item.id}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-role-link-card block rounded-none border border-neutral-200 bg-white px-4 py-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-role-name text-sm font-semibold wrap-break-word">{item.title}</p>
+                    <ExternalLink size={13} className="mt-0.5 shrink-0 text-neutral-400" />
+                  </div>
+                  <p className="text-role-body-sm mt-1.5 text-xs">{item.description}</p>
+                </a>
+              ) : null,
+            )}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="text-role-name-display text-xl tracking-tight">{t('uni.sources', lang)}</h3>
+          {visibleSourcesMobile.length > 0 ? (
+            <div className="space-y-2.5">
+              {visibleSourcesMobile.map((source, i) => (
+                <a
+                  key={`${source.link}-${i}`}
+                  href={source.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-role-link-card block rounded-none border border-neutral-200 bg-white px-4 py-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-role-name text-xs font-semibold leading-snug wrap-break-word">{source.title}</p>
+                    <ExternalLink size={13} className="mt-0.5 shrink-0 text-neutral-400" />
+                  </div>
+                  {source.snippet ? (
+                    <p className="text-role-body mt-1.5 text-[11px] leading-relaxed text-neutral-500">
+                      {highlightInlinePrices(source.snippet)}
+                    </p>
+                  ) : null}
+                </a>
+              ))}
+              {normalizedSources.length > maxSourcesOnMobile ? (
+                <button
+                  type="button"
+                  onClick={() => setSourcesExpandedMobile((prev) => !prev)}
+                  className="w-full rounded-none border border-neutral-300 bg-neutral-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-neutral-700"
+                >
+                  {sourcesExpandedMobile ? showLessLabel : t('uni.view', lang)}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <p className="rounded-none border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm text-neutral-500">
+              {t('uni.not_specified', lang)}
+            </p>
+          )}
+        </section>
+
+        <div className="rounded-none border border-neutral-300 bg-neutral-50/70 px-4 py-3">
+          <p className="text-role-body-sm text-[11px] leading-relaxed text-neutral-600">{t('uni.disclaimer_official', lang)}</p>
+        </div>
+      </div>
+
+      {/* Hero Section */}
+      <div className="hidden sm:block relative border-b border-neutral-200 bg-(--bg-surface) pt-4 pb-6 sm:pt-5 sm:pb-8 lg:pt-6 lg:pb-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          {/* Back button */}
+          <Link href="/search" className="edge-btn-secondary mb-4 px-3 py-2 text-[11px] sm:mb-5 sm:px-5 sm:py-2.5 sm:text-xs lg:mb-6">
+            <ArrowLeft size={14} /> {t('uni.back', lang)}
+          </Link>
+
+          <div className="flex flex-row items-start gap-3 sm:gap-4 md:gap-6 lg:gap-10 text-left">
+            {/* Logo */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-none border border-neutral-300 bg-white p-2 transition-transform sm:h-24 sm:w-24 sm:p-3 md:h-28 md:w-28 lg:h-36 lg:w-36 lg:p-4"
+            >
+              <SmartImage
+                src={logoSrc}
+                fallback={fallbackSrc}
+                alt={basicInfo.name}
+                className="h-full w-full object-contain"
+              />
+            </motion.div>
+
+            {/* Info column */}
+            <div className="min-w-0 flex-1 space-y-3 sm:space-y-3 lg:space-y-5">
+              {/* Badge row — trust meta hidden on mobile to reduce clutter */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div className="edge-eyebrow">{t('uni.profile', lang)}</div>
+                <div className={`hidden sm:flex items-center gap-2 text-xs font-semibold ${heroTrust.textClass}`}>
+                  <Shield size={14} className={`shrink-0 ${heroTrust.iconClass}`} aria-hidden />
+                  <span>{heroTrust.label}</span>
+                </div>
+              </div>
+
+              {/* University name */}
+              <h1
+                className="text-role-name-display text-xl leading-[1.15] wrap-break-word sm:text-3xl md:text-4xl lg:text-5xl max-w-4xl"
+                data-text-role="name"
+              >
+                {basicInfo.name}
+              </h1>
+
+              {/* Location + website row */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 sm:gap-4 md:gap-6">
+                <div className="flex items-center gap-1.5 text-sm font-medium text-neutral-700">
+                  <MapPin size={14} className="shrink-0 text-neutral-400" />
+                  <span>
+                    {basicInfo.country}
+                    {basicInfo.state_province ? (
+                      <span className="text-neutral-500">{`, ${basicInfo.state_province}`}</span>
+                    ) : null}
+                  </span>
+                </div>
+                <div className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
+                  <Globe size={14} className="shrink-0 text-neutral-400" />
+                  {websiteFallback ? (
+                    <a
+                      href={websiteFallback}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-role-link-quiet truncate max-w-[160px] sm:max-w-none"
+                    >
+                      {domain}
+                    </a>
+                  ) : (
+                    <span className="truncate text-neutral-500">{domain}</span>
+                  )}
+                </div>
+                {/* Alpha code — hidden on mobile */}
+                <div className="hidden sm:block px-3 py-1 rounded-md border border-neutral-200 bg-white text-xs font-bold text-neutral-500 uppercase">
+                  {basicInfo.alpha_two_code}
+                </div>
+              </div>
+
+              {/* Official site notice */}
+              {websiteFallback ? (
+                <a
+                  href={websiteFallback}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-role-link-surface inline-flex items-center gap-1.5 text-sm"
+                >
+                  <span className="line-clamp-2 sm:line-clamp-none">{heroOfficialNotice}</span>
+                  <ExternalLink size={14} className="shrink-0" />
+                </a>
+              ) : (
+                <p className="text-sm text-neutral-500">{heroOfficialNotice}</p>
+              )}
+
+              {/* At-a-glance chips — 2-col grid on mobile, flex-wrap on sm+ */}
+              {showHeroChips ? (
+                <div
+                  className="hidden sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-2 md:gap-0"
+                  aria-label={t('uni.hero_at_a_glance', lang)}
+                >
+                  {programCount > 0 ? (
+                    <div className="flex min-h-[84px] items-start gap-2 rounded-none border border-neutral-200 bg-white px-3 py-2.5 text-left">
+                      <BookOpen size={14} className="shrink-0 text-neutral-500" aria-hidden />
+                      <span className="min-w-0 text-xs text-neutral-800">
+                        <span className="mb-0.5 block font-bold text-neutral-500">{t('uni.programs', lang)}</span>
+                        <span className="block leading-snug">
+                          <span className="font-bold tabular-nums">{programCount}</span>{' '}
+                          {t('uni.hero_programs_listed', lang)}
+                        </span>
+                      </span>
+                    </div>
+                  ) : null}
+                  {hasHeroTuition ? (
+                    <div className="flex min-h-[84px] items-start gap-2 rounded-none border border-neutral-200 bg-white px-3 py-2.5 text-left">
+                      <DollarSign size={14} className="mt-0.5 shrink-0 text-neutral-500" aria-hidden />
+                      <span className="min-w-0 text-xs text-neutral-800">
+                        <span className="block font-bold text-neutral-500 mb-0.5">{t('uni.tuition', lang)}</span>
+                        <span className="line-clamp-2 leading-snug">
+                          {highlightInlinePrices(heroTuitionLine)}
+                        </span>
+                      </span>
+                    </div>
+                  ) : null}
+                  {hasHeroDeadline ? (
+                    <div className="flex min-h-[84px] items-start gap-2 rounded-none border border-neutral-200 bg-white px-3 py-2.5 text-left">
+                      <ClipboardList size={14} className="mt-0.5 shrink-0 text-neutral-500" aria-hidden />
+                      <span className="min-w-0 text-xs text-neutral-800">
+                        <span className="block font-bold text-neutral-500 mb-0.5">{t('uni.deadline', lang)}</span>
+                        <span className="line-clamp-2 leading-snug">
+                          {heroDeadlineLine}
+                        </span>
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {/* Excerpt — hidden on mobile (body has full content); shown on sm+ */}
+              {heroExcerpt?.excerpt && heroExcerpt.truncated ? (
+                <div className="hidden sm:block mt-4 max-w-3xl space-y-2 text-left">
+                  <p className="text-role-body text-base leading-relaxed">
+                    {highlightInlinePrices(heroExcerpt.excerpt)}
+                  </p>
+                  <a href="#executive-summary" className="text-role-link inline-flex text-sm">
+                    {t('uni.hero_read_full', lang)}
+                  </a>
+                </div>
+              ) : null}
+              {!overviewBody ? (
+                <p className="hidden sm:block mt-4 max-w-3xl text-left text-sm leading-relaxed text-neutral-500">
+                  {t('uni.hero_whats_below', lang)}
+                </p>
+              ) : overviewBody && !heroExcerpt?.truncated && !showHeroChips ? (
+                <p className="hidden sm:block mt-4 max-w-3xl text-left text-sm leading-relaxed text-neutral-500">
+                  {t('uni.hero_more_below', lang)}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 w-full max-w-full space-y-2 overflow-hidden sm:hidden">
+          <div className="grid w-full grid-cols-2 gap-2">
+            <a
+              href="#executive-summary"
+              className="edge-btn-secondary flex min-w-0 w-full px-3 py-2 text-[10px]"
+            >
+              {t('uni.summary', lang)}
+            </a>
+            <a
+              href="#tuition-detail"
+              className="edge-btn-secondary flex min-w-0 w-full px-3 py-2 text-[10px]"
+            >
+              {t('uni.tuition', lang)}
+            </a>
+            {websiteFallback ? (
+              <a
+                href={websiteFallback}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="edge-btn-primary col-span-2 flex min-w-0 w-full px-3 py-2 text-[10px]"
+              >
+                {t('uni.visit', lang)}
+                <ExternalLink size={12} className="shrink-0" />
+              </a>
+            ) : null}
+          </div>
+          {programCount > 0 ? (
+            <div className="flex w-full min-w-0 items-center gap-2 rounded-none border border-neutral-200 bg-white px-3 py-2.5 text-left">
+              <BookOpen size={14} className="shrink-0 text-neutral-500" aria-hidden />
+              <span className="text-xs text-neutral-800">
+                <span className="font-bold tabular-nums">{programCount}</span>{' '}
+                {t('uni.hero_programs_listed', lang)}
+              </span>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="hidden sm:grid mx-auto max-w-7xl grid-cols-1 gap-8 px-4 py-6 sm:gap-14 sm:px-6 sm:py-12 lg:grid-cols-3 lg:gap-20 lg:py-16">
         {/* Content Data */}
-        <div className="lg:col-span-2 space-y-12 sm:space-y-20 lg:space-y-32">
+        <div className="lg:col-span-2 space-y-10 sm:space-y-20 lg:space-y-32">
           <section id="executive-summary" className="scroll-mt-28 space-y-6 sm:space-y-8">
              <div className="flex items-center gap-4 border-b border-neutral-100 pb-6">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-neutral-300 bg-white text-neutral-700">
@@ -729,7 +999,10 @@ export default function UniversityDetailView({
              <div className="group edge-panel p-5 sm:p-8">
                 <div className="text-role-label mb-4 tracking-[0.14em]">{t('uni.overview', lang)}</div>
                 {overviewBody ? (
-                  <p className="text-role-body text-base sm:text-xl transition-colors" data-text-role="body">
+                  <p
+                    className={`text-role-body text-base sm:text-xl transition-colors ${shouldClampSummaryOnMobile && !summaryExpandedMobile ? 'line-clamp-8 sm:line-clamp-none' : ''}`}
+                    data-text-role="body"
+                  >
                     {highlightInlinePrices(overviewBody)}
                   </p>
                 ) : (
@@ -737,6 +1010,15 @@ export default function UniversityDetailView({
                     {t('uni.overview_empty', lang)}
                   </p>
                 )}
+                {overviewBody && shouldClampSummaryOnMobile ? (
+                  <button
+                    type="button"
+                    onClick={() => setSummaryExpandedMobile((prev) => !prev)}
+                    className="sm:hidden inline-flex items-center text-[11px] font-bold uppercase tracking-wider text-neutral-600 underline underline-offset-4"
+                  >
+                    {summaryExpandedMobile ? showLessLabel : t('uni.view', lang)}
+                  </button>
+                ) : null}
                 {confidencePct !== null ? (
                   <div className="mt-6 space-y-1.5" aria-label={t('uni.confidence', lang)}>
                     <div className="flex items-baseline justify-between gap-3 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">
@@ -776,7 +1058,7 @@ export default function UniversityDetailView({
           </section>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
-             <div id="tuition-detail" className="p-5 sm:p-7 rounded-none border border-neutral-200 space-y-4 bg-white relative overflow-hidden hover:bg-neutral-50 transition-all min-h-[210px]">
+             <div id="tuition-detail" className="p-5 sm:p-7 rounded-none border border-neutral-200 space-y-4 bg-white relative overflow-hidden hover:bg-neutral-50 transition-all min-h-[140px] sm:min-h-[210px]">
                 <div className="absolute -top-4 -right-4 p-8 opacity-[0.06]">
                    <DollarSign size={80} className="text-neutral-700" />
                 </div>
@@ -793,7 +1075,7 @@ export default function UniversityDetailView({
                 </div>
              </div>
 
-             <div id="deadline-detail" className="p-5 sm:p-7 rounded-none border border-neutral-200 space-y-4 bg-white relative overflow-hidden hover:bg-neutral-50 transition-all min-h-[210px]">
+             <div id="deadline-detail" className="p-5 sm:p-7 rounded-none border border-neutral-200 space-y-4 bg-white relative overflow-hidden hover:bg-neutral-50 transition-all min-h-[140px] sm:min-h-[210px]">
                 <div className="absolute -top-4 -right-4 p-8 opacity-[0.06]">
                    <ClipboardList size={80} className="text-neutral-700" />
                 </div>
@@ -864,7 +1146,7 @@ export default function UniversityDetailView({
              </div>
              {normalizedPrograms.length > 0 ? (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {normalizedPrograms.map((program, i) => (
+                 {visiblePrograms.map((program, i) => (
                    <a
                      key={`${program.name}-${i}`}
                      href={program.link || undefined}
@@ -884,6 +1166,15 @@ export default function UniversityDetailView({
                     {program.link ? <ExternalLink size={15} className="shrink-0 text-neutral-500 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /> : null}
                    </a>
                  ))}
+                 {normalizedPrograms.length > maxProgramsOnMobile ? (
+                   <button
+                     type="button"
+                     onClick={() => setProgramsExpandedMobile((prev) => !prev)}
+                     className="sm:hidden md:hidden col-span-1 rounded-none border border-neutral-300 bg-neutral-50 px-4 py-3 text-center text-[11px] font-bold uppercase tracking-wider text-neutral-700 hover:bg-neutral-100 transition-colors"
+                   >
+                     {programsExpandedMobile ? showLessLabel : t('uni.view', lang)}
+                   </button>
+                 ) : null}
                </div>
              ) : (
                <div className="p-10 text-center rounded-none border-2 border-dashed border-neutral-300 bg-neutral-50">

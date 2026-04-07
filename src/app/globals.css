@@ -376,3 +376,16 @@
     transform: translateY(-1.5px);
   }
 }
+
+.university-card-hover {
+  transition: background-image 0s, background-size 0s, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.university-card-hover:hover {
+  background-color: #ffffff;
+  background-image: radial-gradient(circle, #d4d4d4 1px, transparent 1px);
+  background-size: 18px 18px;
+  transform: translateY(-4px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.09);
+  border-color: transparent;
+}
