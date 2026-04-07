@@ -5,17 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Outfit } from 'next/font/google';
-import {
-  Loader2,
-  MessageCircle,
-  Plus,
-  Send,
-  Paperclip,
-  X,
-  Search,
-  Menu,
-  Sparkles,
-} from 'lucide-react';
+import { Loader2, MessageCircle, Plus, Send, Paperclip, X, Search, Menu } from 'lucide-react';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
@@ -74,7 +64,7 @@ function AssistantMessageBody({ content }: { content: string }) {
   const text = normalizeAssistantText(content);
   const blocks = text.split(/\n\n+/).filter(Boolean);
   return (
-    <div className="space-y-3 text-[13px] sm:text-sm leading-[1.65] text-neutral-800">
+    <div className="space-y-4 text-[15px] sm:text-[0.9375rem] leading-[1.7] text-neutral-800/95">
       {blocks.map((block, i) => (
         <p key={`b-${i}-${block.length}`} className="whitespace-pre-wrap">
           {block}
@@ -171,10 +161,24 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const dragDepthRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
+  /** When false and focus-university had a country, we show a compact summary instead of the full field. */
+  const [countryPickerOpen, setCountryPickerOpen] = useState(true);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, sending]);
+
+  useEffect(() => {
+    if (advisorContext?.country) {
+      setCountryPickerOpen(false);
+    }
+  }, [advisorContext?.country]);
+
+  useEffect(() => {
+    if (!advisorContext) {
+      setCountryPickerOpen(true);
+    }
+  }, [advisorContext]);
 
   const handleMediaFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -302,6 +306,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const startNewChat = async () => {
     setError(null);
     setAdvisorContext(null);
+    setCountryPickerOpen(true);
     try {
       const response = await authFetch('/api/chat/conversations', { method: 'POST' });
       if (!response.ok) throw new Error('Could not create a new chat.');
@@ -397,9 +402,9 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fafafa] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f4f0]">
         <div className="flex items-center gap-3 text-sm text-neutral-500">
-          <Loader2 size={18} className="animate-spin text-neutral-400" />
+          <Loader2 size={18} className="animate-spin text-neutral-500" />
           {t('chat.loadingWorkspace')}
         </div>
       </div>
@@ -407,8 +412,8 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#fafafa] flex flex-col">
-      <nav className="sticky top-0 z-40 border-b border-neutral-200/80 bg-white/90 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 backdrop-blur-md">
+    <main className="flex min-h-screen flex-col bg-[#f5f4f0] text-neutral-900 antialiased">
+      <nav className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#f5f4f0]/92 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8 sm:py-4">
         <div className="mx-auto flex max-w-7xl flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <button
@@ -461,7 +466,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
               >
                 {t('nav.students')}
               </Link>
-              <span className="shrink-0 rounded-lg bg-neutral-900 px-2.5 py-1 text-[10px] sm:text-[11px] font-black text-white uppercase tracking-widest">
+              <span className="shrink-0 border border-neutral-900 bg-neutral-900 px-2.5 py-1 text-[10px] sm:text-[11px] font-black text-white uppercase tracking-[0.18em]">
                 {t('chat.navActive')}
               </span>
             </div>
@@ -492,157 +497,185 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
         </div>
       </nav>
 
-      <section className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="overflow-hidden rounded-3xl border border-neutral-200/90 bg-white shadow-sm">
+      <section className="flex-1 px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex min-h-[72vh] flex-col overflow-hidden lg:flex-row lg:ring-1 lg:ring-neutral-900/10 lg:shadow-[0_2px_28px_-6px_rgba(0,0,0,0.07)]">
             {sidebarOpen ? (
               <button
                 type="button"
                 aria-label="Close chats"
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden fixed inset-0 z-20 bg-black/25 backdrop-blur-[1px]"
+                className="fixed inset-0 z-20 bg-neutral-900/20 backdrop-blur-[2px] lg:hidden"
               />
             ) : null}
 
-            <div className="grid min-h-[70vh] grid-cols-1 lg:grid-cols-[minmax(0,288px)_1fr]">
-              <aside
-                className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,20rem)] flex-col gap-4 border-neutral-200 bg-white p-4 shadow-xl transition-transform lg:static lg:w-auto lg:max-w-none lg:translate-x-0 lg:border-r lg:shadow-none ${
-                  sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
-              >
-                <div className="flex items-center justify-between lg:hidden">
-                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">{t('chat.sidebarTitle')}</p>
-                  <button
-                    type="button"
-                    onClick={() => setSidebarOpen(false)}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-700"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-
+            <aside
+              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-5 bg-[#eae8e3] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-[17.5rem] lg:max-w-none lg:translate-x-0 lg:shadow-none ${
+                sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+              }`}
+            >
+              <div className="flex items-center justify-between lg:pt-1">
+                <p className={`text-[11px] font-extrabold uppercase tracking-[0.2em] text-neutral-500 ${outfit.className}`}>
+                  {t('chat.threadsLabel')}
+                </p>
                 <button
                   type="button"
-                  onClick={() => void startNewChat()}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 py-3 text-xs font-bold uppercase tracking-widest text-white transition-colors hover:bg-neutral-800"
+                  onClick={() => setSidebarOpen(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center text-neutral-600 transition-colors hover:text-neutral-900 lg:hidden"
+                  aria-label="Close chats"
                 >
-                  <Plus size={16} strokeWidth={2.5} />
-                  {t('chat.newChat')}
+                  <X size={18} strokeWidth={1.5} />
                 </button>
+              </div>
 
-                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-0.5 lg:max-h-[calc(70vh-8rem)]">
-                  {conversations.map((conversation) => (
+              <button
+                type="button"
+                onClick={() => void startNewChat()}
+                className="group flex w-full items-center justify-center gap-2 border border-dashed border-neutral-500/50 bg-transparent py-3.5 text-[11px] font-bold uppercase tracking-[0.16em] text-neutral-700 transition-all hover:border-neutral-900 hover:bg-[#f5f4f0] hover:text-neutral-900"
+              >
+                <Plus size={15} strokeWidth={2} />
+                {t('chat.newChat')}
+              </button>
+
+              <div className="min-h-0 flex-1 space-y-0 overflow-y-auto lg:max-h-[calc(72vh-10rem)]">
+                {conversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    type="button"
+                    onClick={() => void openConversation(conversation.id)}
+                    className={`w-full border-l-2 py-3.5 pl-4 pr-2 text-left transition-colors ${
+                      activeConversationId === conversation.id
+                        ? 'border-neutral-900 bg-white/50'
+                        : 'border-transparent hover:border-neutral-400/80 hover:bg-white/25'
+                    }`}
+                  >
+                    <p className="line-clamp-2 text-sm font-semibold leading-snug text-neutral-900">
+                      {conversation.title}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-neutral-500">
+                      {conversation.lastMessage || t('chat.noMessagesYet')}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </aside>
+
+              <section className="flex min-h-[72vh] flex-1 flex-col bg-[#f5f4f0]">
+                <header className="border-b border-black/[0.07] px-5 py-6 sm:px-8 sm:py-8">
+                  <div className="flex items-start gap-4 sm:gap-5">
                     <button
-                      key={conversation.id}
                       type="button"
-                      onClick={() => void openConversation(conversation.id)}
-                      className={`w-full rounded-xl border px-3 py-3 text-left transition-all ${
-                        activeConversationId === conversation.id
-                          ? 'border-neutral-900 bg-neutral-50 shadow-sm'
-                          : 'border-transparent bg-neutral-50/80 hover:border-neutral-200 hover:bg-white'
-                      }`}
+                      onClick={() => setSidebarOpen(true)}
+                      className="mt-2 inline-flex shrink-0 items-center justify-center text-neutral-600 transition-colors hover:text-neutral-900 lg:hidden"
+                      aria-label="Open chats"
                     >
-                      <p className="text-sm font-semibold leading-snug text-neutral-900 line-clamp-2">
-                        {conversation.title}
-                      </p>
-                      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-neutral-500">
-                        {conversation.lastMessage || t('chat.noMessagesYet')}
-                      </p>
+                      <Menu size={22} strokeWidth={1.5} />
                     </button>
-                  ))}
-                </div>
-              </aside>
-
-              <section className="flex min-h-[70vh] flex-col bg-[#fafafa]/50">
-                <div className="border-b border-neutral-100 bg-white px-4 py-4 sm:px-5 sm:py-5">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="flex items-start gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setSidebarOpen(true)}
-                        className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-700 lg:hidden"
-                        aria-label="Open chats"
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`text-[10px] font-extrabold uppercase tracking-[0.22em] text-neutral-400 sm:text-[11px] ${outfit.className}`}
                       >
-                        <MessageCircle size={18} />
-                      </button>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-900 text-white">
-                            <Sparkles size={18} strokeWidth={2} />
-                          </div>
-                          <div>
-                            <h1 className="text-lg font-bold tracking-tight text-neutral-900 sm:text-xl">
-                              AI advisor
-                            </h1>
-                            <p className="text-xs text-neutral-500 sm:text-[13px]">
-                              Universities, admissions, and next steps
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
-                      {advisorContext ? (
-                        <div className="flex flex-col justify-center rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 sm:max-w-xs">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                            {t('chat.focus')}
-                          </span>
-                          <p className="mt-0.5 text-sm font-medium text-neutral-900 line-clamp-2">
-                            {advisorContext.name}
-                            {typeof advisorContext.nationalRank === 'number' ? (
-                              <span className="font-normal text-neutral-500"> · #{advisorContext.nationalRank}</span>
-                            ) : null}
-                          </p>
-                        </div>
-                      ) : null}
-                      <label className="flex flex-col gap-1 sm:min-w-[220px]">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                          {t('chat.regionLabel')}
-                        </span>
-                        <div className="flex items-center gap-2 rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 shadow-sm">
-                          <Search size={16} className="shrink-0 text-neutral-400" />
-                          <input
-                            value={country}
-                            onChange={(event) => setCountry(event.target.value)}
-                            className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
-                            placeholder={t('chat.regionPlaceholder')}
-                            aria-label={t('chat.regionLabel')}
-                          />
-                        </div>
-                      </label>
+                        {t('chat.sectionEyebrow')}
+                      </p>
+                      <h1
+                        className={`mt-3 text-2xl font-extrabold leading-none tracking-tight text-neutral-900 sm:text-3xl ${outfit.className}`}
+                      >
+                        {t('chat.title')}
+                      </h1>
+                      <p className="mt-3 max-w-xl text-sm leading-[1.65] text-neutral-600">{t('chat.subtitle')}</p>
+                      <div className="mt-6 h-px max-w-[4.5rem] bg-neutral-900" aria-hidden />
                     </div>
                   </div>
-                </div>
+
+                  <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:max-w-3xl">
+                    {advisorContext ? (
+                      <div>
+                        <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                          {t('chat.focus')}
+                        </p>
+                        <div className="border border-black/[0.09] bg-white/60 px-3 py-3 text-sm text-neutral-900">
+                          <span className="font-semibold">{advisorContext.name}</span>
+                          {typeof advisorContext.nationalRank === 'number' ? (
+                            <span className="text-neutral-500"> · #{advisorContext.nationalRank}</span>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className={advisorContext ? '' : 'sm:col-span-2 lg:max-w-md'}>
+                      {advisorContext?.country && !countryPickerOpen ? (
+                        <div>
+                          <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                            {t('chat.regionLabel')}
+                          </p>
+                          <div className="flex flex-col gap-2 border border-black/[0.09] bg-white/60 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                            <p className="min-w-0 text-neutral-800">
+                              <span className="text-neutral-500">{t('chat.regionInUse')}:</span>{' '}
+                              <span className="font-semibold text-neutral-900">{country}</span>
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setCountryPickerOpen(true)}
+                              className="shrink-0 self-start text-xs font-bold uppercase tracking-wide text-neutral-800 underline decoration-neutral-400 underline-offset-4 hover:text-neutral-950 sm:self-auto"
+                            >
+                              {t('chat.regionChange')}
+                            </button>
+                          </div>
+                          <p className="mt-2 text-xs leading-relaxed text-neutral-500">{t('chat.regionHint')}</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block" htmlFor="chat-region-country">
+                            <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                              {t('chat.regionLabel')}
+                            </span>
+                            <div className="flex items-center gap-2 border border-black/[0.09] border-b-2 border-b-neutral-900/15 bg-white/60 px-3 py-2.5 transition-colors focus-within:border-b-neutral-900">
+                              <Search size={16} className="shrink-0 text-neutral-400" aria-hidden />
+                              <input
+                                id="chat-region-country"
+                                value={country}
+                                onChange={(event) => setCountry(event.target.value)}
+                                className="min-w-0 flex-1 bg-transparent text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0"
+                                placeholder={t('chat.regionPlaceholder')}
+                                aria-label={t('chat.regionLabel')}
+                              />
+                            </div>
+                          </label>
+                          <p className="mt-2 text-xs leading-relaxed text-neutral-500">{t('chat.regionHint')}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </header>
 
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
+                  <div className="flex-1 space-y-10 overflow-y-auto px-5 py-8 sm:px-8 sm:py-10">
                     {messages.length === 0 ? (
-                      <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-neutral-200 bg-white shadow-sm">
-                          <MessageCircle className="text-neutral-400" size={26} strokeWidth={1.5} />
-                        </div>
-                        <p className="mt-4 max-w-sm text-center text-sm leading-relaxed text-neutral-500">
-                          {t('chat.emptyHint')}
+                      <div className="flex h-full min-h-[14rem] flex-col items-start justify-center px-0 sm:px-2">
+                        <p
+                          className={`text-[11px] font-extrabold uppercase tracking-[0.2em] text-neutral-400 ${outfit.className}`}
+                        >
+                          soso.
                         </p>
+                        <p className="mt-4 max-w-md text-sm leading-[1.7] text-neutral-600">{t('chat.emptyHint')}</p>
                       </div>
                     ) : null}
 
                     {messages.map((message) =>
                       message.role === 'assistant' ? (
-                        <div key={message.id} className="flex gap-3">
-                          <div
-                            className="mt-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 sm:flex"
-                            aria-hidden
+                        <article key={message.id} className="max-w-[min(100%,40rem)]">
+                          <p
+                            className={`mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-neutral-400 ${outfit.className}`}
                           >
-                            <Sparkles size={15} />
-                          </div>
-                          <div className="min-w-0 max-w-[min(100%,42rem)] rounded-2xl rounded-tl-md border border-neutral-200/80 bg-white px-4 py-3 shadow-sm">
+                            soso.
+                          </p>
+                          <div className="border-l-2 border-neutral-900 pl-5 sm:pl-6">
                             {message.content ? <AssistantMessageBody content={message.content} /> : null}
                             {message.attachmentDataUrl ? (
-                              <div className="mt-3 space-y-1 border-t border-neutral-100 pt-3">
+                              <div className="mt-5 space-y-1 border-t border-black/[0.06] pt-5">
                                 {message.attachmentName ? (
-                                  <p className="text-[10px] text-neutral-500">{message.attachmentName}</p>
+                                  <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                                    {message.attachmentName}
+                                  </p>
                                 ) : null}
                                 <Image
                                   src={message.attachmentDataUrl}
@@ -650,22 +683,25 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                                   width={640}
                                   height={360}
                                   unoptimized
-                                  className="max-h-52 w-full rounded-lg border border-neutral-200 bg-neutral-50 object-contain"
+                                  className="max-h-52 w-full border border-black/[0.08] bg-white object-contain"
                                 />
                               </div>
                             ) : null}
                           </div>
-                        </div>
+                        </article>
                       ) : (
-                        <div key={message.id} className="flex justify-end">
-                          <div className="max-w-[min(100%,36rem)] space-y-2 rounded-2xl rounded-tr-md bg-neutral-900 px-4 py-3 text-[13px] sm:text-sm leading-relaxed text-white shadow-md">
+                        <div key={message.id} className="flex flex-col items-end gap-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400">
+                            {t('chat.youLabel')}
+                          </span>
+                          <div className="max-w-[min(100%,34rem)] border border-black/[0.1] bg-white/80 px-4 py-4 text-[15px] leading-[1.65] text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
                             {message.content ? (
                               <p className="whitespace-pre-wrap">{message.content}</p>
                             ) : null}
                             {message.attachmentDataUrl ? (
-                              <div className="space-y-1">
+                              <div className="mt-3 space-y-1">
                                 {message.attachmentName ? (
-                                  <p className="text-[10px] text-neutral-400">{message.attachmentName}</p>
+                                  <p className="text-[11px] text-neutral-500">{message.attachmentName}</p>
                                 ) : null}
                                 <Image
                                   src={message.attachmentDataUrl}
@@ -673,7 +709,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                                   width={640}
                                   height={360}
                                   unoptimized
-                                  className="max-h-52 w-full rounded-lg border border-white/10 bg-black/30 object-contain"
+                                  className="max-h-52 w-full border border-black/[0.08] bg-neutral-50 object-contain"
                                 />
                               </div>
                             ) : null}
@@ -683,15 +719,14 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     )}
 
                     {sending ? (
-                      <div className="flex gap-3">
-                        <div
-                          className="mt-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white sm:flex"
-                          aria-hidden
+                      <div className="max-w-[min(100%,40rem)] border-l-2 border-neutral-900/30 pl-5 sm:pl-6">
+                        <p
+                          className={`mb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-neutral-400 ${outfit.className}`}
                         >
-                          <Sparkles size={15} className="text-neutral-400" />
-                        </div>
-                        <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-600 shadow-sm">
-                          <Loader2 size={15} className="animate-spin text-neutral-400" />
+                          soso.
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-neutral-500">
+                          <Loader2 size={16} className="animate-spin text-neutral-400" />
                           {t('chat.thinking')}
                         </div>
                       </div>
@@ -699,9 +734,9 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     <div ref={messagesEndRef} className="h-1 w-full shrink-0" aria-hidden />
                   </div>
 
-                  <div className="border-t border-neutral-200 bg-white p-4 sm:p-5">
+                  <div className="border-t border-black/[0.07] bg-[#ebe8e2]/40 px-5 py-6 sm:px-8">
                     {screenshotDataUrl ? (
-                      <div className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+                      <div className="mb-4 border border-black/[0.1] bg-white/70 p-3 sm:p-4">
                         <div className="flex items-center justify-between text-xs text-neutral-500">
                           <span className="truncate pr-2 font-medium">{screenshotName || 'screenshot'}</span>
                           <button
@@ -733,62 +768,65 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
-                      className="relative"
+                      className="relative mx-auto max-w-3xl"
                     >
                       <div
-                        className={`flex items-end gap-2 rounded-2xl border-2 bg-white p-2 transition-colors sm:p-3 ${
-                          isDragActive ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-200'
+                        className={`flex items-end gap-3 border-b-2 pb-2 transition-colors ${
+                          isDragActive ? 'border-neutral-900' : 'border-neutral-900/20'
                         }`}
                       >
+                        <label className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center text-neutral-500 transition-colors hover:text-neutral-900">
+                          <Paperclip size={20} strokeWidth={1.5} />
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            className="hidden"
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (!file) return;
+                              handleMediaFile(file);
+                              event.currentTarget.value = '';
+                            }}
+                          />
+                        </label>
                         <textarea
                           value={input}
                           onChange={(event) => setInput(event.target.value)}
                           rows={2}
                           placeholder={t('chat.messagePlaceholder')}
-                          className="max-h-40 min-h-[2.75rem] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none sm:text-[15px]"
+                          className="max-h-40 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-base text-neutral-900 placeholder:text-neutral-400 outline-none focus:ring-0 sm:text-[15px]"
                         />
-                        <div className="flex shrink-0 flex-col gap-2 pb-0.5">
-                          <label className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 transition-colors hover:bg-neutral-100">
-                            <Paperclip size={18} className="text-neutral-500" />
-                            <input
-                              type="file"
-                              accept="image/png,image/jpeg,image/webp,image/gif"
-                              className="hidden"
-                              onChange={(event) => {
-                                const file = event.target.files?.[0];
-                                if (!file) return;
-                                handleMediaFile(file);
-                                event.currentTarget.value = '';
-                              }}
-                            />
-                          </label>
-                          <button
-                            type="submit"
-                            disabled={(!input.trim() && !screenshotDataUrl) || sending}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-900 text-white transition-colors hover:bg-neutral-800 disabled:opacity-40"
-                            aria-label="Send message"
-                          >
-                            <Send size={18} />
-                          </button>
-                        </div>
+                        <button
+                          type="submit"
+                          disabled={(!input.trim() && !screenshotDataUrl) || sending}
+                          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center border transition-all disabled:opacity-35 ${
+                            !input.trim() && !screenshotDataUrl
+                              ? 'border-neutral-300 text-neutral-300'
+                              : 'border-neutral-900 bg-neutral-900 text-white hover:bg-neutral-800'
+                          }`}
+                          aria-label="Send message"
+                        >
+                          <Send size={18} strokeWidth={1.75} />
+                        </button>
                       </div>
                       {isDragActive ? (
-                        <p className="mt-2 text-center text-[11px] text-neutral-500">{t('chat.dropImage')}</p>
+                        <p className="mt-3 text-center text-[11px] text-neutral-500">{t('chat.dropImage')}</p>
                       ) : null}
                     </form>
 
                     {error ? (
-                      <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
+                      <p className="mt-4 border border-red-200/80 bg-red-50/80 px-3 py-2 text-xs text-red-800">
+                        {error}
+                      </p>
                     ) : null}
                   </div>
                 </div>
               </section>
             </div>
           </div>
-        </div>
       </section>
 
-      <footer className="py-10 sm:py-12 px-4 sm:px-6 border-t border-black/10 bg-white flex flex-col justify-center">
+      <footer className="flex flex-col justify-center border-t border-neutral-900/10 bg-[#f5f4f0] px-4 py-10 sm:px-6 sm:py-12">
         <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
           <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left flex-1">
             {t('footer.copyright')}

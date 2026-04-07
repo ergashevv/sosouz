@@ -87,6 +87,7 @@ export const translations: InternalDict = {
     uz: "Reyting keshida hozir dunyo boʻyicha {loaded} ta universitet bor (toʻliq roʻyxat — {target} gacha). Mamlakat filtri uchun kengroq natija berish uchun serverda reytingni yangilang — oy allaqachon sinxron boʻlgan boʻlsa /api/rankings/sync ni force bilan ishga tushiring.",
   },
 
+  "chat.sectionEyebrow": { en: "SOSO assistant", ru: "Помощник SOSO", uz: "SOSO yordamchisi" },
   "chat.title": { en: "AI advisor", ru: "ИИ‑советник", uz: "AI maslahatchi" },
   "chat.subtitle": {
     en: "Universities, admissions, and next steps",
@@ -94,7 +95,22 @@ export const translations: InternalDict = {
     uz: "Universitetlar, qabul va keyingi qadamlar",
   },
   "chat.focus": { en: "Focus", ru: "Фокус", uz: "Fokus" },
-  "chat.regionLabel": { en: "List region", ru: "Страна списка", uz: "Roʻyxat mamlakati" },
+  "chat.regionLabel": {
+    en: "Country for recommendations",
+    ru: "Страна для подборки",
+    uz: "Tavsiyalar uchun mamlakat",
+  },
+  "chat.regionHint": {
+    en: "We only suggest universities that exist in SOSO’s directory for this country (rankings or Hipolabs). Pick another country here if you want a different list.",
+    ru: "Мы советуем только те вузы, которые есть в каталоге SOSO для выбранной страны. Смените страну, если нужна другая подборка.",
+    uz: "AI faqat SOSO katalogidagi shu mamlakat universitetlarini tavsiya qiladi (reyting yoki ochiq bazadan). Boshqa davlat boʻyicha roʻyxat kerak boʻlsa, shuni oʻzgartiring.",
+  },
+  "chat.regionInUse": {
+    en: "Recommendations use the list for",
+    ru: "Подборка по списку для",
+    uz: "Tavsiyalar roʻyxati",
+  },
+  "chat.regionChange": { en: "Change country", ru: "Сменить страну", uz: "Mamlakatni almashtirish" },
   "chat.regionPlaceholder": {
     en: "e.g. United Kingdom",
     ru: "напр. United Kingdom",
@@ -115,6 +131,8 @@ export const translations: InternalDict = {
   "chat.loadingWorkspace": { en: "Loading your AI workspace…", ru: "Загрузка чата…", uz: "Yuklanmoqda…" },
   "chat.navActive": { en: "AI Chat", ru: "ИИ‑чат", uz: "AI chat" },
   "chat.langShort": { en: "Lang", ru: "Яз.", uz: "Til" },
+  "chat.youLabel": { en: "You", ru: "Вы", uz: "Siz" },
+  "chat.threadsLabel": { en: "Threads", ru: "Темы", uz: "Mavzular" },
 
   "dataFreshness.badge": { en: "Data snapshot", ru: "Снимок данных", uz: "Maʼlumot holati" },
   "dataFreshness.profileBuilt": { en: "Profile built", ru: "Профиль собран", uz: "Profil tuzilgan" },
