@@ -177,12 +177,12 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
 
             <button
               type="button"
-              className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-none border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-black transition-colors"
+              className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-linear-to-b from-white to-neutral-50 text-neutral-600 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-all hover:border-neutral-300 hover:text-black hover:shadow-[0_4px_10px_rgba(0,0,0,0.1)] active:scale-[0.98]"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
+              {mobileMenuOpen ? <X size={15} strokeWidth={2.2} /> : <Menu size={15} strokeWidth={2.2} />}
             </button>
             </div>
 
