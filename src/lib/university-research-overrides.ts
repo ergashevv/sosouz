@@ -54,12 +54,25 @@ export function getResearchTuitionOverride(university: string, lang: Language): 
   if (!isNationalUniversityOfUzbekistan(university)) return null;
 
   if (lang === "uz") {
-    return `Taxminan 19,2–28,5 mln so‘m/yil (kunduzgi bakalavr, ko‘pchilik yo‘nalishlar; DTM jadvali, OTM 314). Aniq summa — tanlangan yo‘nalishga qarab. Jadval: ${NUU_UZBMB_CATALOG_URL} · Shartnoma: shartnoma.nuu.uz`;
+    return (
+      "Yillik to‘lov-kontrakt: taxminan 19 200 000 so‘mdan 28 500 000 so‘mgacha " +
+      "(o'zbek so'mi, AQSH dollari emas). Bu — ko'pchilik kunduzgi bakalavr yo'nalishlari uchun rasmiy DTM/BBA katalogidagi oraliq; OTM kodi 314. " +
+      "Aniq summa tanlangan yo‘nalishga qarab farq qiladi. "
+    ).concat(`To‘liq jadval: ${NUU_UZBMB_CATALOG_URL}. Onlayn shartnoma: shartnoma.nuu.uz`);
   }
 
   if (lang === "ru") {
-    return `Около 19,2–28,5 млн сум/год (очная бакалавриат, типичный диапазон по каталогу DTM, вуз №314). Точная сумма — по направлению. Каталог: ${NUU_UZBMB_CATALOG_URL} · Контракт: shartnoma.nuu.uz`;
+    return (
+      "Годовой контракт: примерно от 19 200 000 до 28 500 000 сумов в год " +
+      "(узбекская национальная валюта, не доллары США). Для многих очных программ бакалавриата — по официальному каталогу DTM, вуз №314. " +
+      "Точная сумма зависит от направления. "
+    ).concat(`Таблица: ${NUU_UZBMB_CATALOG_URL}. Онлайн-контракт: shartnoma.nuu.uz`);
   }
 
-  return `About 19.2–28.5M UZS/year (full-time bachelor, typical range in the DTM catalog — university 314). Exact fee depends on your program. Table: ${NUU_UZBMB_CATALOG_URL} · Contract: shartnoma.nuu.uz`;
+  return (
+    "Annual contract tuition: about 19,200,000 to 28,500,000 UZS per year " +
+    "(Uzbek soum — Uzbekistan national currency, not US dollars). " +
+    "That range covers many full-time bachelor programs in the official DTM/BBA catalog; this university is listed as no. 314. " +
+    "Your exact amount depends on the program you choose. "
+  ).concat(`Full table: ${NUU_UZBMB_CATALOG_URL}. Contract portal: shartnoma.nuu.uz`);
 }
