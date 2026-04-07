@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ChatWorkspace from "@/components/ChatWorkspace";
 import { authFetch } from "@/lib/client-auth";
@@ -56,5 +56,9 @@ export default function ChatPage() {
     return <div className="min-h-screen bg-white" />;
   }
 
-  return <ChatWorkspace user={user} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <ChatWorkspace user={user} />
+    </Suspense>
+  );
 }

@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { fetchUniversityByName, getLogoUrl, getFallbackLogoUrl } from '@/lib/api';
+import { getSiteUrl } from '@/lib/site';
 import { performResearch } from '@/lib/research';
 import { GraduationCap } from 'lucide-react';
 import Link from 'next/link';
@@ -11,6 +13,47 @@ import { headers } from 'next/headers';
 interface UniversityPageProps {
   params: Promise<{ name: string }>;
   searchParams: Promise<{ lang?: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ name: string }>;
+}): Promise<Metadata> {
+  const { name } = await params;
+  const decodedName = decodeURIComponent(name);
+  const basicInfo = await fetchUniversityByName(decodedName);
+  const site = getSiteUrl();
+  const canonicalPath = `/university/${name}`;
+
+  if (!basicInfo) {
+    return {
+      title: decodedName,
+      description: `Find "${decodedName}" and explore universities worldwide on SOSO.`,
+      robots: { index: false, follow: true },
+      alternates: { canonical: `${site}${canonicalPath}` },
+    };
+  }
+
+  const title = `${basicInfo.name} — ${basicInfo.country}`;
+  const description = `Profile for ${basicInfo.name} in ${basicInfo.country}: official links, discovery data, and research context on SOSO.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `${site}${canonicalPath}` },
+    openGraph: {
+      title: `${basicInfo.name} | SOSO`,
+      description,
+      url: canonicalPath,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${basicInfo.name} | SOSO`,
+      description,
+    },
+  };
 }
 
 function LoadingState() {

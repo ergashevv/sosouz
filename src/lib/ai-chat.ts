@@ -2,6 +2,8 @@ import "server-only";
 
 import { Buffer } from "buffer";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getAdvisorRankingUniversities } from "@/lib/rankings";
+import { canonicalCountryKey } from "@/lib/geoFilters";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
@@ -28,12 +30,19 @@ export interface AdvisorContext {
   officialWebsite?: string | null;
   programs?: string[];
   links?: AdvisorLink[];
+  /** National / list position when opened from rankings UI */
+  nationalRank?: number;
+  worldRank?: number;
+  rankingSourceUrl?: string | null;
 }
 
 interface PlatformUniversity {
   name: string;
   country: string;
   website: string | null;
+  national_rank?: number;
+  world_rank?: number;
+  ranking_source_url?: string | null;
 }
 
 function parseDataUrl(dataUrl: string) {
@@ -48,7 +57,7 @@ function parseDataUrl(dataUrl: string) {
   return { mimeType, base64 };
 }
 
-async function fetchPlatformUniversities(country: string): Promise<PlatformUniversity[]> {
+async function fetchHipoUniversities(country: string): Promise<PlatformUniversity[]> {
   const target = country.trim();
   if (!target) return [];
 
@@ -77,6 +86,46 @@ async function fetchPlatformUniversities(country: string): Promise<PlatformUnive
     .slice(0, 80);
 }
 
+async function resolvePlatformUniversities(country: string): Promise<{
+  universities: PlatformUniversity[];
+  listOrigin: "soso-country-ranking" | "soso-world-slice" | "hipolabs";
+}> {
+  const target = country.trim();
+  if (!target) {
+    return { universities: [], listOrigin: "hipolabs" };
+  }
+
+  const ranking = await getAdvisorRankingUniversities({ filterCountry: target });
+  if (ranking.rows.length > 0) {
+    const listOrigin = ranking.source === "country-cache" ? "soso-country-ranking" : "soso-world-slice";
+    return {
+      listOrigin,
+      universities: ranking.rows.slice(0, 80).map((row) => ({
+        name: row.university_name,
+        country: row.country,
+        website: row.official_website,
+        national_rank: row.rank,
+        world_rank: row.world_rank,
+        ranking_source_url: row.source_url,
+      })),
+    };
+  }
+
+  return {
+    listOrigin: "hipolabs",
+    universities: await fetchHipoUniversities(target),
+  };
+}
+
+function domainFromWebsite(url: string | null | undefined): string | undefined {
+  if (!url?.trim()) return undefined;
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return undefined;
+  }
+}
+
 function buildConversationLog(messages: AdvisorMessage[]) {
   return messages
     .map((message) => `${message.role === "assistant" ? "AI" : "User"}: ${message.content}`)
@@ -86,17 +135,26 @@ function buildConversationLog(messages: AdvisorMessage[]) {
 function buildSystemPrompt(
   language: "uz" | "ru" | "en",
   recommendationCountry: string,
+  listOrigin: "soso-country-ranking" | "soso-world-slice" | "hipolabs",
   platformUniversities: PlatformUniversity[],
   context?: AdvisorContext,
 ) {
+  const resolvedDomain =
+    context?.domain ||
+    domainFromWebsite(context?.officialWebsite ?? null) ||
+    "unknown";
+
   const contextBlock = JSON.stringify(
     {
       focused_university: context?.name
         ? {
             name: context.name,
             country: context.country || recommendationCountry,
-            domain: context.domain || "unknown",
+            domain: resolvedDomain,
             official_website: context.officialWebsite || null,
+            national_rank: context.nationalRank ?? null,
+            world_rank: context.worldRank ?? null,
+            ranking_source_url: context.rankingSourceUrl || null,
             top_programs: context.programs || [],
           }
         : null,
@@ -111,7 +169,17 @@ function buildSystemPrompt(
     name: uni.name,
     country: uni.country,
     website: uni.website,
+    national_rank: uni.national_rank ?? null,
+    world_rank: uni.world_rank ?? null,
+    ranking_source_url: uni.ranking_source_url ?? null,
   }));
+
+  const originNote =
+    listOrigin === "soso-country-ranking"
+      ? "PLATFORM_UNIVERSITIES is from SOSO national ranking cache (trusted list for this country). Prefer higher-ranked options when they fit the student's goals. Ranks are informational only—do not invent extra ranking claims."
+      : listOrigin === "soso-world-slice"
+        ? "PLATFORM_UNIVERSITIES is the intersection of SOSO world ranking data with this country (may be shorter than a full national list)."
+        : "PLATFORM_UNIVERSITIES is from the Hipolabs open directory for this country (broad list, not a formal ranking). Do not treat list order as world rank.";
 
   return `You are SOSO AI Student Advisor.
 Language: ${language.toUpperCase()}.
@@ -125,15 +193,20 @@ Main job:
 Hard rules:
 1) For university recommendations, ONLY use universities from PLATFORM_UNIVERSITIES.
 2) If user asks universities outside the list, clearly say you can only recommend from platform data.
-3) Prefer official links and provided platform links.
+3) Prefer official links (website / ranking_source_url when present) and provided platform links.
 4) Never invent fees, deadlines, or scholarship facts.
-5) End every answer with "Next steps" checklist (2-5 bullets).
+5) When national_rank or world_rank appear on a row, you may cite them as shown—do not extrapolate ranks for other schools.
+6) End every answer with "Next steps" checklist (2-5 bullets).
+
+Data note:
+${originNote}
 
 Current context:
 ${contextBlock}
 
-Recommendation country:
+Recommendation country (filter):
 ${recommendationCountry}
+Canonical country key (for matching): ${canonicalCountryKey(recommendationCountry)}
 
 PLATFORM_UNIVERSITIES:
 ${JSON.stringify(universityList, null, 2)}
@@ -154,10 +227,13 @@ export async function generateAdvisorReply(args: {
     throw new Error("Conversation is empty.");
   }
 
-  const platformUniversities = await fetchPlatformUniversities(args.recommendationCountry);
+  const { universities: platformUniversities, listOrigin } = await resolvePlatformUniversities(
+    args.recommendationCountry,
+  );
   const systemPrompt = buildSystemPrompt(
     args.language,
     args.recommendationCountry,
+    listOrigin,
     platformUniversities,
     args.context,
   );

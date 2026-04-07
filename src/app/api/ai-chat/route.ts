@@ -16,6 +16,9 @@ interface AiChatPayload {
     officialWebsite?: string | null;
     programs?: string[];
     links?: Array<{ title: string; url: string }>;
+    nationalRank?: number;
+    worldRank?: number;
+    rankingSourceUrl?: string | null;
   };
 }
 

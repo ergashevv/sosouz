@@ -3,7 +3,7 @@
 import { DragEvent, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Outfit } from 'next/font/google';
 import {
   Loader2,
@@ -28,6 +28,17 @@ interface ChatWorkspaceProps {
     phoneCountry: string;
   };
 }
+
+/** Mirrors server `AdvisorContext` fields we send from rankings deep links. */
+type ClientAdvisorContextPayload = {
+  name: string;
+  country?: string;
+  officialWebsite?: string | null;
+  nationalRank?: number;
+  worldRank?: number;
+  rankingSourceUrl?: string | null;
+  domain?: string;
+};
 
 interface ConversationItem {
   id: string;
@@ -73,6 +84,7 @@ async function fileToDataUrl(file: File): Promise<string> {
 
 export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { language, setLanguage, t } = useLanguage();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -88,6 +100,53 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const dragDepthRef = useRef(0);
+  const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
+
+  useEffect(() => {
+    const raw = searchParams.get('advisorContext');
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(decodeURIComponent(raw)) as unknown;
+      if (!parsed || typeof parsed !== 'object') return;
+      const o = parsed as Record<string, unknown>;
+      const name = typeof o.name === 'string' ? o.name.trim() : '';
+      if (!name) return;
+      const country = typeof o.country === 'string' ? o.country.trim() : undefined;
+      const officialWebsite =
+        o.officialWebsite === null
+          ? null
+          : typeof o.officialWebsite === 'string'
+            ? o.officialWebsite.trim() || null
+            : undefined;
+      const nationalRank =
+        typeof o.nationalRank === 'number' && Number.isFinite(o.nationalRank)
+          ? Math.trunc(o.nationalRank)
+          : undefined;
+      const worldRank =
+        typeof o.worldRank === 'number' && Number.isFinite(o.worldRank)
+          ? Math.trunc(o.worldRank)
+          : undefined;
+      const rankingSourceUrl =
+        o.rankingSourceUrl === null
+          ? null
+          : typeof o.rankingSourceUrl === 'string'
+            ? o.rankingSourceUrl.trim() || null
+            : undefined;
+      const domain = typeof o.domain === 'string' ? o.domain.trim() : undefined;
+      setAdvisorContext({
+        name,
+        country,
+        officialWebsite: officialWebsite ?? undefined,
+        nationalRank,
+        worldRank,
+        rankingSourceUrl: rankingSourceUrl ?? undefined,
+        domain,
+      });
+      if (country) setCountry(country);
+    } catch {
+      /* ignore malformed advisorContext */
+    }
+  }, [searchParams]);
 
   const handleMediaFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -237,6 +296,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
           language,
           screenshotDataUrl: pendingScreenshotDataUrl,
           screenshotName: pendingScreenshotName,
+          advisorContext: advisorContext ?? undefined,
         }),
       });
       const payload = (await response.json()) as {
@@ -433,14 +493,25 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     <MessageCircle size={16} className="text-neutral-700" />
                     <h1 className="text-sm sm:text-base font-semibold text-neutral-900">SOSO AI Chat</h1>
                   </div>
-                  <div className="flex items-center gap-2 border border-neutral-200 bg-white px-3 py-2 sm:w-[260px] max-w-full">
-                    <Search size={14} className="text-neutral-400" />
-                    <input
-                      value={country}
-                      onChange={(event) => setCountry(event.target.value)}
-                      className="w-full bg-transparent text-xs text-neutral-800 outline-none placeholder:text-neutral-400"
-                      placeholder="Recommendation country"
-                    />
+                  <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end w-full sm:w-auto">
+                    {advisorContext ? (
+                      <div className="text-[11px] text-neutral-600 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 shadow-sm max-w-full sm:max-w-[280px]">
+                        <span className="font-semibold text-neutral-800">Focus:</span>{' '}
+                        <span className="line-clamp-2">{advisorContext.name}</span>
+                        {typeof advisorContext.nationalRank === 'number' ? (
+                          <span className="text-neutral-500"> · #{advisorContext.nationalRank}</span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <div className="flex items-center gap-2 border border-neutral-200 bg-white px-3 py-2 sm:w-[260px] max-w-full">
+                      <Search size={14} className="text-neutral-400" />
+                      <input
+                        value={country}
+                        onChange={(event) => setCountry(event.target.value)}
+                        className="w-full bg-transparent text-xs text-neutral-800 outline-none placeholder:text-neutral-400"
+                        placeholder="Recommendation country"
+                      />
+                    </div>
                   </div>
                 </div>
 

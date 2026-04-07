@@ -896,6 +896,97 @@ async function getCountryRankingSnapshotFromCache(args: {
   };
 }
 
+/** One row for SOSO AI advisor prompts (read from cache only). */
+export interface AdvisorRankingUniversityRow {
+  rank: number;
+  university_name: string;
+  country: string;
+  official_website: string | null;
+  world_rank?: number;
+  source_url: string | null;
+}
+
+export type AdvisorUniversityListSource = "country-cache" | "world-cache";
+
+function pickWorldRank(entry: RankingEntry): number | undefined {
+  const raw = entry as RankingEntry & { world_rank?: unknown };
+  return typeof raw.world_rank === "number" && Number.isFinite(raw.world_rank)
+    ? raw.world_rank
+    : undefined;
+}
+
+/**
+ * Read-only: universities from SOSO ranking snapshots for a country (no Serper/Gemini).
+ * Prefers national cache when present; otherwise slices the world snapshot by country.
+ */
+export async function getAdvisorRankingUniversities(args: {
+  filterCountry: string;
+  year?: number;
+  monthSnapshot?: string;
+}): Promise<{
+  rows: AdvisorRankingUniversityRow[];
+  source: AdvisorUniversityListSource | null;
+}> {
+  const label = args.filterCountry.trim();
+  if (!label) {
+    return { rows: [], source: null };
+  }
+
+  const slug = canonicalCountryKey(label);
+  const year = args.year ?? new Date().getUTCFullYear();
+
+  const countryHit = await getCountryRankingSnapshotFromCache({
+    countrySlug: slug,
+    year,
+    monthSnapshot: args.monthSnapshot,
+  });
+
+  if (countryHit && countryHit.snapshot.entries.length > 0) {
+    return {
+      source: "country-cache",
+      rows: countryHit.snapshot.entries.map((e) => ({
+        rank: e.rank,
+        university_name: e.university_name,
+        country: e.country,
+        official_website: e.official_website,
+        world_rank: pickWorldRank(e),
+        source_url: e.source_url,
+      })),
+    };
+  }
+
+  const world = await getRankingSnapshot({
+    dataset: "world-top-100",
+    year: args.year,
+    monthSnapshot: args.monthSnapshot,
+  });
+
+  if (!world) {
+    return { rows: [], source: null };
+  }
+
+  const filtered = world.snapshot.entries
+    .filter((e) => countryFilterMatches(e.country, label))
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, Math.min(100, WORLD_RANKING_ENTRY_COUNT));
+
+  if (filtered.length === 0) {
+    return { rows: [], source: null };
+  }
+
+  return {
+    source: "world-cache",
+    rows: filtered.map((e) => ({
+      rank: e.rank,
+      university_name: e.university_name,
+      country: e.country,
+      official_website: e.official_website,
+      world_rank: pickWorldRank(e),
+      source_url: e.source_url,
+    })),
+  };
+}
+
 /**
  * Returns a country-national ranking from cache, or builds and caches it (Serper + Gemini).
  */

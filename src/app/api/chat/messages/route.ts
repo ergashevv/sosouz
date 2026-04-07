@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSessionUserFromRequest } from "@/lib/auth";
-import { generateAdvisorReply } from "@/lib/ai-chat";
+import { generateAdvisorReply, type AdvisorContext } from "@/lib/ai-chat";
 import {
   parseChatMessageContent,
   serializeChatMessageContent,
@@ -16,6 +16,7 @@ interface SendMessagePayload {
   recommendationCountry?: string;
   screenshotDataUrl?: string;
   screenshotName?: string;
+  advisorContext?: unknown;
 }
 
 const ChatRole = {
@@ -55,6 +56,44 @@ const chatMessageRepo = (prisma as unknown as { chatMessage: ChatMessageReposito
 function coerceLanguage(value: unknown): "uz" | "ru" | "en" {
   if (value === "uz" || value === "ru" || value === "en") return value;
   return "uz";
+}
+
+function parseAdvisorContextPayload(raw: unknown): AdvisorContext | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const o = raw as Record<string, unknown>;
+  const name = typeof o.name === "string" ? o.name.trim() : "";
+  if (!name) return undefined;
+  const country = typeof o.country === "string" ? o.country.trim() : undefined;
+  const officialWebsite =
+    o.officialWebsite === null
+      ? null
+      : typeof o.officialWebsite === "string"
+        ? o.officialWebsite.trim() || null
+        : undefined;
+  const nationalRank =
+    typeof o.nationalRank === "number" && Number.isFinite(o.nationalRank)
+      ? Math.trunc(o.nationalRank)
+      : undefined;
+  const worldRank =
+    typeof o.worldRank === "number" && Number.isFinite(o.worldRank)
+      ? Math.trunc(o.worldRank)
+      : undefined;
+  const rankingSourceUrl =
+    o.rankingSourceUrl === null
+      ? null
+      : typeof o.rankingSourceUrl === "string"
+        ? o.rankingSourceUrl.trim() || null
+        : undefined;
+  const domain = typeof o.domain === "string" ? o.domain.trim() : undefined;
+  return {
+    name,
+    country,
+    officialWebsite: officialWebsite ?? undefined,
+    nationalRank,
+    worldRank,
+    rankingSourceUrl: rankingSourceUrl ?? undefined,
+    domain,
+  };
 }
 
 function buildConversationTitle(content: string): string {
@@ -148,10 +187,11 @@ export async function POST(request: Request) {
     });
 
     const language = coerceLanguage(payload.language);
+    const advisorFromPayload = parseAdvisorContextPayload(payload.advisorContext);
     const recommendationCountry =
       typeof payload.recommendationCountry === "string" && payload.recommendationCountry.trim()
         ? payload.recommendationCountry.trim()
-        : "United Kingdom";
+        : advisorFromPayload?.country || "United Kingdom";
 
     const assistantReply = await generateAdvisorReply({
       language,
@@ -170,6 +210,7 @@ export async function POST(request: Request) {
         })
         .filter((item): item is { role: "user" | "assistant"; content: string } => Boolean(item)),
       screenshotDataUrl,
+      context: advisorFromPayload,
     });
 
     const assistantMessage = await chatMessageRepo.create({

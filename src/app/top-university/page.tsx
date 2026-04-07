@@ -90,6 +90,7 @@ const pageCopy = {
     resultsTitle: "Universitetlar",
     summaryPrefix: "Hozirgi tanlov",
     worldRank: "Jahon reytingida: #{n}",
+    askAi: "AI chat",
   },
   en: {
     title: "Top Universities",
@@ -111,6 +112,7 @@ const pageCopy = {
     resultsTitle: "Universities",
     summaryPrefix: "Current selection",
     worldRank: "World rank: #{n}",
+    askAi: "Ask AI",
   },
   ru: {
     title: "Топ университеты",
@@ -132,6 +134,7 @@ const pageCopy = {
     resultsTitle: "Университеты",
     summaryPrefix: "Сейчас выбрано",
     worldRank: "Мировой рейтинг: #{n}",
+    askAi: "Спросить AI",
   },
 } as const;
 
@@ -169,6 +172,25 @@ function buildPageHref(args: { country: string; region: string; top: number; pag
   params.set("top", String(args.top));
   params.set("page", String(args.page));
   return `/top-university?${params.toString()}`;
+}
+
+function buildChatAdvisorHref(entry: RankingEntry) {
+  const params = new URLSearchParams();
+  params.set("country", entry.country);
+  params.set(
+    "advisorContext",
+    encodeURIComponent(
+      JSON.stringify({
+        name: entry.university_name,
+        country: entry.country,
+        officialWebsite: entry.official_website,
+        nationalRank: entry.rank,
+        worldRank: entry.world_rank,
+        rankingSourceUrl: entry.source_url,
+      }),
+    ),
+  );
+  return `/chat?${params.toString()}`;
 }
 
 const SKELETON_ROWS = 10;
@@ -539,7 +561,13 @@ export default function TopUniversityPage() {
                       ) : null}
                     </div>
 
-                    <div className="flex flex-col items-end gap-1 shrink-0 text-[12px]">
+                    <div className="flex flex-col items-end gap-2 shrink-0 text-[12px]">
+                      <Link
+                        href={buildChatAdvisorHref(entry)}
+                        className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-800 shadow-sm transition-colors hover:border-neutral-900 hover:bg-neutral-50"
+                      >
+                        {copy.askAi}
+                      </Link>
                       {entry.official_website ? (
                         <a
                           href={entry.official_website}
