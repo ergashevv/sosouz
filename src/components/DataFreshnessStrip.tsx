@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Clock3, Database } from "lucide-react";
 import type { Language } from "@/lib/i18n";
-import { translations } from "@/lib/i18n";
+import { translations, translateRefreshStatus } from "@/lib/i18n";
 
 function tr(key: string, lang: Language): string {
   const entry = translations[key];
@@ -114,6 +114,16 @@ export default function DataFreshnessStrip({
 
   if (!gen && !db && !periodLabel && !yearFallbackNote && !refreshStatus) return null;
 
+  const statusNorm = refreshStatus?.toLowerCase().trim() || "";
+  const statusPillClass =
+    statusNorm === "fresh"
+      ? "border-emerald-200/90 bg-emerald-50 text-emerald-900"
+      : statusNorm === "failed"
+        ? "border-red-200/90 bg-red-50 text-red-900"
+        : statusNorm === "stale" || statusNorm === "partial"
+          ? "border-amber-200/90 bg-amber-50 text-amber-950"
+          : "border-neutral-200 bg-white text-neutral-600";
+
   return (
     <aside
       className={`rounded-2xl border border-neutral-200 bg-neutral-50/90 px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2 sm:gap-2.5 text-xs text-neutral-600 ${className}`}
@@ -164,8 +174,11 @@ export default function DataFreshnessStrip({
         ) : null}
 
         {refreshStatus ? (
-          <span className="rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            {tr("uni.refresh_status", language)}: {refreshStatus}
+          <span
+            title={refreshStatus}
+            className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusPillClass}`}
+          >
+            {tr("uni.refresh_status", language)}: {translateRefreshStatus(refreshStatus, language)}
           </span>
         ) : null}
       </div>

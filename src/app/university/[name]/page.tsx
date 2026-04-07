@@ -176,7 +176,10 @@ async function UniversityContent({
   const domain = deriveDomain(basicInfo);
   let aiDetails: Awaited<ReturnType<typeof performResearch>> = null;
   try {
-    aiDetails = await performResearch(decodedName, basicInfo.country, domain, lang);
+    aiDetails = await performResearch(decodedName, basicInfo.country, domain, lang, {
+      domains: basicInfo.domains,
+      web_pages: basicInfo.web_pages,
+    });
   } catch (error) {
     console.error("Research fetch failed:", error);
   }

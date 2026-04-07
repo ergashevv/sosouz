@@ -8,6 +8,12 @@ import DataFreshnessStrip from '@/components/DataFreshnessStrip';
 import { University } from '@/lib/api';
 import { translations, type Language } from '@/lib/i18n';
 import type { YoutubeVideoPreview } from '@/lib/university-youtube';
+import {
+  clampHttpUrlToOfficial,
+  collectOfficialBases,
+  officialHomeUrl,
+  urlMatchesOfficialBases,
+} from '@/lib/official-url';
 
 export interface AIResearchData {
   tuition_fees?: string | null;
@@ -39,6 +45,46 @@ function t(key: string, lang: Language) {
   const entry = translations[key];
   if (!entry) return key;
   return entry[lang] || entry.en;
+}
+
+function heroTrustMeta(
+  aiDetails: AIResearchData | null,
+  lang: Language,
+): { label: string; textClass: string; iconClass: string } {
+  if (!aiDetails) {
+    return {
+      label: t('uni.hero_trust_pending', lang),
+      textClass: 'text-neutral-500',
+      iconClass: 'text-neutral-400',
+    };
+  }
+  const s = (aiDetails.refresh_status || '').toLowerCase().trim();
+  if (s === 'failed') {
+    return {
+      label: t('uni.hero_trust_incomplete', lang),
+      textClass: 'text-amber-800',
+      iconClass: 'text-amber-600',
+    };
+  }
+  if (s === 'partial' || s === 'stale') {
+    return {
+      label: t('uni.hero_trust_review', lang),
+      textClass: 'text-amber-800',
+      iconClass: 'text-amber-600',
+    };
+  }
+  if (s === 'fresh') {
+    return {
+      label: t('uni.hero_trust_verified', lang),
+      textClass: 'text-blue-600',
+      iconClass: 'text-blue-500',
+    };
+  }
+  return {
+    label: t('uni.hero_trust_general', lang),
+    textClass: 'text-neutral-600',
+    iconClass: 'text-blue-500',
+  };
 }
 
 function pad2(value: number): string {
@@ -340,13 +386,48 @@ export default function UniversityDetailView({
   youtubeVideos = null,
 }: UniversityDetailsProps) {
   const websiteFallback = basicInfo.web_pages?.[0] || null;
+  const officialBases = collectOfficialBases({
+    primaryDomain: domain,
+    domains: basicInfo.domains,
+    web_pages: basicInfo.web_pages,
+  });
+  const displayHome =
+    officialHomeUrl(officialBases, basicInfo.web_pages) ||
+    (websiteFallback
+      ? (() => {
+          try {
+            return new URL(websiteFallback).origin + '/';
+          } catch {
+            return '';
+          }
+        })()
+      : '') ||
+    (domain && domain !== 'unknown' ? `https://${domain}/` : '');
+  const linkFallbackForClamp = displayHome || websiteFallback || '';
+
   const normalizedPrograms = (aiDetails?.programs || [])
     .map((program) => normalizeProgram(program, websiteFallback))
-    .filter((program): program is NormalizedProgram => Boolean(program));
+    .filter((program): program is NormalizedProgram => Boolean(program))
+    .map((program) => ({
+      ...program,
+      link: program.link
+        ? clampHttpUrlToOfficial(program.link, officialBases, linkFallbackForClamp)
+        : null,
+    }));
   const normalizedSources = (aiDetails?.source_links || [])
     .map((source, index) => normalizeSource(source, index))
     .filter((source): source is NormalizedSource => Boolean(source))
-    .slice(0, 4);
+    .filter(
+      (source) =>
+        officialBases.length === 0 || urlMatchesOfficialBases(source.link, officialBases),
+    )
+    .slice(0, 6);
+  const heroTrust = heroTrustMeta(aiDetails, lang);
+  const overviewBody = aiDetails?.detailed_overview?.trim() || '';
+  const confidencePct =
+    typeof aiDetails?.data_confidence === 'number' && Number.isFinite(aiDetails.data_confidence)
+      ? Math.min(100, Math.max(0, Math.round(aiDetails.data_confidence * 100)))
+      : null;
   const nextRefreshAt =
     aiDetails?.next_refresh_at ? new Date(aiDetails.next_refresh_at) : null;
   const formattedNextRefresh =
@@ -445,8 +526,11 @@ export default function UniversityDetailView({
               <div className="space-y-4 sm:space-y-6 flex-1 min-w-0">
                 <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-4 flex-wrap">
                    <div className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide">{t('uni.profile', lang)}</div>
-                   <div className="text-xs font-semibold text-neutral-500 flex items-center gap-2">
-                      <Shield size={14} className="text-blue-500" /> {t('uni.verified', lang)}
+                   <div
+                     className={`text-xs font-semibold flex items-center gap-2 ${heroTrust.textClass}`}
+                   >
+                      <Shield size={14} className={`shrink-0 ${heroTrust.iconClass}`} aria-hidden />{' '}
+                      <span className="text-left">{heroTrust.label}</span>
                    </div>
                 </div>
                 <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-neutral-900 tracking-tight leading-[1.15] max-w-4xl wrap-break-word">
@@ -505,9 +589,35 @@ export default function UniversityDetailView({
              </div>
              <div className="p-5 sm:p-8 rounded-2xl border border-neutral-200 bg-white shadow-sm group">
                 <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-4">{t('uni.overview', lang)}</div>
-                <p className="text-base sm:text-xl text-neutral-700 leading-relaxed font-medium transition-colors">
-                   {aiDetails?.detailed_overview || "..."}
-                </p>
+                {overviewBody ? (
+                  <p className="text-base sm:text-xl text-neutral-700 leading-relaxed font-medium transition-colors">
+                    {overviewBody}
+                  </p>
+                ) : (
+                  <p className="text-base sm:text-lg text-neutral-500 leading-relaxed font-medium italic">
+                    {t('uni.overview_empty', lang)}
+                  </p>
+                )}
+                {confidencePct !== null ? (
+                  <div className="mt-6 space-y-1.5" aria-label={t('uni.confidence', lang)}>
+                    <div className="flex items-baseline justify-between gap-3 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">
+                      <span>{t('uni.confidence', lang)}</span>
+                      <span className="tabular-nums text-neutral-800">{confidencePct}%</span>
+                    </div>
+                    <div
+                      className="h-1.5 overflow-hidden rounded-full bg-neutral-200"
+                      role="presentation"
+                    >
+                      <div
+                        className="h-full rounded-full bg-blue-600 transition-[width] duration-500"
+                        style={{ width: `${confidencePct}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] leading-snug text-neutral-400">
+                      {t('uni.confidence_hint', lang)}
+                    </p>
+                  </div>
+                ) : null}
                 <div className="mt-8 pt-6 border-t border-neutral-100 space-y-3">
                   <DataFreshnessStrip
                     language={lang}
@@ -644,12 +754,19 @@ export default function UniversityDetailView({
                     aiDetails.scholarships.map((s, i) => (
                       <div key={i} className="p-5 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-8 rounded-3xl border border-neutral-100 bg-white shadow-sm hover:shadow-md hover:border-blue-100 transition-all">
                          <div className="space-y-3">
-                            <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Scholarship Opportunity</div>
+                            <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+                              {t('uni.scholarship_tag', lang)}
+                            </div>
                             <h4 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight wrap-break-word">{s.name}</h4>
                          </div>
                          <a 
-                          href={s.link} 
+                          href={
+                            clampHttpUrlToOfficial(s.link, officialBases, linkFallbackForClamp) ||
+                            websiteFallback ||
+                            '#'
+                          }
                           target="_blank" 
+                          rel="noopener noreferrer"
                           className="w-full md:w-auto px-6 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-bold hover:bg-black transition-colors flex items-center justify-center"
                          >
                            {t('uni.visit', lang)} <ExternalLink size={14} className="ml-2" />
@@ -658,7 +775,9 @@ export default function UniversityDetailView({
                     ))
                  ) : (
                     <div className="p-20 text-center rounded-3xl border-2 border-dashed border-neutral-100 bg-neutral-50">
-                       <p className="text-sm font-medium text-neutral-400">No active scholarships detected for this university.</p>
+                       <p className="text-sm font-medium text-neutral-500 leading-relaxed max-w-prose mx-auto">
+                         {t('uni.scholarships_empty', lang)}
+                       </p>
                     </div>
                  )}
              </div>
@@ -795,17 +914,12 @@ export default function UniversityDetailView({
               ) : (
                 <p className="text-xs text-white/60">{t('uni.not_specified', lang)}</p>
               )}
-              {typeof aiDetails?.data_confidence === 'number' ? (
-                <p className="text-[11px] text-white/50">
-                  {t('uni.confidence', lang)}: {Math.round(aiDetails.data_confidence * 100)}%
-                </p>
-              ) : null}
             </div>
 
             <div className="relative z-10 flex gap-3 items-start rounded-2xl bg-white/7 px-4 py-3.5">
-              <Info size={17} className="text-white/65 shrink-0 mt-0.5" />
+              <Info size={17} className="text-white/65 shrink-0 mt-0.5" aria-hidden />
               <p className="text-[11px] text-white/62 leading-relaxed">
-                Note: While we strive for accuracy, please verify all specific program details and deadlines on the official university website.
+                {t('uni.disclaimer_official', lang)}
               </p>
             </div>
           </div>

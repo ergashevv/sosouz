@@ -3,6 +3,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Prisma } from "@prisma/client";
 import type { Language } from "@/lib/i18n";
 import { getResearchTuitionOverride } from "@/lib/university-research-overrides";
+import {
+  clampResearchUrlToOfficial,
+  collectOfficialBases,
+  officialHomeUrl,
+  urlMatchesOfficialBases,
+} from "@/lib/official-url";
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -120,6 +126,30 @@ function buildSourceLinks(rawResults: unknown): ResearchSource[] {
   return sources;
 }
 
+function filterOrganicByOfficialHost(organic: unknown[], bases: string[]): unknown[] {
+  if (!bases.length) return organic;
+  return organic.filter((item) => {
+    if (!item || typeof item !== "object") return false;
+    const link = (item as { link?: unknown }).link;
+    if (typeof link !== "string" || !link.trim()) return false;
+    return urlMatchesOfficialBases(link, bases);
+  });
+}
+
+function clampResearchLinks(output: ResearchOutput, bases: string[], homeUrl: string): ResearchOutput {
+  return {
+    ...output,
+    programs: output.programs.map((p) => ({
+      ...p,
+      link: clampResearchUrlToOfficial(p.link, bases, homeUrl),
+    })),
+    available_scholarships: output.available_scholarships.map((s) => ({
+      ...s,
+      link: clampResearchUrlToOfficial(s.link, bases, homeUrl),
+    })),
+  };
+}
+
 function extractJsonObject(input: string) {
   const cleaned = input.replace(/```json|```/g, "").trim();
   const firstBrace = cleaned.indexOf("{");
@@ -133,10 +163,10 @@ function extractJsonObject(input: string) {
 
 function normalizeResearchOutput(
   raw: unknown,
-  university: string,
-  fallbackDomain?: string,
+  ctx: { university: string; homeUrl: string; bases: string[] },
 ): ResearchOutput {
   const safeRaw = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const linkFallback = ctx.homeUrl;
 
   const rawScholarships = Array.isArray(safeRaw.available_scholarships)
     ? safeRaw.available_scholarships
@@ -151,7 +181,7 @@ function normalizeResearchOutput(
 
       return {
         name,
-        link: link || `https://${fallbackDomain || "google.com"}`,
+        link: link ? clampResearchUrlToOfficial(link, ctx.bases, linkFallback) : linkFallback,
       };
     })
     .filter((item): item is { name: string; link: string } => Boolean(item));
@@ -164,7 +194,7 @@ function normalizeResearchOutput(
         if (!name) return null;
         return {
           name,
-          link: `https://${fallbackDomain || "google.com"}`,
+          link: linkFallback,
         };
       }
 
@@ -176,7 +206,7 @@ function normalizeResearchOutput(
 
       return {
         name,
-        link: link || `https://${fallbackDomain || "google.com"}`,
+        link: link ? clampResearchUrlToOfficial(link, ctx.bases, linkFallback) : linkFallback,
       };
     })
     .filter((program): program is ProgramLink => Boolean(program))
@@ -218,11 +248,16 @@ function normalizeResearchOutput(
     available_scholarships:
       scholarships.length > 0
         ? scholarships
-        : [{ name: "International Excellence Award", link: `https://${fallbackDomain || "google.com"}` }],
+        : [{ name: "International Excellence Award", link: linkFallback }],
     programs:
       programs.length > 0
         ? programs
-        : [{ name: "Information not specified by official sources", link: `https://${fallbackDomain || "google.com"}` }],
+        : [
+            {
+              name: "Information not specified by official sources",
+              link: linkFallback,
+            },
+          ],
     admission_requirements:
       Object.keys(admissionRequirements).length > 0
         ? admissionRequirements
@@ -234,7 +269,7 @@ function normalizeResearchOutput(
     detailed_overview:
       typeof safeRaw.detailed_overview === "string" && safeRaw.detailed_overview.trim()
         ? safeRaw.detailed_overview.trim()
-        : `${university} offers world-class education with a focus on student success and global leadership.`,
+        : `${ctx.university} offers world-class education with a focus on student success and global leadership.`,
     confidence_score: confidenceScore,
   };
 }
@@ -373,6 +408,7 @@ export async function performResearch(
   country?: string,
   domain?: string,
   lang: Language = "en",
+  trust?: { domains?: string[] | null; web_pages?: string[] | null },
 ) {
   const safeLang = coerceLanguage(lang);
   const cacheKey = toLocalizedCacheKey(university, safeLang);
@@ -411,6 +447,38 @@ export async function performResearch(
   }
 
   try {
+    const bases = collectOfficialBases({
+      primaryDomain: domain || "",
+      domains: trust?.domains,
+      web_pages: trust?.web_pages,
+    });
+    const domainOnly =
+      domain && domain !== "unknown"
+        ? domain.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./i, "")
+        : "";
+    const homeUrl =
+      officialHomeUrl(bases, trust?.web_pages) ||
+      (domainOnly ? `https://${domainOnly}/` : "");
+    const safeHome =
+      homeUrl ||
+      (() => {
+        const p = trust?.web_pages?.[0];
+        if (!p) return "";
+        try {
+          return new URL(p).origin + "/";
+        } catch {
+          return "";
+        }
+      })();
+    const linkClampFallback =
+      safeHome ||
+      (domainOnly ? `https://${domainOnly}/` : "") ||
+      (bases[0] ? `https://${bases[0]}/` : "");
+
+    if (!linkClampFallback.trim()) {
+      throw new Error("performResearch: could not resolve official homepage for link validation");
+    }
+
     const siteConstraint = domain && domain !== "unknown" ? ` site:${domain}` : "";
     const query =
       `Official tuition fees, scholarships, study programs, admission requirements, and deadlines ` +
@@ -434,11 +502,21 @@ export async function performResearch(
       serperData && typeof serperData === "object" && Array.isArray((serperData as { organic?: unknown }).organic)
         ? (serperData as { organic: unknown[] }).organic
         : [];
-    const sources = buildSourceLinks(searchResults);
-    const snippetBlock = sources
+    const organicForOfficial = filterOrganicByOfficialHost(searchResults, bases);
+    const organicForGemini =
+      organicForOfficial.length > 0 ? organicForOfficial : searchResults.slice(0, 8);
+    const sourcesForStore = buildSourceLinks(
+      organicForOfficial.length > 0 ? organicForOfficial : [],
+    );
+    const snippetSources = buildSourceLinks(organicForGemini.slice(0, 8));
+    const snippetBlock = snippetSources
       .slice(0, 6)
       .map((source, index) => `${index + 1}. ${source.title}\nURL: ${source.link}\nSnippet: ${source.snippet}`)
       .join("\n\n");
+
+    const officialHomeLine = safeHome
+      ? `Official homepage (use this exact URL when a specific page URL is unknown): ${safeHome}`
+      : "Official homepage: not available — keep confidence_score low.";
 
     const prompt = `You are a senior education analyst. Build a concise but complete university profile.
 
@@ -462,9 +540,10 @@ Return ONLY valid JSON with this exact schema:
 
 Constraints:
 - detailed_overview must be 4-5 sentences in ${safeLang.toUpperCase()}.
-- Include 4-8 programs, and every program must include a direct official URL for that specific program page (same university domain).
-- Include 2-5 scholarships if available.
-- confidence_score must be between 0 and 1.
+- Include 4-8 programs. Each program "link" MUST be copied exactly from a URL in Sources, OR ${officialHomeLine}
+- Never invent pathnames or guess URLs. Wrong links break the site.
+- Include 2-5 scholarships if available; each scholarship "link" MUST be a URL from Sources or the official homepage above.
+- confidence_score must be between 0 and 1; lower it if you had to fall back to the homepage only.
 - Do not use markdown.
 
 Sources:
@@ -472,7 +551,12 @@ ${snippetBlock || "No external snippets available."}`;
 
     const text = await generateWithGemini(prompt);
     const parsed = JSON.parse(extractJsonObject(text));
-    const structuredData = normalizeResearchOutput(parsed, university, domain);
+    const structuredRaw = normalizeResearchOutput(parsed, {
+      university,
+      homeUrl: linkClampFallback,
+      bases,
+    });
+    const structuredData = clampResearchLinks(structuredRaw, bases, linkClampFallback);
     const tuitionForStorage =
       getResearchTuitionOverride(university, safeLang) ?? structuredData.annual_tuition_usd;
 
@@ -489,7 +573,7 @@ ${snippetBlock || "No external snippets available."}`;
           admission_requirements: structuredData.admission_requirements,
           admission_deadline: structuredData.admission_deadline,
           detailed_overview: structuredData.detailed_overview,
-          source_links: sources as unknown as Prisma.InputJsonValue,
+          source_links: sourcesForStore as unknown as Prisma.InputJsonValue,
           data_confidence: structuredData.confidence_score,
           refresh_status: "fresh",
           next_refresh_at: computeNextRefresh(),
@@ -505,7 +589,7 @@ ${snippetBlock || "No external snippets available."}`;
           admission_requirements: structuredData.admission_requirements,
           admission_deadline: structuredData.admission_deadline,
           detailed_overview: structuredData.detailed_overview,
-          source_links: sources as unknown as Prisma.InputJsonValue,
+          source_links: sourcesForStore as unknown as Prisma.InputJsonValue,
           data_confidence: structuredData.confidence_score,
           refresh_status: "fresh",
           next_refresh_at: computeNextRefresh(),

@@ -205,6 +205,62 @@ export const translations: InternalDict = {
     uz: "Video ijrosi YouTube kontentini yuklashi mumkin. Uchinchi tomon xizmatlari haqida foydalanish shartlarimizda.",
   },
 
+  "uni.hero_trust_verified": {
+    en: "Summary from official sources",
+    ru: "Сводка по официальным источникам",
+    uz: "Rasmiy manbalar asosidagi xulosa",
+  },
+  "uni.hero_trust_review": {
+    en: "Confirm details on the official site",
+    ru: "Проверьте детали на официальном сайте",
+    uz: "Batafsilni rasmiy saytda tekshiring",
+  },
+  "uni.hero_trust_incomplete": {
+    en: "Some sections could not be filled",
+    ru: "Часть разделов не удалось заполнить",
+    uz: "Baʼzi boʻlimlar toʻldirilmadi",
+  },
+  "uni.hero_trust_pending": {
+    en: "Profile is still being built",
+    ru: "Профиль ещё формируется",
+    uz: "Profil hali toʻldirilmoqda",
+  },
+  "uni.hero_trust_general": {
+    en: "Overview from available data",
+    ru: "Обзор по доступным данным",
+    uz: "Mavjud maʼlumotlar boʻyicha umumiy qarash",
+  },
+  "uni.refresh_status_value_fresh": { en: "Up to date", ru: "Актуально", uz: "Dolzarb" },
+  "uni.refresh_status_value_stale": { en: "May be outdated", ru: "Может устареть", uz: "Eskirgan boʻlishi mumkin" },
+  "uni.refresh_status_value_partial": { en: "Partially filled", ru: "Заполнено частично", uz: "Qisman toʻldirilgan" },
+  "uni.refresh_status_value_failed": { en: "Refresh failed", ru: "Обновление не удалось", uz: "Yangilanish muvaffaqiyatsiz" },
+  "uni.refresh_status_value_unknown": { en: "Status", ru: "Статус", uz: "Holat" },
+  "uni.overview_empty": {
+    en: "No AI overview is saved for this university yet. Use the official website and the links below for accurate requirements and deadlines.",
+    ru: "Для этого университета ещё нет сохранённого AI-обзора. Точные требования и сроки смотрите на официальном сайте и в ссылках ниже.",
+    uz: "Bu universitet uchun hali AI xulosasi saqlanmagan. Aniq talablar va muddatlar uchun rasmiy sayt va pastdagi havolardan foydalaning.",
+  },
+  "uni.confidence_hint": {
+    en: "Automated estimate of how complete this profile looks compared to the sources we found — not a legal guarantee.",
+    ru: "Оценка полноты профиля по найденным источникам — не юридическая гарантия.",
+    uz: "Topilgan manbalar bilan solishtirganda profil toʻliqligi boʻyicha avtomatik baho — bu yuridik kafolat emas.",
+  },
+  "uni.scholarship_tag": {
+    en: "Scholarship",
+    ru: "Стипендия",
+    uz: "Grant / stipendiya",
+  },
+  "uni.scholarships_empty": {
+    en: "No scholarships were linked in our last data refresh. Check the official site for current funding options.",
+    ru: "В последнем обновлении стипендии не найдены. Актуальные варианты финансирования смотрите на официальном сайте.",
+    uz: "Soʻnggi yangilanishda grantlar bogʻlanmagan. Dolzarb moliyaviy imkoniyatlarni rasmiy saytdan tekshiring.",
+  },
+  "uni.disclaimer_official": {
+    en: "SOSO summarizes pages we could find. Always confirm programs, fees, and deadlines on the official university website before you apply.",
+    ru: "SOSO обобщает найденные страницы. Перед подачей заявки всегда подтверждайте программы, оплату и сроки на официальном сайте вуза.",
+    uz: "SOSO topilgan sahifalarni qisqacha beradi. Ariza topshirishdan oldin dastur, to‘lov va muddatlarni har doim universitetning rasmiy saytida tasdiqlang.",
+  },
+
   "cookie.analytics.title": {
     en: "Analytics & measurement",
     ru: "Аналитика и измерение",
@@ -257,3 +313,25 @@ export const translations: InternalDict = {
   "uni.view": { en: "View Details", ru: "Подробнее", uz: "Batafsil" },
   "uni.verified_tag": { en: "Verified", ru: "Проверено", uz: "Tasdiqlangan" },
 };
+
+/** Localized label for Prisma `refresh_status` (fresh | stale | partial | failed). */
+export function translateRefreshStatus(status: string | null | undefined, lang: Language): string {
+  if (!status) return "";
+  const s = status.toLowerCase().trim();
+  const key =
+    s === "fresh"
+      ? "uni.refresh_status_value_fresh"
+      : s === "stale"
+        ? "uni.refresh_status_value_stale"
+        : s === "partial"
+          ? "uni.refresh_status_value_partial"
+          : s === "failed"
+            ? "uni.refresh_status_value_failed"
+            : "uni.refresh_status_value_unknown";
+  const entry = translations[key];
+  const label = (entry?.[lang] || entry?.en || status).trim();
+  if (key === "uni.refresh_status_value_unknown") {
+    return `${label} (${status})`;
+  }
+  return label;
+}
