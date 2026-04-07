@@ -22,10 +22,14 @@ export function LanguageProvider({
 
   useEffect(() => {
     const saved = localStorage.getItem('soso_lang');
-    if (saved !== 'uz' && saved !== 'ru' && saved !== 'en') {
+    if (saved === 'uz' || saved === 'ru' || saved === 'en') {
+      setLanguage(saved);
+      document.cookie = `soso_lang=${saved}; path=/; max-age=31536000`;
+    } else {
       localStorage.setItem('soso_lang', language);
     }
-  }, [language]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seed storage from server cookie on first visit only
+  }, []);
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);

@@ -34,10 +34,11 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
   const selectedCountry = searchParams?.get('country') || 'United Kingdom';
   const initialQuery = searchParams?.get('q') || '';
   const mobileLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/search', label: 'Search' },
-    { href: '/about', label: 'About' },
-    { href: '/students', label: 'Students' },
+    { href: '/', label: t('nav.home') },
+    { href: '/search', label: t('nav.search') },
+    { href: '/top-university', label: t('nav.top') },
+    { href: '/about', label: t('nav.about') },
+    { href: '/students', label: t('nav.students') },
   ];
 
   const buildSearchHref = (country: string, searchQuery?: string) => {
@@ -189,7 +190,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
               <div className="md:hidden rounded-2xl border border-neutral-200 bg-white/95 backdrop-blur-sm p-4 shadow-sm space-y-5">
                 <div className="space-y-2">
                   <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                    Navigation
+                    {t('header.menu.navigation')}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {mobileLinks.map((item) => {
@@ -218,7 +219,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
 
                 <div className="border-t border-neutral-100 pt-4 space-y-2">
                   <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                    Language
+                    {t('header.menu.language')}
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {(['en', 'ru', 'uz'] as const).map((lang) => (
@@ -242,7 +243,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
 
                 <div className="border-t border-neutral-100 pt-4 space-y-2">
                   <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                    Account
+                    {t('header.menu.account')}
                   </div>
                   <HeaderAccountActions />
                 </div>

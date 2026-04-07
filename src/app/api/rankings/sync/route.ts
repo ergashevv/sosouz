@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
-import { hasMonthlySnapshots, syncMonthlyRankings } from "@/lib/rankings";
+import {
+  getRankingSnapshot,
+  hasMonthlySnapshots,
+  syncMonthlyRankings,
+  WORLD_RANKING_ENTRY_COUNT,
+} from "@/lib/rankings";
 
 export const runtime = "nodejs";
+/** Ranking sync runs Serper + Gemini twice; allow long runs on Vercel (configure plan limits). */
+export const maxDuration = 300;
 
 function parseYear(value: unknown) {
   if (typeof value !== "number" || !Number.isFinite(value)) return new Date().getUTCFullYear();
@@ -33,11 +40,16 @@ async function handleSync(request: Request, body?: { year?: number; force?: bool
   if (!force) {
     const hasCurrent = await hasMonthlySnapshots(year);
     if (hasCurrent) {
-      return NextResponse.json({
-        ok: true,
-        skipped: true,
-        reason: "Current month snapshot already exists.",
-      });
+      const world = await getRankingSnapshot({ dataset: "world-top-100", year });
+      const n = world?.snapshot.entries.length ?? 0;
+      if (n >= WORLD_RANKING_ENTRY_COUNT) {
+        return NextResponse.json({
+          ok: true,
+          skipped: true,
+          reason: "Current month snapshot already exists.",
+          world_entries: n,
+        });
+      }
     }
   }
 

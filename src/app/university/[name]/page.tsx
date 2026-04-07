@@ -53,7 +53,7 @@ function getNotFoundCopy(lang: Language): { title: string; message: string; acti
   if (lang === 'uz') {
     return {
       title: 'Universitet topilmadi',
-      message: 'Bizning bazamizda ushbu nomga mos universitet topilmadi',
+      message: 'Ushbu nomga mos universitet topilmadi. Boshqa kalit soʻz bilan qidirib koʻring.',
       action: "Qidiruvga qaytish",
     };
   }
@@ -61,14 +61,14 @@ function getNotFoundCopy(lang: Language): { title: string; message: string; acti
   if (lang === 'ru') {
     return {
       title: 'Университет не найден',
-      message: 'В нашей базе не найден университет с таким названием',
+      message: 'Университет с таким названием не найден. Попробуйте другой запрос.',
       action: 'Вернуться к поиску',
     };
   }
 
   return {
     title: 'University Not Found',
-    message: 'We could not find a university matching this name in our database',
+    message: 'We could not find a university matching this name. Try a different search.',
     action: 'Return to Search',
   };
 }

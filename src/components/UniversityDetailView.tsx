@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Globe, MapPin, ExternalLink, DollarSign, Award, ClipboardList, Info, ArrowLeft, Shield, Search, Clock3, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import SmartImage from '@/components/SmartImage';
+import DataFreshnessStrip from '@/components/DataFreshnessStrip';
 import { University } from '@/lib/api';
 import { translations, type Language } from '@/lib/i18n';
 
@@ -53,13 +54,6 @@ function formatDateStable(date: Date, lang: Language): string {
   }
 
   return `${day}.${month}.${year}`;
-}
-
-function formatDateTimeStable(date: Date, lang: Language): string {
-  const baseDate = formatDateStable(date, lang);
-  const hours = pad2(date.getUTCHours());
-  const minutes = pad2(date.getUTCMinutes());
-  return `${baseDate}, ${hours}:${minutes} UTC`;
 }
 
 function localizeStructuredValue(
@@ -350,14 +344,8 @@ export default function UniversityDetailView({
     .map((source, index) => normalizeSource(source, index))
     .filter((source): source is NormalizedSource => Boolean(source))
     .slice(0, 4);
-  const lastUpdated =
-    aiDetails?.last_updated ? new Date(aiDetails.last_updated) : null;
   const nextRefreshAt =
     aiDetails?.next_refresh_at ? new Date(aiDetails.next_refresh_at) : null;
-  const formattedLastUpdated =
-    lastUpdated && !Number.isNaN(lastUpdated.getTime())
-      ? formatDateTimeStable(lastUpdated, lang)
-      : null;
   const formattedNextRefresh =
     nextRefreshAt && !Number.isNaN(nextRefreshAt.getTime())
       ? formatDateStable(nextRefreshAt, lang)
@@ -512,23 +500,19 @@ export default function UniversityDetailView({
                 <p className="text-base sm:text-xl text-neutral-700 leading-relaxed font-medium transition-colors">
                    {aiDetails?.detailed_overview || "..."}
                 </p>
-                <div className="mt-8 pt-6 border-t border-neutral-100 flex flex-wrap items-center gap-4 text-xs text-neutral-500 font-medium">
-                  <div className="inline-flex items-center gap-2">
-                    <Clock3 size={14} className="text-neutral-400" />
-                    {t('uni.last_updated', lang)}:{' '}
-                    <span suppressHydrationWarning>
-                      {formattedLastUpdated || t('uni.not_specified', lang)}
-                    </span>
-                  </div>
-                  {aiDetails?.refresh_status ? (
-                    <div className="px-3 py-1 rounded-full border border-neutral-200 bg-neutral-50 text-[10px] uppercase tracking-wider font-bold">
-                      {t('uni.refresh_status', lang)}: {aiDetails.refresh_status}
-                    </div>
-                  ) : null}
+                <div className="mt-8 pt-6 border-t border-neutral-100 space-y-3">
+                  <DataFreshnessStrip
+                    language={lang}
+                    generatedAt={aiDetails?.last_updated}
+                    refreshStatus={aiDetails?.refresh_status}
+                  />
                   {formattedNextRefresh ? (
-                    <div className="text-[11px] text-neutral-400">
-                      {t('uni.next_refresh', lang)}:{' '}
-                      <span suppressHydrationWarning>{formattedNextRefresh}</span>
+                    <div className="inline-flex items-center gap-2 text-[11px] text-neutral-400 font-medium">
+                      <Clock3 size={14} className="text-neutral-400 shrink-0" aria-hidden />
+                      <span>
+                        {t('uni.next_refresh', lang)}:{' '}
+                        <span suppressHydrationWarning>{formattedNextRefresh}</span>
+                      </span>
                     </div>
                   ) : null}
                 </div>

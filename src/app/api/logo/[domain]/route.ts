@@ -47,8 +47,19 @@ function toBuffer(bytes: Uint8Array | Buffer): Buffer {
 
 function isKnownPrismaDbShapeError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
-  const code = (error as { code?: unknown }).code;
-  return code === "P2021" || code === "P2022";
+  const candidate = error as { code?: unknown; message?: unknown; meta?: unknown };
+  const code = candidate.code;
+  if (code === "P2021" || code === "P2022" || code === "P2010") return true;
+
+  const message = typeof candidate.message === "string" ? candidate.message : "";
+  if (/relation .* does not exist/i.test(message)) return true;
+
+  if (candidate.meta && typeof candidate.meta === "object") {
+    const metaText = JSON.stringify(candidate.meta);
+    if (/TableDoesNotExist|relation .* does not exist/i.test(metaText)) return true;
+  }
+
+  return false;
 }
 
 let tableEnsured = false;

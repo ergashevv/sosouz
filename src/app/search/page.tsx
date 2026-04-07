@@ -25,6 +25,7 @@ const buildSearchHref = (country: string, page: number, query?: string) => {
 };
 
 function ResultsGrid({ country, q, page }: { country: string; q?: string; page: number }) {
+  const { t } = useLanguage();
   const { data: universities, error, isLoading } = useSWR(
     [country, q],
     fetcher,
@@ -50,20 +51,23 @@ function ResultsGrid({ country, q, page }: { country: string; q?: string; page: 
       <div className="p-8 sm:p-16 md:p-24 border border-black/10 text-center relative z-10 bg-neutral-50 shadow-sm rounded-2xl">
         <Database size={80} className="mx-auto text-neutral-200 mb-10" />
         <div className="space-y-6">
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">Error Loading Data</h3>
-          <p className="text-neutral-500 font-medium">Status: connection failed.</p>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">{t('search.results.errorTitle')}</h3>
+          <p className="text-neutral-500 font-medium">{t('search.results.errorBody')}</p>
         </div>
       </div>
     );
   }
 
   if (universities.length === 0) {
+    const emptyDetail = t('search.results.emptyBody')
+      .replace('{query}', q?.trim() ? q : '—')
+      .replace('{country}', country);
     return (
       <div className="p-8 sm:p-16 md:p-24 border border-neutral-100 text-center relative z-10 bg-neutral-50 shadow-sm rounded-3xl">
         <Database size={80} className="mx-auto text-neutral-200 mb-10" />
         <div className="space-y-6">
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">Zero Results</h3>
-          <p className="text-neutral-500 font-medium">No universities matching &quot;{q || 'None'}&quot; in {country}.</p>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">{t('search.results.emptyTitle')}</h3>
+          <p className="text-neutral-500 font-medium">{emptyDetail}</p>
         </div>
       </div>
     );
@@ -88,7 +92,7 @@ function ResultsGrid({ country, q, page }: { country: string; q?: string; page: 
             href={buildSearchHref(country, Math.max(1, page - 1), q)}
             className={`px-8 py-3 rounded-full border border-neutral-200 text-sm font-bold transition-all hover:bg-neutral-50 ${page === 1 ? 'opacity-20 pointer-events-none' : ''}`}
           >
-            PREVIOUS
+            {t('pagination.previous')}
           </a>
 
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
@@ -114,7 +118,7 @@ function ResultsGrid({ country, q, page }: { country: string; q?: string; page: 
             href={buildSearchHref(country, Math.min(totalPages, page + 1), q)}
             className={`px-8 py-3 rounded-full border border-neutral-200 text-sm font-bold transition-all hover:bg-neutral-50 ${page === totalPages ? 'opacity-20 pointer-events-none' : ''}`}
           >
-            NEXT
+            {t('pagination.next')}
           </a>
         </div>
       )}
@@ -145,7 +149,7 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
           <div className="rounded-3xl border border-neutral-200 bg-neutral-50/70 p-4 sm:p-6 shadow-sm">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3 sm:mb-4">
               <Search size={13} className="text-neutral-400" />
-              Search Universities
+              {t('search.panel.title')}
             </div>
 
             <form onSubmit={handleRefineSearch} className="w-full">
@@ -193,7 +197,7 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
               <Shield size={14} /> {t('search.header.country')}
             </div>
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] capitalize wrap-break-word">
-              {country} Universities.
+              {t('search.countryUniversities').replace('{country}', country)}
             </h1>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mt-4 sm:mt-6">
                <div className="px-4 py-1.5 rounded-full bg-white text-neutral-600 text-[10px] font-bold uppercase tracking-widest border border-neutral-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2">

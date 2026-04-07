@@ -207,6 +207,7 @@ export default function Home() {
 
           <div className="hidden md:flex items-center flex-wrap justify-end gap-3 sm:gap-5">
             <Link href="/search" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
+            <Link href="/top-university" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.top')}</Link>
             <Link href="/about" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
             <Link href="/students" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
 
@@ -234,13 +235,14 @@ export default function Home() {
           <div className="md:hidden mt-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm space-y-4">
             <div className="grid grid-cols-1 gap-3">
               <Link href="/search" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
+              <Link href="/top-university" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.top')}</Link>
               <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
               <Link href="/students" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
             </div>
 
             <div className="border-t border-neutral-100 pt-4">
               <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
-                Language
+                {t('header.menu.language')}
               </div>
               <div className="flex items-center gap-4">
                 {(['en', 'ru', 'uz'] as const).map((lang) => (

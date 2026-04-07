@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Globe2, Landmark, RefreshCw } from "lucide-react";
+import { Globe2 } from "lucide-react";
+import Link from "next/link";
+import DataFreshnessStrip from "@/components/DataFreshnessStrip";
 
 interface RankingEntry {
   rank: number;
@@ -22,6 +24,13 @@ interface RankingSnapshotPayload {
   generated_at: string;
   source_strategy: "serper+gemini";
   entries: RankingEntry[];
+  total: number;
+  total_pages: number;
+  page: number;
+  page_size: number;
+  available_countries: string[];
+  db_synced_at?: string;
+  used_prior_year_cache?: boolean;
 }
 
 type SectionLanguage = "uz" | "ru" | "en";
@@ -38,40 +47,44 @@ const sectionCopy: Record<
     noData: string;
     loading: string;
     refreshHint: string;
+    openAll: string;
   }
 > = {
   uz: {
     title: "Top universitetlar",
-    subtitle: "Serper + Gemini orqali oylik yangilanadigan reytinglar",
-    worldTitle: "Dunyo top 100 (ko'rsatilyapti: top 10)",
+    subtitle: "Dunyo boʻyicha mashhur universitetlar reytingi — har oy yangilanadi.",
+    worldTitle: "Dunyo reytingi (ko‘rsatilyapti: top 10)",
     koreaTitle: "Koreya top 10",
     source: "Manba",
     official: "Rasmiy sayt",
-    noData: "Ma'lumot topilmadi. Avval ranking sync ishga tushiring.",
+    noData: "Hozircha reyting maʼlumotlari yoʻq. Keyinroq qayta urinib koʻring.",
     loading: "Top reytinglar yuklanmoqda...",
-    refreshHint: "Har oy avtomatik yangilanadi",
+    refreshHint: "Maʼlumotlar katalogdan — yangilanish vaqti pastda",
+    openAll: "To‘liq ro‘yxat",
   },
   en: {
     title: "Top Universities",
-    subtitle: "Monthly ranking snapshots powered by Serper + Gemini",
+    subtitle: "A curated global ranking of leading universities, refreshed monthly.",
     worldTitle: "World top 100 (showing: top 10)",
     koreaTitle: "South Korea top 10",
     source: "Source",
     official: "Official site",
-    noData: "No data yet. Run the ranking sync first.",
+    noData: "Rankings are not available yet. Please try again later.",
     loading: "Loading top rankings...",
-    refreshHint: "Auto-updates monthly",
+    refreshHint: "Served from catalog — see update time below",
+    openAll: "Open full list",
   },
   ru: {
     title: "Топ университеты",
-    subtitle: "Ежемесячные срезы рейтинга через Serper + Gemini",
-    worldTitle: "Топ 100 мира (показано: топ 10)",
+    subtitle: "Подборка ведущих университетов мира с ежемесячным обновлением.",
+    worldTitle: "Мировой рейтинг (показано: топ 10)",
     koreaTitle: "Топ 10 Южной Кореи",
     source: "Источник",
     official: "Официальный сайт",
-    noData: "Данных пока нет. Сначала запустите ranking sync.",
+    noData: "Рейтинг пока недоступен. Попробуйте позже.",
     loading: "Загрузка топ-рейтингов...",
-    refreshHint: "Автообновление каждый месяц",
+    refreshHint: "Данные из каталога — время обновления ниже",
+    openAll: "Полный список",
   },
 };
 
@@ -82,10 +95,11 @@ async function fetchRanking(
   const url = new URL("/api/rankings", window.location.origin);
   url.searchParams.set("dataset", dataset);
   url.searchParams.set("year", String(year));
+  url.searchParams.set("top", dataset === "world-top-100" ? "10" : "10");
+  url.searchParams.set("page", "1");
+  url.searchParams.set("pageSize", "10");
 
-  const response = await fetch(url.toString(), {
-    cache: "no-store",
-  });
+  const response = await fetch(url.toString());
   if (!response.ok) return null;
   return (await response.json()) as RankingSnapshotPayload;
 }
@@ -160,7 +174,6 @@ export default function TopRankingsSection({ language }: { language: SectionLang
   const copy = sectionCopy[language] ?? sectionCopy.en;
   const [loading, setLoading] = useState(true);
   const [world, setWorld] = useState<RankingSnapshotPayload | null>(null);
-  const [korea, setKorea] = useState<RankingSnapshotPayload | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -168,13 +181,9 @@ export default function TopRankingsSection({ language }: { language: SectionLang
 
     async function run() {
       try {
-        const [worldData, koreaData] = await Promise.all([
-          fetchRanking("world-top-100", year),
-          fetchRanking("south-korea-top-10", year),
-        ]);
+        const worldData = await fetchRanking("world-top-100", year);
         if (cancelled) return;
         setWorld(worldData);
-        setKorea(koreaData);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -188,9 +197,7 @@ export default function TopRankingsSection({ language }: { language: SectionLang
     };
   }, []);
 
-  const worldTopTen = useMemo(() => (world?.entries || []).slice(0, 10), [world]);
-  const koreaTopTen = useMemo(() => (korea?.entries || []).slice(0, 10), [korea]);
-  const monthLabel = world?.month_snapshot || korea?.month_snapshot || "";
+  const worldTopTen = useMemo(() => world?.entries || [], [world]);
 
   return (
     <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-black/5 bg-white">
@@ -199,24 +206,42 @@ export default function TopRankingsSection({ language }: { language: SectionLang
           <div>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-neutral-900">{copy.title}</h2>
             <p className="mt-2 text-sm sm:text-base text-neutral-500">{copy.subtitle}</p>
+            <div className="mt-3">
+              <Link
+                href="/top-university"
+                className="inline-flex items-center rounded-full border border-neutral-300 px-4 py-2 text-xs font-bold uppercase tracking-wide text-neutral-700 hover:border-black hover:text-black transition-colors"
+              >
+                {copy.openAll}
+              </Link>
+            </div>
           </div>
-          <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-neutral-400">
-            <RefreshCw size={13} />
-            <span>{copy.refreshHint}</span>
-            {monthLabel ? <span className="text-neutral-500">{monthLabel}</span> : null}
-          </div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-400 max-w-md sm:text-left sm:max-w-xs">
+            {copy.refreshHint}
+          </p>
         </div>
+
+        {!loading && world ? (
+          <div className="mt-6">
+            <DataFreshnessStrip
+              language={language}
+              generatedAt={world.generated_at}
+              dbSyncedAt={world.db_synced_at}
+              periodLabel={world.month_snapshot}
+              yearFallbackNote={Boolean(world.used_prior_year_cache)}
+            />
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="mt-6 rounded-3xl border border-neutral-200 bg-neutral-50 px-5 py-8 text-sm text-neutral-500">
             {copy.loading}
           </div>
-        ) : worldTopTen.length === 0 && koreaTopTen.length === 0 ? (
+        ) : worldTopTen.length === 0 ? (
           <div className="mt-6 rounded-3xl border border-neutral-200 bg-neutral-50 px-5 py-8 text-sm text-neutral-500">
             {copy.noData}
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:gap-6">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-500">
                 <Globe2 size={12} />
@@ -225,19 +250,6 @@ export default function TopRankingsSection({ language }: { language: SectionLang
               <RankingList
                 title={copy.worldTitle}
                 entries={worldTopTen}
-                sourceText={copy.source}
-                officialText={copy.official}
-              />
-            </div>
-
-            <div>
-              <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-500">
-                <Landmark size={12} />
-                <span>{copy.koreaTitle}</span>
-              </div>
-              <RankingList
-                title={copy.koreaTitle}
-                entries={koreaTopTen}
                 sourceText={copy.source}
                 officialText={copy.official}
               />

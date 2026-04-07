@@ -26,6 +26,7 @@ model UniversityDetails {
   data_confidence       Float?
   refresh_status        String?  // fresh | stale | partial | failed
   next_refresh_at       DateTime?
+  last_ai_refresh_attempt_at DateTime?
   last_updated          DateTime @updatedAt
 }
 

@@ -7,6 +7,11 @@ const SERPER_API_KEY = process.env.SERPER_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const CACHE_TTL_DAYS = 14;
+/** Min interval between Serper+Gemini runs for the same university+language (per DB row). */
+const RESEARCH_REFRESH_COOLDOWN_MS =
+  Number(process.env.RESEARCH_REFRESH_COOLDOWN_MS) > 0
+    ? Number(process.env.RESEARCH_REFRESH_COOLDOWN_MS)
+    : 6 * 60 * 60 * 1000;
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
@@ -227,6 +232,27 @@ function isMissingColumnError(error: unknown) {
   return candidate.code === "P2022";
 }
 
+/** Returns true if this request may call Serper/Gemini; false if another refresh is in-flight or in cooldown. */
+async function tryClaimAiRefresh(cacheKey: string): Promise<boolean> {
+  const cutoff = new Date(Date.now() - RESEARCH_REFRESH_COOLDOWN_MS);
+  try {
+    const result = await prisma.universityDetails.updateMany({
+      where: {
+        university_name: cacheKey,
+        OR: [{ last_ai_refresh_attempt_at: null }, { last_ai_refresh_attempt_at: { lt: cutoff } }],
+      },
+      data: { last_ai_refresh_attempt_at: new Date() },
+    });
+    return result.count > 0;
+  } catch (error) {
+    if (isMissingColumnError(error)) {
+      return true;
+    }
+    console.error("tryClaimAiRefresh failed:", error);
+    return true;
+  }
+}
+
 async function findCachedDetails(cacheKey: string) {
   try {
     return await prisma.universityDetails.findUnique({
@@ -247,6 +273,7 @@ async function findCachedDetails(cacheKey: string) {
         data_confidence: true,
         refresh_status: true,
         next_refresh_at: true,
+        last_ai_refresh_attempt_at: true,
       },
     });
   } catch (error) {
@@ -340,9 +367,26 @@ export async function performResearch(
   }
 
   if (!SERPER_API_KEY || !GEMINI_API_KEY) {
+    if (cachedDetails && hasMinimumDetails(cachedDetails)) {
+      return cachedDetails;
+    }
     if (cachedDetails) return cachedDetails;
     console.error("Missing SERPER_API_KEY or GEMINI_API_KEY.");
     return null;
+  }
+
+  const needsRemoteFetch =
+    !cachedDetails || !hasMinimumDetails(cachedDetails) || !isFresh(cachedDetails.last_updated);
+
+  if (!needsRemoteFetch) {
+    return cachedDetails;
+  }
+
+  if (cachedDetails) {
+    const claimed = await tryClaimAiRefresh(cacheKey);
+    if (!claimed) {
+      return cachedDetails;
+    }
   }
 
   try {
@@ -423,6 +467,7 @@ ${snippetBlock || "No external snippets available."}`;
           data_confidence: structuredData.confidence_score,
           refresh_status: "fresh",
           next_refresh_at: computeNextRefresh(),
+          last_ai_refresh_attempt_at: null,
           domain: domain || null,
           country: country || null,
         },
@@ -438,6 +483,7 @@ ${snippetBlock || "No external snippets available."}`;
           data_confidence: structuredData.confidence_score,
           refresh_status: "fresh",
           next_refresh_at: computeNextRefresh(),
+          last_ai_refresh_attempt_at: null,
           domain: domain || null,
           country: country || null,
         },
@@ -451,14 +497,34 @@ ${snippetBlock || "No external snippets available."}`;
   } catch (error) {
     console.error("Research logic error:", error);
     if (cachedDetails) {
+      const debounceNext = new Date(Date.now() - RESEARCH_REFRESH_COOLDOWN_MS + 15 * 60 * 1000);
       try {
-        return await prisma.universityDetails.update({
+        await prisma.universityDetails.update({
           where: { university_name: cacheKey },
-          data: { refresh_status: "stale" },
+          data: {
+            refresh_status: "stale",
+            last_ai_refresh_attempt_at: debounceNext,
+          },
         });
-      } catch {
-        return cachedDetails;
+      } catch (updateErr) {
+        if (isMissingColumnError(updateErr)) {
+          try {
+            await prisma.universityDetails.update({
+              where: { university_name: cacheKey },
+              data: { refresh_status: "stale" },
+            });
+          } catch {
+            /* ignore */
+          }
+        }
       }
+      try {
+        const again = await findCachedDetails(cacheKey);
+        if (again) return again;
+      } catch {
+        /* ignore */
+      }
+      return cachedDetails;
     }
     return null;
   }
