@@ -289,8 +289,8 @@ async function tryClaimAiRefresh(cacheKey: string): Promise<boolean> {
       where: {
         university_name: cacheKey,
         OR: [{ last_ai_refresh_attempt_at: null }, { last_ai_refresh_attempt_at: { lt: cutoff } }],
-      },
-      data: { last_ai_refresh_attempt_at: new Date() },
+      } as unknown as Prisma.UniversityDetailsWhereInput,
+      data: { last_ai_refresh_attempt_at: new Date() } as unknown as Prisma.UniversityDetailsUpdateManyMutationInput,
     });
     return result.count > 0;
   } catch (error) {
@@ -580,7 +580,7 @@ ${snippetBlock || "No external snippets available."}`;
               last_ai_refresh_attempt_at: null,
               domain: domain || null,
               country: country || null,
-            },
+            } as unknown as Prisma.UniversityDetailsUpdateInput,
             create: {
               university_name: cacheKey,
               tuition_fees: tuitionForStorage,
@@ -596,7 +596,7 @@ ${snippetBlock || "No external snippets available."}`;
               last_ai_refresh_attempt_at: null,
               domain: domain || null,
               country: country || null,
-            },
+            } as unknown as Prisma.UniversityDetailsCreateInput,
           }),
         );
       } catch (error) {
@@ -622,7 +622,7 @@ ${snippetBlock || "No external snippets available."}`;
             data: {
               refresh_status: "stale",
               last_ai_refresh_attempt_at: debounceNext,
-            },
+            } as unknown as Prisma.UniversityDetailsUpdateInput,
           });
         } catch (updateErr) {
           if (isMissingColumnError(updateErr)) {

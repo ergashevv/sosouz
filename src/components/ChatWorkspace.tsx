@@ -414,7 +414,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
   return (
     <main className="flex min-h-screen flex-col bg-[#f5f4f0] text-neutral-900 antialiased">
-      <nav className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#f5f4f0]/92 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8 sm:py-4">
+      <nav className="sticky top-0 z-40 border-b border-black/6 bg-[#f5f4f0]/92 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8 sm:py-4">
         <div className="mx-auto flex max-w-7xl flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <button
@@ -511,7 +511,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             ) : null}
 
             <aside
-              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-5 bg-[#eae8e3] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-[17.5rem] lg:max-w-none lg:translate-x-0 lg:shadow-none ${
+              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-5 bg-[#eae8e3] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-70 lg:max-w-none lg:translate-x-0 lg:shadow-none ${
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
               }`}
             >
@@ -584,7 +584,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                         {t('chat.title')}
                       </h1>
                       <p className="mt-3 max-w-xl text-sm leading-[1.65] text-neutral-600">{t('chat.subtitle')}</p>
-                      <div className="mt-6 h-px max-w-[4.5rem] bg-neutral-900" aria-hidden />
+                      <div className="mt-6 h-px max-w-18 bg-neutral-900" aria-hidden />
                     </div>
                   </div>
 
@@ -594,7 +594,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                         <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                           {t('chat.focus')}
                         </p>
-                        <div className="border border-black/[0.09] bg-white/60 px-3 py-3 text-sm text-neutral-900">
+                        <div className="border border-black/9 bg-white/60 px-3 py-3 text-sm text-neutral-900">
                           <span className="font-semibold">{advisorContext.name}</span>
                           {typeof advisorContext.nationalRank === 'number' ? (
                             <span className="text-neutral-500"> · #{advisorContext.nationalRank}</span>
@@ -608,7 +608,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                           <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                             {t('chat.regionLabel')}
                           </p>
-                          <div className="flex flex-col gap-2 border border-black/[0.09] bg-white/60 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                          <div className="flex flex-col gap-2 border border-black/9 bg-white/60 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                             <p className="min-w-0 text-neutral-800">
                               <span className="text-neutral-500">{t('chat.regionInUse')}:</span>{' '}
                               <span className="font-semibold text-neutral-900">{country}</span>
@@ -629,7 +629,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                             <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                               {t('chat.regionLabel')}
                             </span>
-                            <div className="flex items-center gap-2 border border-black/[0.09] border-b-2 border-b-neutral-900/15 bg-white/60 px-3 py-2.5 transition-colors focus-within:border-b-neutral-900">
+                            <div className="flex items-center gap-2 border border-black/9 border-b-2 border-b-neutral-900/15 bg-white/60 px-3 py-2.5 transition-colors focus-within:border-b-neutral-900">
                               <Search size={16} className="shrink-0 text-neutral-400" aria-hidden />
                               <input
                                 id="chat-region-country"
@@ -651,7 +651,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                 <div className="flex min-h-0 flex-1 flex-col">
                   <div className="flex-1 space-y-10 overflow-y-auto px-5 py-8 sm:px-8 sm:py-10">
                     {messages.length === 0 ? (
-                      <div className="flex h-full min-h-[14rem] flex-col items-start justify-center px-0 sm:px-2">
+                      <div className="flex h-full min-h-56 flex-col items-start justify-center px-0 sm:px-2">
                         <p
                           className={`text-[11px] font-extrabold uppercase tracking-[0.2em] text-neutral-400 ${outfit.className}`}
                         >
@@ -672,7 +672,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                           <div className="border-l-2 border-neutral-900 pl-5 sm:pl-6">
                             {message.content ? <AssistantMessageBody content={message.content} /> : null}
                             {message.attachmentDataUrl ? (
-                              <div className="mt-5 space-y-1 border-t border-black/[0.06] pt-5">
+                              <div className="mt-5 space-y-1 border-t border-black/6 pt-5">
                                 {message.attachmentName ? (
                                   <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
                                     {message.attachmentName}
@@ -684,7 +684,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                                   width={640}
                                   height={360}
                                   unoptimized
-                                  className="max-h-52 w-full border border-black/[0.08] bg-white object-contain"
+                                  className="max-h-52 w-full border border-black/8 bg-white object-contain"
                                 />
                               </div>
                             ) : null}
@@ -695,7 +695,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                           <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400">
                             {t('chat.youLabel')}
                           </span>
-                          <div className="max-w-[min(100%,34rem)] border border-black/[0.1] bg-white/80 px-4 py-4 text-[15px] leading-[1.65] text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+                          <div className="max-w-[min(100%,34rem)] border border-black/10 bg-white/80 px-4 py-4 text-[15px] leading-[1.65] text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
                             {message.content ? (
                               <p className="whitespace-pre-wrap">{message.content}</p>
                             ) : null}
@@ -710,7 +710,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                                   width={640}
                                   height={360}
                                   unoptimized
-                                  className="max-h-52 w-full border border-black/[0.08] bg-neutral-50 object-contain"
+                                  className="max-h-52 w-full border border-black/8 bg-neutral-50 object-contain"
                                 />
                               </div>
                             ) : null}
@@ -737,7 +737,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
                   <div className="border-t border-black/[0.07] bg-[#ebe8e2]/40 px-5 py-6 sm:px-8">
                     {screenshotDataUrl ? (
-                      <div className="mb-4 border border-black/[0.1] bg-white/70 p-3 sm:p-4">
+                      <div className="mb-4 border border-black/10 bg-white/70 p-3 sm:p-4">
                         <div className="flex items-center justify-between text-xs text-neutral-500">
                           <span className="truncate pr-2 font-medium">{screenshotName || 'screenshot'}</span>
                           <button

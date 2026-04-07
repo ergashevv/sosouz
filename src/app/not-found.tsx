@@ -61,21 +61,30 @@ export default function NotFound() {
           </div>
 
           <div className="mt-16 sm:mt-20 pt-10 sm:pt-12 border-t border-neutral-100">
-            <div className="flex items-start gap-4 rounded-2xl border border-neutral-200 bg-neutral-50/80 p-5 sm:p-6">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-neutral-700 shadow-sm border border-neutral-100">
-                <Compass size={22} strokeWidth={1.75} />
+            <div className="flex items-center gap-4 rounded-none border border-neutral-200 bg-(--bg-surface) p-5 sm:p-6 shadow-none">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-neutral-300 bg-white text-neutral-800">
+                <Compass size={20} strokeWidth={1.75} />
               </div>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                <span className="font-semibold text-neutral-900">{t('nav.search')}</span>
-                {' · '}
-                <Link href="/top-university" className="font-semibold text-neutral-900 hover:underline">
+              <nav
+                aria-label={t('header.menu.navigation')}
+                className="flex flex-wrap items-center gap-x-2 sm:gap-x-2.5 gap-y-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-neutral-500"
+              >
+                <Link href="/search" className="hover:text-black transition-colors">
+                  {t('nav.search')}
+                </Link>
+                <span className="text-neutral-300 select-none" aria-hidden>
+                  ·
+                </span>
+                <Link href="/top-university" className="hover:text-black transition-colors">
                   {t('nav.top')}
                 </Link>
-                {' · '}
-                <Link href="/about" className="font-semibold text-neutral-900 hover:underline">
+                <span className="text-neutral-300 select-none" aria-hidden>
+                  ·
+                </span>
+                <Link href="/about" className="hover:text-black transition-colors">
                   {t('nav.about')}
                 </Link>
-              </p>
+              </nav>
             </div>
           </div>
         </div>

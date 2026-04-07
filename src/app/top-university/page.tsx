@@ -201,7 +201,7 @@ function RankingsListSkeleton() {
       {Array.from({ length: SKELETON_ROWS }).map((_, index) => (
         <div
           key={`sk-${index}`}
-          className="rounded-2xl border border-neutral-100 bg-white px-4 py-4 shadow-sm min-h-[5.75rem] animate-pulse"
+          className="rounded-2xl border border-neutral-100 bg-white px-4 py-4 shadow-sm min-h-23 animate-pulse"
         >
           <div className="h-2.5 w-12 rounded bg-neutral-200" />
           <div className="mt-3 h-5 w-[70%] max-w-md rounded bg-neutral-200" />
@@ -327,7 +327,7 @@ export default function TopUniversityPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-white/75 backdrop-blur-[3px] pointer-events-none"
+            className="fixed inset-0 z-100 flex items-center justify-center bg-white/75 backdrop-blur-[3px] pointer-events-none"
           >
             <motion.div
               initial={{ opacity: 0, y: 6 }}
@@ -352,7 +352,7 @@ export default function TopUniversityPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
         <section className="rounded-3xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
-          <header className="border-b border-neutral-100 bg-gradient-to-b from-neutral-50 to-white px-5 py-5 sm:px-6 sm:py-6">
+          <header className="border-b border-neutral-100 bg-linear-to-b from-neutral-50 to-white px-5 py-5 sm:px-6 sm:py-6">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
               <Globe2 size={12} className="shrink-0 text-neutral-400" aria-hidden />
               {t("rankings.top100.badge")}

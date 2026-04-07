@@ -133,7 +133,7 @@
   }
 
   .home-intent-shell {
-    @apply relative overflow-hidden rounded-[2rem] border border-neutral-200 bg-white p-6 sm:p-10;
+    @apply relative overflow-hidden rounded-4xl border border-neutral-200 bg-white p-6 sm:p-10;
     box-shadow: 0 20px 50px rgba(10, 10, 10, 0.06);
   }
 
@@ -286,7 +286,7 @@
   .text-role-price-block {
     border-left: 3px solid var(--text-role-price-border);
     background-color: var(--text-role-price-bg);
-    @apply rounded-r-lg rounded-l-sm border-y border-r border-neutral-200/80 py-3 pl-4 pr-3 shadow-[inset_1px_0_0_0_rgb(0_0_0_/_0.04)];
+    @apply rounded-r-lg rounded-l-sm border-y border-r border-neutral-200/80 py-3 pl-4 pr-3 shadow-[inset_1px_0_0_0_rgb(0_0_0/0.04)];
   }
 
   .text-role-deadline-block {
@@ -296,7 +296,7 @@
 
   .text-role-link {
     color: var(--text-role-link);
-    @apply font-semibold underline decoration-[color:var(--text-role-link-decoration)] underline-offset-[0.22em] transition-colors;
+    @apply font-semibold underline decoration-(--text-role-link-decoration) underline-offset-[0.22em] transition-colors;
   }
 
   .text-role-link:hover {
@@ -306,7 +306,7 @@
 
   .text-role-name-link {
     color: var(--text-role-name);
-    @apply font-semibold underline decoration-[color:var(--text-role-link-decoration)] underline-offset-[0.22em] transition-colors;
+    @apply font-semibold underline decoration-(--text-role-link-decoration) underline-offset-[0.22em] transition-colors;
   }
 
   .group:hover .text-role-name-link {
@@ -315,12 +315,12 @@
 
   .text-role-link-quiet {
     color: var(--text-role-link);
-    @apply font-semibold underline decoration-neutral-300 underline-offset-[0.2em] transition-colors hover:text-[color:var(--text-role-link-hover)] hover:decoration-neutral-500;
+    @apply font-semibold underline decoration-neutral-300 underline-offset-[0.2em] transition-colors hover:text-(--text-role-link-hover) hover:decoration-neutral-500;
   }
 
   .text-role-link-surface {
     color: var(--text-role-link);
-    @apply text-sm sm:text-base font-semibold underline decoration-[color:var(--text-role-link-decoration)] underline-offset-[0.22em] transition-colors hover:text-[color:var(--text-role-link-hover)] hover:decoration-neutral-500;
+    @apply text-sm sm:text-base font-semibold underline decoration-(--text-role-link-decoration) underline-offset-[0.22em] transition-colors hover:text-(--text-role-link-hover) hover:decoration-neutral-500;
   }
 
   .text-role-url-line {
