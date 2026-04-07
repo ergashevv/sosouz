@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Search, Compass } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
 import { Outfit } from 'next/font/google';
 import { useLanguage } from '@/contexts/LanguageContext';
 import ContactMailtoLink from '@/components/ContactMailtoLink';
@@ -58,34 +58,6 @@ export default function NotFound() {
               <Search size={18} strokeWidth={2.25} />
               {t('notfound.search')}
             </Link>
-          </div>
-
-          <div className="mt-16 sm:mt-20 pt-10 sm:pt-12 border-t border-neutral-100">
-            <div className="flex items-center gap-4 rounded-none border border-neutral-200 bg-(--bg-surface) p-5 sm:p-6 shadow-none">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-neutral-300 bg-white text-neutral-800">
-                <Compass size={20} strokeWidth={1.75} />
-              </div>
-              <nav
-                aria-label={t('header.menu.navigation')}
-                className="flex flex-wrap items-center gap-x-2 sm:gap-x-2.5 gap-y-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-neutral-500"
-              >
-                <Link href="/search" className="hover:text-black transition-colors">
-                  {t('nav.search')}
-                </Link>
-                <span className="text-neutral-300 select-none" aria-hidden>
-                  ·
-                </span>
-                <Link href="/top-university" className="hover:text-black transition-colors">
-                  {t('nav.top')}
-                </Link>
-                <span className="text-neutral-300 select-none" aria-hidden>
-                  ·
-                </span>
-                <Link href="/about" className="hover:text-black transition-colors">
-                  {t('nav.about')}
-                </Link>
-              </nav>
-            </div>
           </div>
         </div>
       </section>
