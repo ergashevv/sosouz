@@ -230,6 +230,31 @@ export const translations: InternalDict = {
     ru: "Обзор по доступным данным",
     uz: "Mavjud maʼlumotlar boʻyicha umumiy qarash",
   },
+  "uni.hero_read_full": {
+    en: "Read full executive summary",
+    ru: "Читать полный обзор",
+    uz: "Toʻliq xulosani oʻqish",
+  },
+  "uni.hero_whats_below": {
+    en: "On this page: executive summary, tuition and fees, application deadlines, programs we found, scholarships, and official links.",
+    ru: "На странице: обзор, стоимость обучения, сроки подачи, найденные программы, стипендии и официальные ссылки.",
+    uz: "Sahifada: qisqacha xulosa, oʻqish narxi, ariza muddatlari, topilgan yoʻnalishlar, grantlar va rasmiy havolalar.",
+  },
+  "uni.hero_programs_listed": {
+    en: "programs in this profile",
+    ru: "программ в профиле",
+    uz: "profildagi yoʻnalishlar",
+  },
+  "uni.hero_more_below": {
+    en: "Full executive summary and structured details are just below.",
+    ru: "Полный обзор и структурированные детали — чуть ниже.",
+    uz: "Toʻliq xulosa va tuzilgan tafsilotlar pastroqda.",
+  },
+  "uni.hero_at_a_glance": {
+    en: "At a glance",
+    ru: "Кратко",
+    uz: "Qisqacha",
+  },
   "uni.refresh_status_value_fresh": { en: "Up to date", ru: "Актуально", uz: "Dolzarb" },
   "uni.refresh_status_value_stale": { en: "May be outdated", ru: "Может устареть", uz: "Eskirgan boʻlishi mumkin" },
   "uni.refresh_status_value_partial": { en: "Partially filled", ru: "Заполнено частично", uz: "Qisman toʻldirilgan" },
@@ -285,6 +310,56 @@ export const translations: InternalDict = {
   "about.desc1": { en: "SOSO is a university discovery platform that connects ambitious students with leading institutions worldwide. We combine official sources and careful verification so you get clear, up-to-date information across 195+ countries.", ru: "SOSO — платформа для поиска университетов: она помогает абитуриентам находить ведущие вузы по всему миру. Мы опираемся на официальные источники и проверку данных, чтобы вы видели актуальную информацию по 195+ странам.", uz: "SOSO — talabalarni dunyo boʻylab yetakchi oliygohlar bilan uchrashiradigan universitet qidiruv platformasi. Rasmiy manbalar va tekshiruvlar asosida 195+ mamlakat boʻyicha aniq, dolzarb maʼlumot beramiz." },
   "about.desc2": { en: "We believe in absolute transparency and accessibility in academic research. By standardizing diverse institutional registries into a single, high-performance interface, we eliminate the friction typically associated with researching international education.", ru: "Мы верим в абсолютную прозрачность и доступность академических исследований. Стандартизируя различные институциональные реестры в единый высокопроизводительный интерфейс, мы устраняем трения.", uz: "Biz akademik tadqiqotlarda mutlaq shaffoflik va ochiqlikka ishonamiz. Turli xil oliygohlar ma'lumotlarini yagona tizimga jamlash orqali biz xalqaro ta'limni o'rganishdagi barcha to'siqlarni olib tashlaymiz." },
   "about.back": { en: "Back to Home", ru: "На Главную", uz: "Bosh sahifaga qaytish" },
+  "about.offerTitle": {
+    en: "What you can do here",
+    ru: "Что вы можете делать на платформе",
+    uz: "Bu yerda nima qila olasiz",
+  },
+  "about.offer1Title": { en: "Search across countries", ru: "Поиск по странам", uz: "Mamlakatlar bo'yicha qidiruv" },
+  "about.offer1Desc": {
+    en: "Explore universities by country, compare options, and jump to full profiles with tuition context, deadlines, and verified links.",
+    ru: "Ищите вузы по странам, сравнивайте варианты и открывайте полные карточки со стоимостью обучения, сроками и проверенными ссылками.",
+    uz: "Mamlakat bo'yicha universitetlarni qidiring, variantlarni solishtiring va kontrakt, muddatlar va tasdiqlangan havolalar bilan toʻliq profillarga oʻting.",
+  },
+  "about.offer2Title": { en: "Trusted profile view", ru: "Понятный профиль вуза", uz: "Ishonchli profil ko'rinishi" },
+  "about.offer2Desc": {
+    en: "Each profile is built from official pages and structured sources where possible, with clear citations so you know where facts came from.",
+    ru: "Карточка собирается из официальных страниц и структурированных источников с указанием ссылок — видно, откуда взяты сведения.",
+    uz: "Har bir profil iloji boricha rasmiy sahifalar va tuzilgan manbalardan yigʻiladi; havolalar bilan qaysi fakt qayerdan olinganini koʻrasiz.",
+  },
+  "about.offer3Title": { en: "AI advisor in your language", ru: "ИИ‑советник на вашем языке", uz: "O‘zingiz tilingizdagi AI maslahatchi" },
+  "about.offer3Desc": {
+    en: "Use the SOSO assistant for practical next steps on admissions, programs, and paperwork — always double‑check critical details on the university’s own site.",
+    ru: "Помощник SOSO подскажет практические шаги по поступлению и программам — ключевые детали всё равно сверяйте на официальном сайте вуза.",
+    uz: "SOSO yordamchisi qabul, dasturlar va hujjatlar boʻyicha amaliy qadamlarni tushuntiradi — muhim jihatlarni universitetning rasmiy saytida yana bir bor tekshiring.",
+  },
+  "about.dataTitle": { en: "Data posture", ru: "Подход к данным", uz: "Maʼlumotlar yondashuvi" },
+  "about.dataP1": {
+    en: "We aggregate public university data and rankings snapshots to keep discovery fast. Freshness badges and “confirm on the official site” reminders are intentional — immigration rules, fees, and intakes change often.",
+    ru: "Мы агрегируем открытые данные и снимки рейтингов, чтобы ускорить поиск. Бейджи свежести и напоминания «проверьте на официальном сайте» — не формальность: правила виз, оплаты и набор часто меняются.",
+    uz: "Biz ochiq universitet maʼlumotlari va reyting suratlarini birlashtirib, qidiruvni tezlashtiramiz. Dolzarbilik belgilari va «rasmiy saytda tekshiring» eslatmalari tasodifiy emas — kontrakt, qoidalar va qabul tez-tez oʻzgarmoqda.",
+  },
+  "about.dataP2": {
+    en: "SOSO is an independent discovery tool, not a government registry or a university. We welcome corrections when something looks wrong — that helps every student after you.",
+    ru: "SOSO — независимый инструмент поиска, а не госреестр и не сам университет. Если заметили ошибку, напишите нам — это поможет следующим пользователям.",
+    uz: "SOSO mustaqil qidiruv vositasi; davlat reyestri yoki universitet emas. Xato koʻrsangiz, bizga yozing — bu sizdan keyingi talabalarga ham yordam beradi.",
+  },
+  "about.contactTitle": { en: "Contact", ru: "Контакты", uz: "Aloqa" },
+  "about.contactLead": {
+    en: "Questions about the platform, partnerships, or data corrections — reach us by email.",
+    ru: "Вопросы по платформе, сотрудничеству или исправлению данных — напишите на почту.",
+    uz: "Platforma, hamkorlik yoki maʼlumotni tuzatish bo‘yicha savollar — elektron pochta orqali yozing.",
+  },
+  "about.contactEmailLabel": { en: "Email", ru: "Эл. почта", uz: "Email" },
+  "about.contactWebLabel": { en: "Website", ru: "Сайт", uz: "Veb-sayt" },
+  "about.contactHint": {
+    en: "We read every message; please allow a few business days for a reply. For urgent decisions about an offer or visa, rely on official correspondence from the institution and authorities.",
+    ru: "Мы читаем все письма; ответ может занять несколько рабочих дней. По срочным решениям (офер, виза) ориентируйтесь на официальные письма вуза и госорганов.",
+    uz: "Har bir xabarni oʻqimiz; javob bir necha ish kuni suralishi mumkin. Kontrakt yoki viza boʻyicha shoshilinch qarorlar uchun rasmiy xat va hujjatlarga tayaning.",
+  },
+  "about.ctaSearch": { en: "Open search", ru: "Открыть поиск", uz: "Qidiruvni ochish" },
+  "about.ctaStudents": { en: "Student hub", ru: "Раздел для студентов", uz: "Talabalar markazi" },
+  "about.ctaChat": { en: "AI advisor", ru: "ИИ‑советник", uz: "AI maslahatchi" },
 
   // Students page
   "students.title": { en: "For Students.", ru: "Студентам.", uz: "Talabalar uchun." },

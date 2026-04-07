@@ -4,12 +4,12 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn how SOSO aggregates live university data to help students and advisors discover institutions worldwide.",
+    "Mission, platform features, data practices, and contact options for SOSO — the global university discovery engine.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About SOSO",
     description:
-      "Mission, data approach, and trust model behind the global university discovery engine.",
+      "What SOSO offers students, how we handle university data, and how to reach our team.",
     url: "/about",
     type: "website",
   },

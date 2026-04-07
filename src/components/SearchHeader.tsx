@@ -28,7 +28,9 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchStickyActive, setIsSearchStickyActive] = useState(true);
   const [isLogoStickyElevated, setIsLogoStickyElevated] = useState(false);
-  const isSearchPinned = fixed && showSearchForm;
+  const hideSearchFormOnInnerPages = pathname?.startsWith('/university/');
+  const shouldShowSearchForm = showSearchForm && !hideSearchFormOnInnerPages;
+  const isSearchPinned = fixed && shouldShowSearchForm;
   const shouldStickHeader = fixed;
   const shouldStickSearchBar = isSearchPinned && isSearchStickyActive;
   const selectedCountry = searchParams?.get('country') || 'United Kingdom';
@@ -100,10 +102,6 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
   }, [isSearchPinned]);
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--search-header-height', '0px');
-  }, []);
-
-  useEffect(() => {
     if (!mobileMenuOpen) return;
 
     const onEsc = (event: KeyboardEvent) => {
@@ -134,15 +132,17 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
     const params = new URLSearchParams(searchParams?.toString() || '');
     params.set('lang', lang);
     const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    router.replace(nextUrl);
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    // Use hard navigation so server-rendered pages (e.g. university details) always reflect new language.
+    window.location.assign(`${nextUrl}${hash}`);
   };
 
   return (
     <>
       <header
         ref={logoHeaderRef}
-        className={`${shouldStickHeader ? 'sticky top-0' : 'relative w-full'} z-50 backdrop-blur-md border-b border-neutral-100 transition-all duration-300 ${
-          isLogoStickyElevated ? 'bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)]' : 'bg-white/95'
+        className={`${shouldStickHeader ? 'sticky top-0' : 'relative w-full'} z-50 border-b border-neutral-200 transition-all duration-300 ${
+          isLogoStickyElevated ? 'bg-(--bg-surface) shadow-none' : 'bg-(--bg-surface)'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-[max(env(safe-area-inset-top),0px)] py-4 sm:py-5">
@@ -177,7 +177,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
 
             <button
               type="button"
-              className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:text-black transition-colors"
+              className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-none border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 hover:text-black transition-colors"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
@@ -187,7 +187,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
             </div>
 
             {mobileMenuOpen ? (
-              <div className="md:hidden rounded-2xl border border-neutral-200 bg-white/95 backdrop-blur-sm p-4 shadow-sm space-y-5">
+              <div className="md:hidden rounded-none border border-neutral-200 bg-white p-4 space-y-5">
                 <div className="space-y-2">
                   <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
                     {t('header.menu.navigation')}
@@ -204,7 +204,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
                           key={item.href}
                           href={item.href}
                           onClick={() => setMobileMenuOpen(false)}
-                          className={`rounded-xl border px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                          className={`rounded-none border px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wide transition-colors ${
                             isActive
                               ? 'border-neutral-900 bg-neutral-900 text-white'
                               : 'border-neutral-200 text-neutral-700 hover:border-neutral-300 hover:text-black'
@@ -229,7 +229,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
                           handleLanguageChange(lang);
                           setMobileMenuOpen(false);
                         }}
-                        className={`rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                        className={`rounded-none border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
                           language === lang
                             ? 'border-neutral-900 bg-neutral-900 text-white'
                             : 'border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-black'
@@ -253,19 +253,19 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
         </div>
       </header>
 
-      {showSearchForm ? (
+      {shouldShowSearchForm ? (
         <>
           <div
             style={shouldStickSearchBar ? { top: `${logoHeaderHeight}px` } : undefined}
             className={`w-full transition-all duration-300 ${
               shouldStickSearchBar
-                ? 'sticky z-40 bg-white backdrop-blur-md border-b border-neutral-200 shadow-[0_6px_20px_rgba(15,23,42,0.06)]'
-                : 'static z-30 bg-white/95 border-b border-neutral-100'
+                ? 'sticky z-40 bg-(--bg-surface) border-b border-neutral-200 shadow-none'
+                : 'static z-30 bg-(--bg-surface) border-b border-neutral-200'
             }`}
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
               <form onSubmit={handleSearch} className="w-full">
-                <div className="w-full flex flex-col md:flex-row md:items-center bg-white border border-neutral-200 rounded-3xl md:rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-neutral-200 focus-within:border-neutral-300 transition-all duration-300">
+                <div className="w-full flex flex-col md:flex-row md:items-center bg-white border border-neutral-300 rounded-none shadow-none focus-within:ring-0 transition-all duration-300">
                   <div className="flex items-center gap-2 pl-4 sm:pl-6 pr-4 border-b md:border-b-0 md:border-r border-neutral-200 min-h-11 min-w-0">
                     <MapPin size={16} className="text-neutral-400" />
                     <select
@@ -290,7 +290,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
                   </div>
 
                   <div className="px-2 pb-2 md:pb-0 md:pr-2">
-                    <button type="submit" className={`w-full md:w-auto px-6 bg-neutral-900 text-white text-sm font-bold rounded-full hover:bg-black transition-all duration-300 shadow-sm ${isSearchPinned ? 'py-2' : 'py-2.5'}`}>
+                    <button type="submit" className={`w-full md:w-auto px-6 bg-black text-white text-sm font-bold rounded-none border border-neutral-900 hover:bg-neutral-900 transition-all duration-300 shadow-none ${isSearchPinned ? 'py-2' : 'py-2.5'}`}>
                       {t('home.search.btn')}
                     </button>
                   </div>

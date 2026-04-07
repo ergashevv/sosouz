@@ -5,19 +5,34 @@
 
 :root {
   --primary: #000000;
-  --primary-hover: #1a1a1a;
-  --bg-main: #FFFFFF;
-  --bg-surface: #F9FAFB;
+  --primary-hover: #111111;
+  --bg-main: #ffffff;
+  --bg-surface: #ffffff;
   --text-primary: #000000;
-  --text-secondary: #666666;
-  --border-light: #E5E5E5;
+  --text-secondary: #5e5e5e;
+  --border-light: #e5e5e5;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+
+  /* Semantic text roles (body / name / price / link) — monochrome, matches site */
+  --text-role-body: #404040;
+  --text-role-body-muted: #737373;
+  --text-role-label: #404040;
+  --text-role-name: #0a0a0a;
+  --text-role-price: #0f172a;
+  --text-role-price-bg: #f1f5f9;
+  --text-role-price-border: #0f172a;
+  --text-role-link: #0c4a6e;
+  --text-role-link-bg: #f0f9ff;
+  --text-role-link-hover: #000000;
+  --text-role-link-decoration: #d4d4d4;
+  --text-role-link-muted: #525252;
+  --text-role-link-subtle: #737373;
 }
 
 @layer base {
   body {
-    @apply bg-[var(--bg-main)] text-[var(--text-primary)] font-['Inter'];
+    @apply bg-(--bg-main) text-(--text-primary) font-['Inter'];
     -webkit-font-smoothing: antialiased;
   }
 
@@ -37,23 +52,39 @@
 
 @layer components {
   .clean-card {
-    @apply bg-white border border-[var(--border-light)] rounded-none p-8 transition-all duration-300;
+    @apply bg-(--bg-surface) border border-neutral-200 rounded-none p-8 transition-all duration-300;
   }
 
   .clean-card:hover {
-    @apply border-black;
+    @apply border-neutral-300;
   }
 
   .btn-primary {
-    @apply px-8 py-4 bg-black text-white font-bold rounded-none transition-all duration-200 flex items-center justify-center gap-3 hover:bg-neutral-800 active:scale-[0.98] uppercase text-xs tracking-widest;
+    @apply px-8 py-4 bg-black text-white font-bold rounded-none transition-all duration-200 flex items-center justify-center gap-3 hover:bg-neutral-800 active:scale-[0.98] uppercase text-xs tracking-widest border border-neutral-900;
   }
 
   .btn-secondary {
-    @apply px-8 py-4 bg-white text-black border border-black font-bold rounded-none transition-all duration-200 flex items-center justify-center gap-3 hover:bg-neutral-50 active:scale-[0.98] uppercase text-xs tracking-widest;
+    @apply px-8 py-4 bg-(--bg-surface) text-black border border-neutral-300 font-bold rounded-none transition-all duration-200 flex items-center justify-center gap-3 hover:bg-white active:scale-[0.98] uppercase text-xs tracking-widest;
   }
 
   .tag-pill {
-    @apply inline-flex items-center px-3 py-1 bg-neutral-100 text-neutral-800 text-[10px] font-bold rounded-none border border-neutral-200 uppercase tracking-widest;
+    @apply inline-flex items-center px-3 py-1 bg-black text-white text-[10px] font-bold rounded-none border border-neutral-900 uppercase tracking-widest;
+  }
+
+  .edge-panel {
+    @apply rounded-none border border-neutral-200 bg-(--bg-surface) shadow-none;
+  }
+
+  .edge-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-none border border-neutral-900 bg-black px-6 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white transition-colors hover:bg-neutral-900;
+  }
+
+  .edge-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-none border border-neutral-300 bg-white px-6 py-3 text-xs font-bold uppercase tracking-[0.16em] text-black transition-colors hover:bg-neutral-100;
+  }
+
+  .edge-eyebrow {
+    @apply inline-flex items-center border border-neutral-300 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-700;
   }
 
   .registry-label {
@@ -200,6 +231,107 @@
 
   .home-answer-text {
     @apply mt-2 text-sm leading-relaxed text-neutral-600;
+  }
+
+  /* --- Semantic text roles (use data-text-role for a11y / theming hooks) --- */
+
+  .text-role-label {
+    color: var(--text-role-label);
+    @apply text-[10px] font-bold uppercase tracking-[0.14em];
+  }
+
+  .text-role-label-wide {
+    color: var(--text-role-label);
+    @apply text-xs font-bold uppercase tracking-wider;
+  }
+
+  .text-role-body {
+    color: var(--text-role-body);
+    @apply font-medium leading-relaxed;
+  }
+
+  .text-role-body-muted {
+    color: var(--text-role-body-muted);
+    @apply font-medium leading-relaxed italic;
+  }
+
+  .text-role-body-sm {
+    color: var(--text-role-body);
+    @apply text-sm font-medium leading-relaxed;
+  }
+
+  .text-role-name {
+    color: var(--text-role-name);
+    @apply font-bold tracking-tight;
+  }
+
+  .text-role-name-display {
+    color: var(--text-role-name);
+    @apply font-black tracking-tight;
+  }
+
+  .text-role-price {
+    color: var(--text-role-price);
+    @apply font-extrabold tracking-tight;
+  }
+
+  /* Price tokens inside a sentence — selection / tag style */
+  .text-role-price-inline {
+    @apply rounded-sm bg-neutral-900 px-1.5 py-0.5 text-sm font-extrabold text-white tabular-nums tracking-tight sm:text-base;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  /* Marked block — reads like a “tagged” figure (Cursor-style emphasis) */
+  .text-role-price-block {
+    border-left: 3px solid var(--text-role-price-border);
+    background-color: var(--text-role-price-bg);
+    @apply rounded-r-lg rounded-l-sm border-y border-r border-neutral-200/80 py-3 pl-4 pr-3 shadow-[inset_1px_0_0_0_rgb(0_0_0_/_0.04)];
+  }
+
+  .text-role-deadline-block {
+    border-left: 3px solid rgb(163 163 163);
+    @apply rounded-r-lg rounded-l-sm border-y border-r border-neutral-200/80 bg-white py-3 pl-4 pr-3;
+  }
+
+  .text-role-link {
+    color: var(--text-role-link);
+    @apply font-semibold underline decoration-[color:var(--text-role-link-decoration)] underline-offset-[0.22em] transition-colors;
+  }
+
+  .text-role-link:hover {
+    color: var(--text-role-link-hover);
+    @apply decoration-neutral-500;
+  }
+
+  .text-role-name-link {
+    color: var(--text-role-name);
+    @apply font-semibold underline decoration-[color:var(--text-role-link-decoration)] underline-offset-[0.22em] transition-colors;
+  }
+
+  .group:hover .text-role-name-link {
+    @apply decoration-neutral-500;
+  }
+
+  .text-role-link-quiet {
+    color: var(--text-role-link);
+    @apply font-semibold underline decoration-neutral-300 underline-offset-[0.2em] transition-colors hover:text-[color:var(--text-role-link-hover)] hover:decoration-neutral-500;
+  }
+
+  .text-role-link-surface {
+    color: var(--text-role-link);
+    @apply text-sm sm:text-base font-semibold underline decoration-[color:var(--text-role-link-decoration)] underline-offset-[0.22em] transition-colors hover:text-[color:var(--text-role-link-hover)] hover:decoration-neutral-500;
+  }
+
+  .text-role-url-line {
+    color: var(--text-role-link);
+    background-color: var(--text-role-link-bg);
+    @apply inline-block max-w-full truncate rounded-md border border-sky-200/70 px-2 py-1 font-mono text-[11px] font-medium tabular-nums tracking-tight text-sky-950;
+  }
+
+  .text-role-link-card {
+    border-left: 3px solid var(--text-role-link);
+    @apply transition-colors hover:bg-sky-50/40;
   }
 }
 

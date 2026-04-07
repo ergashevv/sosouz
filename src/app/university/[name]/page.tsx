@@ -59,8 +59,8 @@ export async function generateMetadata({
 
 function LoadingState() {
   return (
-    <section className="bg-white pt-[calc(var(--search-header-height,12rem)+1rem)] sm:pt-[calc(var(--search-header-height,12rem)+1.5rem)]">
-      <div className="min-h-[calc(100vh-var(--search-header-height,12rem)-2rem)] sm:min-h-[calc(100vh-var(--search-header-height,12rem)-2.5rem)] w-full flex items-center justify-center flex-col gap-8 sm:gap-10 px-4 relative z-10">
+    <section className="flex flex-1 flex-col items-center justify-center bg-white px-4 py-8 sm:gap-10 sm:py-12">
+      <div className="flex w-full max-w-md flex-col items-center justify-center gap-8 sm:gap-10">
         <div className="relative">
           <div className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-slate-100 border-t-primary rounded-full animate-spin shadow-sm" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -151,9 +151,9 @@ async function UniversityContent({
     const searchHref = `/search?lang=${lang}`;
 
     return (
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-[calc(var(--search-header-height,12rem)+2rem)] sm:pt-[calc(var(--search-header-height,12rem)+2.5rem)] pb-16 sm:pb-24 lg:pb-28 relative z-10">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-neutral-200 bg-neutral-50/70 p-8 sm:p-12 lg:p-16 text-center shadow-sm">
-          <div className="mx-auto mb-6 sm:mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+      <section className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-4 py-10 sm:px-6 sm:py-16 lg:py-20">
+        <div className="mx-auto max-w-3xl rounded-none border border-neutral-200 bg-neutral-50 p-8 sm:p-12 lg:p-16 text-center shadow-none">
+          <div className="mx-auto mb-6 sm:mb-8 flex h-14 w-14 items-center justify-center rounded-none border border-neutral-300 bg-white text-black">
             <GraduationCap size={26} />
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
@@ -164,7 +164,7 @@ async function UniversityContent({
           </p>
           <Link
             href={searchHref}
-            className="mt-10 inline-flex items-center justify-center rounded-full bg-neutral-900 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-black"
+            className="edge-btn-primary mt-10 px-8 py-3 text-sm"
           >
             {copy.action}
           </Link>
@@ -193,15 +193,17 @@ async function UniversityContent({
   const fallbackSrc = getFallbackLogoUrl(domain);
 
   return (
-    <UniversityDetailView 
-      basicInfo={basicInfo}
-      aiDetails={aiDetails as unknown as AIResearchData}
-      domain={domain}
-      logoSrc={logoSrc}
-      fallbackSrc={fallbackSrc}
-      lang={lang}
-      youtubeVideos={youtubeVideos}
-    />
+    <div className="flex min-h-0 flex-1 flex-col">
+      <UniversityDetailView
+        basicInfo={basicInfo}
+        aiDetails={aiDetails as unknown as AIResearchData}
+        domain={domain}
+        logoSrc={logoSrc}
+        fallbackSrc={fallbackSrc}
+        lang={lang}
+        youtubeVideos={youtubeVideos}
+      />
+    </div>
   );
 }
 
@@ -224,11 +226,13 @@ export default async function UniversityDetail({ params, searchParams }: Univers
   const lang = coerceLanguage(sParams.lang || cookieStore.get('soso_lang')?.value);
   
   return (
-    <main className="min-h-screen bg-white">
-      <SearchHeader />
-      <Suspense fallback={<LoadingState />}>
-        <UniversityContent name={name} lang={lang} apiOrigin={apiOrigin} />
-      </Suspense>
+    <main className="flex min-h-dvh flex-col bg-(--bg-main)">
+      <SearchHeader showSearchForm={false} />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <Suspense fallback={<LoadingState />}>
+          <UniversityContent name={name} lang={lang} apiOrigin={apiOrigin} />
+        </Suspense>
+      </div>
     </main>
   );
 }

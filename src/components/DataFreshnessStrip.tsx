@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Clock3, Database } from "lucide-react";
 import type { Language } from "@/lib/i18n";
-import { translations, translateRefreshStatus } from "@/lib/i18n";
+import { translations } from "@/lib/i18n";
 
 function tr(key: string, lang: Language): string {
   const entry = translations[key];
@@ -46,7 +46,6 @@ export type DataFreshnessStripProps = {
   dbSyncedAt?: string | Date | null;
   /** e.g. month snapshot key YYYY-MM */
   periodLabel?: string | null;
-  refreshStatus?: string | null;
   /** True when rankings served from previous year because current year cache is empty. */
   yearFallbackNote?: boolean;
   /** `inline` = compact pill, last update only (generated_at, else db_synced_at). */
@@ -59,7 +58,6 @@ export default function DataFreshnessStrip({
   generatedAt,
   dbSyncedAt,
   periodLabel,
-  refreshStatus,
   yearFallbackNote,
   variant = "full",
   className = "",
@@ -91,7 +89,7 @@ export default function DataFreshnessStrip({
     return (
       <aside
         suppressHydrationWarning
-        className={`inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-full border border-neutral-200/90 bg-white px-2.5 py-1 text-[11px] leading-tight text-neutral-600 shadow-sm ${yearFallbackNote ? "ring-1 ring-amber-200/80" : ""} ${className}`}
+        className={`inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-none border border-neutral-300 bg-white px-2.5 py-1 text-[11px] leading-tight text-neutral-600 shadow-none ${yearFallbackNote ? "ring-1 ring-neutral-300" : ""} ${className}`}
         title={yearFallbackNote ? tr("dataFreshness.yearFallback", language) : undefined}
       >
         <Clock3 size={12} strokeWidth={2} className="shrink-0 text-neutral-400" aria-hidden />
@@ -112,21 +110,11 @@ export default function DataFreshnessStrip({
     );
   }
 
-  if (!gen && !db && !periodLabel && !yearFallbackNote && !refreshStatus) return null;
-
-  const statusNorm = refreshStatus?.toLowerCase().trim() || "";
-  const statusPillClass =
-    statusNorm === "fresh"
-      ? "border-emerald-200/90 bg-emerald-50 text-emerald-900"
-      : statusNorm === "failed"
-        ? "border-red-200/90 bg-red-50 text-red-900"
-        : statusNorm === "stale" || statusNorm === "partial"
-          ? "border-amber-200/90 bg-amber-50 text-amber-950"
-          : "border-neutral-200 bg-white text-neutral-600";
+  if (!gen && !db && !periodLabel && !yearFallbackNote) return null;
 
   return (
     <aside
-      className={`rounded-2xl border border-neutral-200 bg-neutral-50/90 px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2 sm:gap-2.5 text-xs text-neutral-600 ${className}`}
+      className={`rounded-none border border-neutral-200 bg-neutral-50/90 px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2 sm:gap-2.5 text-xs text-neutral-600 ${className}`}
     >
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-x-6 sm:gap-y-1">
         <div className="flex items-center gap-2 font-semibold text-neutral-800">
@@ -172,19 +160,10 @@ export default function DataFreshnessStrip({
             </time>
           </div>
         ) : null}
-
-        {refreshStatus ? (
-          <span
-            title={refreshStatus}
-            className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusPillClass}`}
-          >
-            {tr("uni.refresh_status", language)}: {translateRefreshStatus(refreshStatus, language)}
-          </span>
-        ) : null}
       </div>
 
       {yearFallbackNote ? (
-        <p className="text-[11px] leading-snug text-amber-900 bg-amber-50 border border-amber-100/80 rounded-lg px-2.5 py-2">
+        <p className="text-[11px] leading-snug text-neutral-800 bg-white border border-neutral-200 rounded-none px-2.5 py-2">
           {tr("dataFreshness.yearFallback", language)}
         </p>
       ) : null}

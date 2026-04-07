@@ -43,6 +43,14 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
 const GEMINI_RETRY_MAX = Math.min(10, Math.max(2, Number(process.env.GEMINI_RETRY_MAX || 6)));
 
+/** Cap HTML→text excerpts sent to Gemini (large pages blow input token budgets). */
+const SOURCE_EXCERPT_MAX_CHARS = Math.min(
+  24_000,
+  Math.max(4000, Number(process.env.RANKING_SOURCE_EXCERPT_MAX_CHARS || 7000)),
+);
+
+const countryRankingBuildLocks = new Map<string, Promise<RankingSnapshotLoadResult | null>>();
+
 function sleepMs(ms: number) {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
@@ -230,7 +238,7 @@ async function fetchSourceExcerpt(url: string): Promise<string> {
 
   const html = await response.text();
   const text = stripHtmlToText(html);
-  return text.slice(0, 18000);
+  return text.slice(0, SOURCE_EXCERPT_MAX_CHARS);
 }
 
 async function extractRankingsWithGemini(args: {
@@ -523,16 +531,11 @@ ${sourceBlock}`;
     return normalizeCountryBatchFromParsedRows(rows, rankStart, rankEnd);
   };
 
-  let out = await run(buildStrictPrompt());
-  if (out.length > 0) {
-    return out;
+  const outStrict = await run(buildStrictPrompt());
+  if (outStrict.length > 0) {
+    return outStrict;
   }
   await sleepMs(900);
-  out = await run(buildSoftPrompt());
-  if (out.length > 0) {
-    return out;
-  }
-  await sleepMs(1500);
   return run(buildSoftPrompt());
 }
 
@@ -998,39 +1001,65 @@ export async function ensureCountryRankingSnapshot(args: {
   maxBatches?: number;
 }): Promise<RankingSnapshotLoadResult | null> {
   const slug = canonicalCountryKey(args.filterCountry);
-  const cached = await getCountryRankingSnapshotFromCache({
-    countrySlug: slug,
-    year: args.year,
-    monthSnapshot: args.monthSnapshot,
-  });
+  const lockKey = `${slug}:${args.year}:${args.monthSnapshot ?? "__latest__"}`;
 
-  const full = COUNTRY_RANKING_ENTRY_COUNT;
+  const runEnsure = async (): Promise<RankingSnapshotLoadResult | null> => {
+    const cached = await getCountryRankingSnapshotFromCache({
+      countrySlug: slug,
+      year: args.year,
+      monthSnapshot: args.monthSnapshot,
+    });
 
-  if (cached) {
-    const next = getNextCountryFetchRank(cached.snapshot, full);
-    if (next > full || cached.snapshot.entries.length >= full) {
-      return cached;
+    const full = COUNTRY_RANKING_ENTRY_COUNT;
+
+    if (cached) {
+      const next = getNextCountryFetchRank(cached.snapshot, full);
+      if (next > full || cached.snapshot.entries.length >= full) {
+        return cached;
+      }
     }
-  }
 
-  if (!SERPER_API_KEY || !GEMINI_API_KEY) {
-    return cached && cached.snapshot.entries.length >= 1 ? cached : null;
-  }
+    if (!SERPER_API_KEY || !GEMINI_API_KEY) {
+      return cached && cached.snapshot.entries.length >= 1 ? cached : null;
+    }
 
-  const existing =
-    cached?.snapshot?.dataset === "country-top" && cached.snapshot.country_key === slug
-      ? cached.snapshot
-      : null;
+    const current = await getCountryRankingSnapshotFromCache({
+      countrySlug: slug,
+      year: args.year,
+      monthSnapshot: args.monthSnapshot,
+    });
+    if (current) {
+      const nextAfterWait = getNextCountryFetchRank(current.snapshot, full);
+      if (nextAfterWait > full || current.snapshot.entries.length >= full) {
+        return current;
+      }
+    }
 
-  await buildCountryRankingSnapshot(args.filterCountry, args.year, full, existing, {
-    maxBatches: args.maxBatches,
+    const existing =
+      current?.snapshot?.dataset === "country-top" && current.snapshot.country_key === slug
+        ? current.snapshot
+        : null;
+
+    await buildCountryRankingSnapshot(args.filterCountry, args.year, full, existing, {
+      maxBatches: args.maxBatches,
+    });
+
+    return getCountryRankingSnapshotFromCache({
+      countrySlug: slug,
+      year: args.year,
+      monthSnapshot: args.monthSnapshot,
+    });
+  };
+
+  const pending = countryRankingBuildLocks.get(lockKey);
+  if (pending) return pending;
+
+  const task = runEnsure();
+  countryRankingBuildLocks.set(lockKey, task);
+  void task.finally(() => {
+    countryRankingBuildLocks.delete(lockKey);
   });
-
-  return getCountryRankingSnapshotFromCache({
-    countrySlug: slug,
-    year: args.year,
-    monthSnapshot: args.monthSnapshot,
-  });
+  return task;
 }
 
 async function buildSnapshot(dataset: CoreRankingDataset, year: number): Promise<RankingSnapshotPayload> {

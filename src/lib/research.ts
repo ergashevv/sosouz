@@ -22,6 +22,11 @@ const RESEARCH_REFRESH_COOLDOWN_MS =
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
+export type PerformResearchOptions = {
+  /** When true, bypass DB-only fast path and cooldown (for explicit refresh). */
+  forceRefresh?: boolean;
+};
+
 function coerceLanguage(value: string | undefined): Language {
   if (value === "uz" || value === "ru" || value === "en") return value;
   return "en";
@@ -62,12 +67,6 @@ export interface ResearchOutput {
   admission_deadline: string;
   detailed_overview: string;
   confidence_score: number;
-}
-
-function isFresh(lastUpdated: Date, ttlDays = CACHE_TTL_DAYS) {
-  const threshold = new Date();
-  threshold.setDate(threshold.getDate() - ttlDays);
-  return lastUpdated > threshold;
 }
 
 function computeNextRefresh(ttlDays = CACHE_TTL_DAYS) {
@@ -356,23 +355,15 @@ async function findCachedDetails(cacheKey: string) {
   }
 }
 
+type CachedResearchDetailsRow = NonNullable<Awaited<ReturnType<typeof findCachedDetails>>>;
+
+/** Coalesce concurrent Serper+Gemini runs for the same cache key (single-flight). */
+const researchInflight = new Map<string, Promise<CachedResearchDetailsRow | null>>();
+
 async function generateWithGemini(prompt: string) {
-  const modelCandidates = Array.from(
-    new Set([GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.5-flash-lite"]),
-  );
-
-  let lastError: unknown = null;
-  for (const modelName of modelCandidates) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const aiResult = await model.generateContent(prompt);
-      return aiResult.response.text();
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError;
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+  const aiResult = await model.generateContent(prompt);
+  return aiResult.response.text();
 }
 
 async function upsertLegacyResearch(
@@ -411,17 +402,18 @@ export async function performResearch(
   domain?: string,
   lang: Language = "en",
   trust?: { domains?: string[] | null; web_pages?: string[] | null },
+  options?: PerformResearchOptions,
 ) {
   const safeLang = coerceLanguage(lang);
   const cacheKey = toLocalizedCacheKey(university, safeLang);
-  let cachedDetails = null;
+  let cachedDetails: CachedResearchDetailsRow | null = null;
   try {
     cachedDetails = await findCachedDetails(cacheKey);
   } catch (error) {
     console.error("Cache lookup failed:", error);
   }
 
-  if (cachedDetails && isFresh(cachedDetails.last_updated) && hasMinimumDetails(cachedDetails)) {
+  if (cachedDetails && hasMinimumDetails(cachedDetails) && !options?.forceRefresh) {
     return withTuitionOverride(university, safeLang, cachedDetails);
   }
 
@@ -435,92 +427,98 @@ export async function performResearch(
   }
 
   const needsRemoteFetch =
-    !cachedDetails || !hasMinimumDetails(cachedDetails) || !isFresh(cachedDetails.last_updated);
+    !cachedDetails || !hasMinimumDetails(cachedDetails) || Boolean(options?.forceRefresh);
 
   if (!needsRemoteFetch) {
     return withTuitionOverride(university, safeLang, cachedDetails);
   }
 
-  if (cachedDetails) {
+  if (cachedDetails && !options?.forceRefresh) {
     const claimed = await tryClaimAiRefresh(cacheKey);
     if (!claimed) {
       return withTuitionOverride(university, safeLang, cachedDetails);
     }
   }
 
-  try {
-    const bases = collectOfficialBases({
-      primaryDomain: domain || "",
-      domains: trust?.domains,
-      web_pages: trust?.web_pages,
-    });
-    const domainOnly =
-      domain && domain !== "unknown"
-        ? domain.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./i, "")
-        : "";
-    const homeUrl =
-      officialHomeUrl(bases, trust?.web_pages) ||
-      (domainOnly ? `https://${domainOnly}/` : "");
-    const safeHome =
-      homeUrl ||
-      (() => {
-        const p = trust?.web_pages?.[0];
-        if (!p) return "";
-        try {
-          return new URL(p).origin + "/";
-        } catch {
-          return "";
-        }
-      })();
-    const linkClampFallback =
-      safeHome ||
-      (domainOnly ? `https://${domainOnly}/` : "") ||
-      (bases[0] ? `https://${bases[0]}/` : "");
+  const pending = researchInflight.get(cacheKey);
+  if (pending) {
+    return pending;
+  }
 
-    if (!linkClampFallback.trim()) {
-      throw new Error("performResearch: could not resolve official homepage for link validation");
-    }
+  const remoteTask = (async (): Promise<CachedResearchDetailsRow | null> => {
+    try {
+      const bases = collectOfficialBases({
+        primaryDomain: domain || "",
+        domains: trust?.domains,
+        web_pages: trust?.web_pages,
+      });
+      const domainOnly =
+        domain && domain !== "unknown"
+          ? domain.replace(/^https?:\/\//i, "").split("/")[0].replace(/^www\./i, "")
+          : "";
+      const homeUrl =
+        officialHomeUrl(bases, trust?.web_pages) ||
+        (domainOnly ? `https://${domainOnly}/` : "");
+      const safeHome =
+        homeUrl ||
+        (() => {
+          const p = trust?.web_pages?.[0];
+          if (!p) return "";
+          try {
+            return new URL(p).origin + "/";
+          } catch {
+            return "";
+          }
+        })();
+      const linkClampFallback =
+        safeHome ||
+        (domainOnly ? `https://${domainOnly}/` : "") ||
+        (bases[0] ? `https://${bases[0]}/` : "");
 
-    const siteConstraint = domain && domain !== "unknown" ? ` site:${domain}` : "";
-    const query =
-      `Official tuition fees, scholarships, study programs, admission requirements, and deadlines ` +
-      `for ${university} ${country || ""} 2026${siteConstraint}`;
+      if (!linkClampFallback.trim()) {
+        throw new Error("performResearch: could not resolve official homepage for link validation");
+      }
 
-    const serperResponse = await fetch("https://google.serper.dev/search", {
-      method: "POST",
-      headers: {
-        "X-API-KEY": SERPER_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ q: query, num: 10 }),
-    });
+      const siteConstraint = domain && domain !== "unknown" ? ` site:${domain}` : "";
+      const query =
+        `Official tuition fees, scholarships, study programs, admission requirements, and deadlines ` +
+        `for ${university} ${country || ""} 2026${siteConstraint}`;
 
-    if (!serperResponse.ok) {
-      throw new Error("Search provider error");
-    }
+      const serperResponse = await fetch("https://google.serper.dev/search", {
+        method: "POST",
+        headers: {
+          "X-API-KEY": SERPER_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ q: query, num: 8 }),
+      });
 
-    const serperData: unknown = await serperResponse.json();
-    const searchResults =
-      serperData && typeof serperData === "object" && Array.isArray((serperData as { organic?: unknown }).organic)
-        ? (serperData as { organic: unknown[] }).organic
-        : [];
-    const organicForOfficial = filterOrganicByOfficialHost(searchResults, bases);
-    const organicForGemini =
-      organicForOfficial.length > 0 ? organicForOfficial : searchResults.slice(0, 8);
-    const sourcesForStore = buildSourceLinks(
-      organicForOfficial.length > 0 ? organicForOfficial : [],
-    );
-    const snippetSources = buildSourceLinks(organicForGemini.slice(0, 8));
-    const snippetBlock = snippetSources
-      .slice(0, 6)
-      .map((source, index) => `${index + 1}. ${source.title}\nURL: ${source.link}\nSnippet: ${source.snippet}`)
-      .join("\n\n");
+      if (!serperResponse.ok) {
+        throw new Error("Search provider error");
+      }
 
-    const officialHomeLine = safeHome
-      ? `Official homepage (use this exact URL when a specific page URL is unknown): ${safeHome}`
-      : "Official homepage: not available — keep confidence_score low.";
+      const serperData: unknown = await serperResponse.json();
+      const searchResults =
+        serperData && typeof serperData === "object" && Array.isArray((serperData as { organic?: unknown }).organic)
+          ? (serperData as { organic: unknown[] }).organic
+          : [];
+      const organicForOfficial = filterOrganicByOfficialHost(searchResults, bases);
+      const organicForGemini =
+        organicForOfficial.length > 0 ? organicForOfficial : searchResults.slice(0, 8);
+      const sourcesForStore = buildSourceLinks(
+        organicForOfficial.length > 0 ? organicForOfficial : [],
+      );
+      const snippetSources = buildSourceLinks(organicForGemini.slice(0, 8));
+      const snippetBlock = snippetSources
+        .slice(0, 5)
+        .map((source, index) => `${index + 1}. ${source.title}\nURL: ${source.link}\nSnippet: ${source.snippet}`)
+        .join("\n\n");
 
-    const prompt = `You are a senior education analyst. Build a concise but complete university profile.
+      const officialHomeLine = safeHome
+        ? `Official homepage (use this exact URL when a specific page URL is unknown): ${safeHome}`
+        : "Official homepage: not available — keep confidence_score low.";
+
+      const prompt = `You are a senior education analyst. Build a concise but complete university profile.
 
 University: ${university}
 Country: ${country || "unknown"}
@@ -551,101 +549,106 @@ Constraints:
 Sources:
 ${snippetBlock || "No external snippets available."}`;
 
-    const text = await generateWithGemini(prompt);
-    const parsed = JSON.parse(extractJsonObject(text));
-    const structuredRaw = normalizeResearchOutput(parsed, {
-      university,
-      homeUrl: linkClampFallback,
-      bases,
-    });
-    const structuredData = clampResearchLinks(structuredRaw, bases, linkClampFallback);
-    const tuitionForStorage =
-      getResearchTuitionOverride(university, safeLang) ?? structuredData.annual_tuition_usd;
-
-    try {
-      return withTuitionOverride(
+      const text = await generateWithGemini(prompt);
+      const parsed = JSON.parse(extractJsonObject(text));
+      const structuredRaw = normalizeResearchOutput(parsed, {
         university,
-        safeLang,
-        await prisma.universityDetails.upsert({
-        where: { university_name: cacheKey },
-        update: {
-          tuition_fees: tuitionForStorage,
-          scholarships: structuredData.available_scholarships,
-          programs: structuredData.programs as unknown as Prisma.InputJsonValue,
-          admission_requirements: structuredData.admission_requirements,
-          admission_deadline: structuredData.admission_deadline,
-          detailed_overview: structuredData.detailed_overview,
-          source_links: sourcesForStore as unknown as Prisma.InputJsonValue,
-          data_confidence: structuredData.confidence_score,
-          refresh_status: "fresh",
-          next_refresh_at: computeNextRefresh(),
-          last_ai_refresh_attempt_at: null,
-          domain: domain || null,
-          country: country || null,
-        },
-        create: {
-          university_name: cacheKey,
-          tuition_fees: tuitionForStorage,
-          scholarships: structuredData.available_scholarships,
-          programs: structuredData.programs as unknown as Prisma.InputJsonValue,
-          admission_requirements: structuredData.admission_requirements,
-          admission_deadline: structuredData.admission_deadline,
-          detailed_overview: structuredData.detailed_overview,
-          source_links: sourcesForStore as unknown as Prisma.InputJsonValue,
-          data_confidence: structuredData.confidence_score,
-          refresh_status: "fresh",
-          next_refresh_at: computeNextRefresh(),
-          last_ai_refresh_attempt_at: null,
-          domain: domain || null,
-          country: country || null,
-        },
-      }),
-      );
-    } catch (error) {
-      if (isMissingColumnError(error)) {
+        homeUrl: linkClampFallback,
+        bases,
+      });
+      const structuredData = clampResearchLinks(structuredRaw, bases, linkClampFallback);
+      const tuitionForStorage =
+        getResearchTuitionOverride(university, safeLang) ?? structuredData.annual_tuition_usd;
+
+      try {
         return withTuitionOverride(
           university,
           safeLang,
-          await upsertLegacyResearch(cacheKey, country, domain, {
-            ...structuredData,
-            annual_tuition_usd: tuitionForStorage,
+          await prisma.universityDetails.upsert({
+            where: { university_name: cacheKey },
+            update: {
+              tuition_fees: tuitionForStorage,
+              scholarships: structuredData.available_scholarships,
+              programs: structuredData.programs as unknown as Prisma.InputJsonValue,
+              admission_requirements: structuredData.admission_requirements,
+              admission_deadline: structuredData.admission_deadline,
+              detailed_overview: structuredData.detailed_overview,
+              source_links: sourcesForStore as unknown as Prisma.InputJsonValue,
+              data_confidence: structuredData.confidence_score,
+              refresh_status: "fresh",
+              next_refresh_at: computeNextRefresh(),
+              last_ai_refresh_attempt_at: null,
+              domain: domain || null,
+              country: country || null,
+            },
+            create: {
+              university_name: cacheKey,
+              tuition_fees: tuitionForStorage,
+              scholarships: structuredData.available_scholarships,
+              programs: structuredData.programs as unknown as Prisma.InputJsonValue,
+              admission_requirements: structuredData.admission_requirements,
+              admission_deadline: structuredData.admission_deadline,
+              detailed_overview: structuredData.detailed_overview,
+              source_links: sourcesForStore as unknown as Prisma.InputJsonValue,
+              data_confidence: structuredData.confidence_score,
+              refresh_status: "fresh",
+              next_refresh_at: computeNextRefresh(),
+              last_ai_refresh_attempt_at: null,
+              domain: domain || null,
+              country: country || null,
+            },
           }),
         );
+      } catch (error) {
+        if (isMissingColumnError(error)) {
+          return withTuitionOverride(
+            university,
+            safeLang,
+            await upsertLegacyResearch(cacheKey, country, domain, {
+              ...structuredData,
+              annual_tuition_usd: tuitionForStorage,
+            }),
+          );
+        }
+        throw error;
       }
-      throw error;
-    }
-  } catch (error) {
-    console.error("Research logic error:", error);
-    if (cachedDetails) {
-      const debounceNext = new Date(Date.now() - RESEARCH_REFRESH_COOLDOWN_MS + 15 * 60 * 1000);
-      try {
-        await prisma.universityDetails.update({
-          where: { university_name: cacheKey },
-          data: {
-            refresh_status: "stale",
-            last_ai_refresh_attempt_at: debounceNext,
-          },
-        });
-      } catch (updateErr) {
-        if (isMissingColumnError(updateErr)) {
-          try {
-            await prisma.universityDetails.update({
-              where: { university_name: cacheKey },
-              data: { refresh_status: "stale" },
-            });
-          } catch {
-            /* ignore */
+    } catch (error) {
+      console.error("Research logic error:", error);
+      if (cachedDetails) {
+        const debounceNext = new Date(Date.now() - RESEARCH_REFRESH_COOLDOWN_MS + 15 * 60 * 1000);
+        try {
+          await prisma.universityDetails.update({
+            where: { university_name: cacheKey },
+            data: {
+              refresh_status: "stale",
+              last_ai_refresh_attempt_at: debounceNext,
+            },
+          });
+        } catch (updateErr) {
+          if (isMissingColumnError(updateErr)) {
+            try {
+              await prisma.universityDetails.update({
+                where: { university_name: cacheKey },
+                data: { refresh_status: "stale" },
+              });
+            } catch {
+              /* ignore */
+            }
           }
         }
+        try {
+          const again = await findCachedDetails(cacheKey);
+          if (again) return withTuitionOverride(university, safeLang, again);
+        } catch {
+          /* ignore */
+        }
+        return withTuitionOverride(university, safeLang, cachedDetails);
       }
-      try {
-        const again = await findCachedDetails(cacheKey);
-        if (again) return withTuitionOverride(university, safeLang, again);
-      } catch {
-        /* ignore */
-      }
-      return withTuitionOverride(university, safeLang, cachedDetails);
+      return null;
     }
-    return null;
-  }
+  })();
+
+  researchInflight.set(cacheKey, remoteTask);
+  void remoteTask.finally(() => researchInflight.delete(cacheKey));
+  return remoteTask;
 }
