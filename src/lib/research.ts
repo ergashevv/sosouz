@@ -228,8 +228,10 @@ function normalizeResearchOutput(
 
 function isMissingColumnError(error: unknown) {
   if (!error || typeof error !== "object") return false;
-  const candidate = error as { code?: unknown };
-  return candidate.code === "P2022";
+  const candidate = error as { code?: unknown; message?: unknown };
+  if (candidate.code === "P2022") return true;
+  const msg = typeof candidate.message === "string" ? candidate.message.toLowerCase() : "";
+  return msg.includes("does not exist") && (msg.includes("column") || msg.includes("last_ai_refresh"));
 }
 
 /** Returns true if this request may call Serper/Gemini; false if another refresh is in-flight or in cooldown. */
@@ -291,6 +293,11 @@ async function findCachedDetails(cacheKey: string) {
           admission_deadline: true,
           detailed_overview: true,
           last_updated: true,
+          programs: true,
+          source_links: true,
+          data_confidence: true,
+          refresh_status: true,
+          next_refresh_at: true,
         },
       });
     }
