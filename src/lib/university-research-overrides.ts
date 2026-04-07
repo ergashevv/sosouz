@@ -50,6 +50,24 @@ export function isNationalUniversityOfUzbekistan(name: string): boolean {
 /** Shorter copy: leading number, then links (DTM catalog + contract portal). */
 const NUU_UZBMB_CATALOG_URL = "https://my.uzbmb.uz/university-about-direction/314";
 
+/**
+ * Optional map of university → official YouTube channel ID (`UC…`) for the Data API.
+ * Add entries using the same normalization as tuition overrides (`normalizeUniversityKey`).
+ */
+const YOUTUBE_CHANNEL_OVERRIDES: Record<string, string> = {
+  // Example (replace with a real channel ID from the channel URL):
+  // [normalizeUniversityKey("Example University")]: "UCxxxxxxxxxxxxxxxxxxxxxx",
+};
+
+export function getYouTubeChannelOverride(university: string): string | null {
+  const key = normalizeUniversityKey(university);
+  const raw = YOUTUBE_CHANNEL_OVERRIDES[key];
+  if (typeof raw !== "string") return null;
+  const id = raw.trim();
+  if (id.startsWith("UC") && id.length >= 20) return id;
+  return null;
+}
+
 export function getResearchTuitionOverride(university: string, lang: Language): string | null {
   if (!isNationalUniversityOfUzbekistan(university)) return null;
 

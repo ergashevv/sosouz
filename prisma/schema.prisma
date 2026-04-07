@@ -28,6 +28,8 @@ model UniversityDetails {
   next_refresh_at       DateTime?
   last_ai_refresh_attempt_at DateTime?
   last_updated          DateTime @updatedAt
+  /** Official YouTube channel ID (UC…) for Data API; optional. */
+  youtube_channel_id    String?
 }
 
 model SearchCache {

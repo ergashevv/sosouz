@@ -289,6 +289,7 @@ async function findCachedDetails(cacheKey: string) {
         refresh_status: true,
         next_refresh_at: true,
         last_ai_refresh_attempt_at: true,
+        youtube_channel_id: true,
       },
     });
   } catch (error) {

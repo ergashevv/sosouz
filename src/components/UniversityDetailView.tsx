@@ -1,12 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Globe, MapPin, ExternalLink, DollarSign, Award, ClipboardList, Info, ArrowLeft, Shield, Search, Clock3, BookOpen } from 'lucide-react';
+import { Globe, MapPin, ExternalLink, DollarSign, Award, ClipboardList, Info, ArrowLeft, Shield, Search, Clock3, BookOpen, Play } from 'lucide-react';
 import Link from 'next/link';
 import SmartImage from '@/components/SmartImage';
 import DataFreshnessStrip from '@/components/DataFreshnessStrip';
 import { University } from '@/lib/api';
 import { translations, type Language } from '@/lib/i18n';
+import type { YoutubeVideoPreview } from '@/lib/university-youtube';
 
 export interface AIResearchData {
   tuition_fees?: string | null;
@@ -31,6 +32,7 @@ export interface UniversityDetailsProps {
   logoSrc: string;
   fallbackSrc: string;
   lang?: Language;
+  youtubeVideos?: YoutubeVideoPreview[] | null;
 }
 
 function t(key: string, lang: Language) {
@@ -335,6 +337,7 @@ export default function UniversityDetailView({
   logoSrc,
   fallbackSrc,
   lang = 'en',
+  youtubeVideos = null,
 }: UniversityDetailsProps) {
   const websiteFallback = basicInfo.web_pages?.[0] || null;
   const normalizedPrograms = (aiDetails?.programs || [])
@@ -549,6 +552,50 @@ export default function UniversityDetailView({
                 </div>
              </div>
           </div>
+
+          {youtubeVideos && youtubeVideos.length > 0 ? (
+            <section className="space-y-6 sm:space-y-8" aria-label={t('uni.youtube.title', lang)}>
+              <div className="flex items-center gap-4 border-b border-neutral-100 pb-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                  <Play size={20} aria-hidden />
+                </div>
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900">
+                    {t('uni.youtube.title', lang)}
+                  </h2>
+                  <p className="mt-1 text-sm text-neutral-500">{t('uni.youtube.subtitle', lang)}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                {youtubeVideos.slice(0, 4).map((video) => (
+                  <div key={video.videoId} className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+                    <p className="text-sm font-semibold leading-snug text-neutral-900 line-clamp-2">{video.title}</p>
+                    <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-neutral-100">
+                      <iframe
+                        title={video.title}
+                        src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.videoId)}`}
+                        className="absolute inset-0 h-full w-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allowFullScreen
+                        loading="lazy"
+                      />
+                    </div>
+                    <a
+                      href={`https://www.youtube.com/watch?v=${encodeURIComponent(video.videoId)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700"
+                    >
+                      {t('uni.youtube.watch', lang)}
+                      <ExternalLink size={12} aria-hidden />
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] leading-relaxed text-neutral-400">{t('uni.youtube.embedNote', lang)}</p>
+            </section>
+          ) : null}
 
           <section className="space-y-8 sm:space-y-12">
              <div className="flex items-center gap-4 border-b border-neutral-100 pb-6 sm:pb-8">

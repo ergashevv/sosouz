@@ -7,6 +7,7 @@ import { GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import SearchHeader from '@/components/SearchHeader';
 import UniversityDetailView, { AIResearchData } from '@/components/UniversityDetailView';
+import { getUniversityYoutubeVideos } from '@/lib/university-youtube';
 import type { Language } from '@/lib/i18n';
 import { headers } from 'next/headers';
 
@@ -179,6 +180,12 @@ async function UniversityContent({
   } catch (error) {
     console.error("Research fetch failed:", error);
   }
+  let youtubeVideos: Awaited<ReturnType<typeof getUniversityYoutubeVideos>> = null;
+  try {
+    youtubeVideos = await getUniversityYoutubeVideos(decodedName);
+  } catch (error) {
+    console.error("YouTube fetch failed:", error);
+  }
   const logoSrc = getLogoUrl(domain);
   const fallbackSrc = getFallbackLogoUrl(domain);
 
@@ -190,6 +197,7 @@ async function UniversityContent({
       logoSrc={logoSrc}
       fallbackSrc={fallbackSrc}
       lang={lang}
+      youtubeVideos={youtubeVideos}
     />
   );
 }

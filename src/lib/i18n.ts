@@ -184,7 +184,41 @@ export const translations: InternalDict = {
     ru: "Официальные цены, условия оплаты и детали контракта.",
     uz: "Rasmiy kontrakt narxi, to'lov shartlari va tegishli ma'lumotlar.",
   },
-  
+  "uni.youtube.title": {
+    en: "Official YouTube channel",
+    ru: "Официальный канал YouTube",
+    uz: "Rasmiy YouTube kanali",
+  },
+  "uni.youtube.subtitle": {
+    en: "Recent videos from the university’s channel (via YouTube).",
+    ru: "Недавние видео с официального канала (YouTube).",
+    uz: "Universitet kanalidagi so‘nggi videolar (YouTube orqali).",
+  },
+  "uni.youtube.watch": {
+    en: "Watch on YouTube",
+    ru: "Смотреть на YouTube",
+    uz: "YouTubeda ko‘rish",
+  },
+  "uni.youtube.embedNote": {
+    en: "Playing a video may load content from YouTube. See our terms for third-party services.",
+    ru: "При воспроизведении может загружаться контент YouTube. Подробнее — в условиях об использовании.",
+    uz: "Video ijrosi YouTube kontentini yuklashi mumkin. Uchinchi tomon xizmatlari haqida foydalanish shartlarimizda.",
+  },
+
+  "cookie.analytics.title": {
+    en: "Analytics & measurement",
+    ru: "Аналитика и измерение",
+    uz: "Analitika va statistika",
+  },
+  "cookie.analytics.body": {
+    en: "We use Google Tag Manager / Google Analytics 4 to understand how the site is used, only if you opt in. Essential cookies are always on.",
+    ru: "Мы используем Google Tag Manager / Google Analytics 4 для понимания использования сайта — только с вашего согласия. Обязательные cookies всегда включены.",
+    uz: "Saytdan qanday foydalanishni tushunish uchun Google Tag Manager / Google Analytics 4 dan rozi bo‘lsangiz foydalanamiz. Zarur cookie’lar doim yoqiladi.",
+  },
+  "cookie.analytics.accept": { en: "Accept analytics", ru: "Разрешить аналитику", uz: "Analitikaga rozilik" },
+  "cookie.analytics.reject": { en: "Essential only", ru: "Только необходимые", uz: "Faqat zarur" },
+  "cookie.analytics.termsLink": { en: "Terms", ru: "Условия", uz: "Shartlar" },
+
   // Footer
   "footer.copyright": { en: "© 2026 SOSO Education", ru: "© 2026 SOSO Образование", uz: "© 2026 SOSO Ta'lim" },
   "footer.status": { en: "All systems operational", ru: "Все системы работают", uz: "Barcha tizimlar ishlamoqda" },
