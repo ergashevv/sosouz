@@ -10,6 +10,7 @@ import HeaderAccountActions from '@/components/HeaderAccountActions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
 import ContactMailtoLink from '@/components/ContactMailtoLink';
+import { countries } from '@/lib/countries';
 
 interface ChatWorkspaceProps {
   user: {
@@ -601,116 +602,91 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             </aside>
 
               <section className="flex min-h-[72vh] flex-1 flex-col bg-[#f7f8fa]">
-                <header className="border-b border-black/6 bg-white/85 px-5 py-6 backdrop-blur-sm sm:px-8 sm:py-8">
-                  <div className="flex items-start gap-4 sm:gap-5">
-                    <button
-                      type="button"
-                      onClick={() => setSidebarOpen(true)}
-                      className="mt-2 inline-flex shrink-0 items-center justify-center text-neutral-600 transition-colors hover:text-neutral-900 lg:hidden"
-                      aria-label="Open chats"
-                    >
-                      <Menu size={22} strokeWidth={1.5} />
-                    </button>
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={`text-[10px] font-extrabold uppercase tracking-[0.22em] text-neutral-400 sm:text-[11px] ${outfit.className}`}
+                <header className="border-b border-black/6 bg-white/90 px-5 py-4 backdrop-blur-sm sm:px-6">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setSidebarOpen(true)}
+                        className="inline-flex shrink-0 items-center justify-center text-neutral-600 transition-colors hover:text-neutral-900 lg:hidden"
+                        aria-label="Open chats"
                       >
-                        {t('chat.sectionEyebrow')}
-                      </p>
-                      <h1
-                        className={`mt-3 text-2xl font-extrabold leading-none tracking-tight text-neutral-900 sm:text-3xl ${outfit.className}`}
-                      >
-                        {t('chat.title')}
-                      </h1>
-                      <p className="mt-3 max-w-xl text-sm leading-[1.65] text-neutral-600">{t('chat.subtitle')}</p>
-                      {activeConversation ? (
-                        <p className="mt-3 text-xs text-neutral-500">
-                          Current chat: <span className="font-semibold text-neutral-700">{activeConversation.title}</span>
-                        </p>
-                      ) : null}
-                      <div className="mt-6 h-px max-w-18 bg-neutral-900" aria-hidden />
-                      <div className="mt-5 lg:hidden">
-                        <label className="block">
-                          <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-500">
-                            Recent chats
-                          </span>
-                          <select
-                            value={activeConversationId || ''}
-                            onChange={(event) => {
-                              const nextId = event.target.value;
-                              if (!nextId) return;
-                              void openConversation(nextId);
-                            }}
-                            className="w-full rounded-lg border border-black/12 bg-white/75 px-3 py-2.5 text-sm text-neutral-900 outline-none"
-                          >
-                            {conversations.map((conversation) => (
-                              <option key={conversation.id} value={conversation.id}>
-                                {conversation.title}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:max-w-3xl">
-                    {advisorContext ? (
-                      <div>
-                        <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
-                          {t('chat.focus')}
-                        </p>
-                        <div className="rounded-xl border border-black/8 bg-white px-3 py-3 text-sm text-neutral-900">
-                          <span className="font-semibold">{advisorContext.name}</span>
-                          {typeof advisorContext.nationalRank === 'number' ? (
-                            <span className="text-neutral-500"> · #{advisorContext.nationalRank}</span>
-                          ) : null}
-                        </div>
-                      </div>
-                    ) : null}
-                    <div className={advisorContext ? '' : 'sm:col-span-2 lg:max-w-md'}>
-                      {advisorContext?.country && !countryPickerOpen ? (
-                        <div>
-                          <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
-                            {t('chat.regionLabel')}
+                        <Menu size={22} strokeWidth={1.5} />
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <h1 className={`text-xl font-extrabold leading-none tracking-tight text-neutral-900 ${outfit.className}`}>
+                          {t('chat.title')}
+                        </h1>
+                        {activeConversation ? (
+                          <p className="mt-1 line-clamp-1 text-xs text-neutral-500">
+                            {activeConversation.title}
                           </p>
-                          <div className="flex flex-col gap-2 rounded-xl border border-black/8 bg-white px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                            <p className="min-w-0 text-neutral-800">
-                              <span className="text-neutral-500">{t('chat.regionInUse')}:</span>{' '}
-                              <span className="font-semibold text-neutral-900">{country}</span>
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => setCountryPickerOpen(true)}
-                              className="shrink-0 self-start text-xs font-bold uppercase tracking-wide text-neutral-800 underline decoration-neutral-400 underline-offset-4 hover:text-neutral-950 sm:self-auto"
-                            >
-                              {t('chat.regionChange')}
-                            </button>
-                          </div>
-                          <p className="mt-2 text-xs leading-relaxed text-neutral-500">{t('chat.regionHint')}</p>
+                        ) : null}
+                      </div>
+                      {advisorContext ? (
+                        <div className="hidden max-w-52 truncate rounded-full border border-black/10 bg-white px-3 py-1 text-xs text-neutral-700 sm:block">
+                          {advisorContext.name}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                      {advisorContext?.country && !countryPickerOpen ? (
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-black/10 bg-[#f8fafc] px-3 py-2 text-sm">
+                          <p className="min-w-0 truncate text-neutral-700">
+                            <span className="text-neutral-500">{t('chat.regionInUse')}:</span>{' '}
+                            <span className="font-semibold text-neutral-900">{country}</span>
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setCountryPickerOpen(true)}
+                            className="shrink-0 text-xs font-bold uppercase tracking-wide text-neutral-700 hover:text-neutral-950"
+                          >
+                            {t('chat.regionChange')}
+                          </button>
                         </div>
                       ) : (
-                        <div>
-                          <label className="block" htmlFor="chat-region-country">
-                            <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-neutral-500">
-                              {t('chat.regionLabel')}
-                            </span>
-                            <div className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2.5 transition-colors focus-within:border-black/30">
-                              <Search size={16} className="shrink-0 text-neutral-400" aria-hidden />
-                              <input
-                                id="chat-region-country"
-                                value={country}
-                                onChange={(event) => setCountry(event.target.value)}
-                                className="min-w-0 flex-1 bg-transparent text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0"
-                                placeholder={t('chat.regionPlaceholder')}
-                                aria-label={t('chat.regionLabel')}
-                              />
-                            </div>
-                          </label>
-                          <p className="mt-2 text-xs leading-relaxed text-neutral-500">{t('chat.regionHint')}</p>
-                        </div>
+                        <label className="block" htmlFor="chat-region-country">
+                          <div className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2.5 transition-colors focus-within:border-black/30">
+                            <Search size={16} className="shrink-0 text-neutral-400" aria-hidden />
+                            <input
+                              id="chat-region-country"
+                              value={country}
+                              onChange={(event) => setCountry(event.target.value)}
+                              list="chat-country-options"
+                              autoComplete="off"
+                              className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0"
+                              placeholder={t('chat.regionPlaceholder')}
+                              aria-label={t('chat.regionLabel')}
+                            />
+                          </div>
+                        </label>
                       )}
+
+                      <div className="lg:hidden">
+                        <select
+                          value={activeConversationId || ''}
+                          onChange={(event) => {
+                            const nextId = event.target.value;
+                            if (!nextId) return;
+                            void openConversation(nextId);
+                          }}
+                          className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none sm:min-w-56"
+                          aria-label="Recent chats"
+                        >
+                          {conversations.map((conversation) => (
+                            <option key={conversation.id} value={conversation.id}>
+                              {conversation.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
+                    <datalist id="chat-country-options">
+                      {countries.map((item) => (
+                        <option key={item.code} value={item.name} />
+                      ))}
+                    </datalist>
                   </div>
                 </header>
 

@@ -4,6 +4,7 @@ import React, { FormEvent, useMemo, useState } from 'react';
 import { Loader2, MessageCircle, Send, Paperclip, X, Globe2 } from 'lucide-react';
 import Image from 'next/image';
 import type { Language } from '@/lib/i18n';
+import { countries } from '@/lib/countries';
 
 type ChatRole = 'user' | 'assistant';
 
@@ -215,9 +216,16 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
           <input
             value={recommendationCountry}
             onChange={(event) => setRecommendationCountry(event.target.value)}
+            list="university-chat-country-options"
+            autoComplete="off"
             className="w-full rounded-xl border border-black/12 bg-white pl-9 pr-3 py-2.5 text-sm text-neutral-900 outline-none focus:border-[#0a84ff]"
           />
         </div>
+        <datalist id="university-chat-country-options">
+          {countries.map((item) => (
+            <option key={item.code} value={item.name} />
+          ))}
+        </datalist>
       </label>
 
       <div className="max-h-72 space-y-3 overflow-y-auto rounded-2xl border border-black/10 bg-white p-3">
