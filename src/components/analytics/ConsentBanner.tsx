@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const CONSENT_COOKIE = "soso_analytics_consent";
+const CONSENT_STORAGE_KEY = "soso_analytics_consent";
 const CONSENT_MAX_AGE_SEC = 60 * 60 * 24 * 180;
 
 function readConsentCookie(): "granted" | "denied" | null {
@@ -19,6 +20,20 @@ function readConsentCookie(): "granted" | "denied" | null {
 function writeConsentCookie(value: "granted" | "denied") {
   const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
   document.cookie = `${CONSENT_COOKIE}=${value}; path=/; max-age=${CONSENT_MAX_AGE_SEC}; SameSite=Lax${secure}`;
+}
+
+function readStoredConsent(): "granted" | "denied" | null {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+  if (stored === "granted" || stored === "denied") return stored;
+  return readConsentCookie();
+}
+
+function persistConsent(value: "granted" | "denied") {
+  writeConsentCookie(value);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(CONSENT_STORAGE_KEY, value);
+  }
 }
 
 function pushConsentToGtag(granted: boolean) {
@@ -42,10 +57,10 @@ declare global {
 
 export function ConsentBanner() {
   const { t } = useLanguage();
-  const [visible, setVisible] = useState(() => readConsentCookie() === null);
+  const [visible, setVisible] = useState(() => readStoredConsent() === null);
 
   useEffect(() => {
-    const existing = readConsentCookie();
+    const existing = readStoredConsent();
     if (existing === "granted") {
       pushConsentToGtag(true);
       return;
@@ -58,13 +73,13 @@ export function ConsentBanner() {
   if (!visible) return null;
 
   const onAccept = () => {
-    writeConsentCookie("granted");
+    persistConsent("granted");
     pushConsentToGtag(true);
     setVisible(false);
   };
 
   const onReject = () => {
-    writeConsentCookie("denied");
+    persistConsent("denied");
     pushConsentToGtag(false);
     setVisible(false);
   };
@@ -73,7 +88,7 @@ export function ConsentBanner() {
     <div
       role="dialog"
       aria-label={t("cookie.analytics.title")}
-      className="fixed bottom-0 left-0 right-0 z-80 border-t border-neutral-200 bg-white/95 backdrop-blur-md shadow-[0_-8px_30px_rgba(15,23,42,0.08)]"
+      className="fixed bottom-0 left-0 right-0 z-9999 pointer-events-auto border-t border-neutral-200 bg-white/95 backdrop-blur-md shadow-[0_-8px_30px_rgba(15,23,42,0.08)]"
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:py-5">
         <div className="min-w-0 space-y-1 pr-0 sm:pr-4">
