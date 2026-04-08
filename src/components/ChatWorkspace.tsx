@@ -507,13 +507,13 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
     <main
       className={`${
         isFullscreen ? 'fixed inset-0 z-70 h-dvh overflow-hidden' : 'flex min-h-screen'
-      } flex-col bg-[#e9edf2] text-neutral-900 antialiased`}
+      } flex-col bg-[#edf1f6] text-neutral-900 antialiased`}
     >
       <div className={`${isFullscreen ? 'px-0 pt-0' : 'px-3 pt-3 sm:px-6 lg:px-8'}`}>
         <div
           className={`${
             isFullscreen
-              ? 'flex w-full items-center justify-between border-b border-black/10 bg-white/90 px-3 py-2.5'
+              ? 'flex w-full items-center justify-between border-b border-black/10 bg-white/95 px-3 py-2.5 shadow-[0_2px_12px_-8px_rgba(15,23,42,0.35)] backdrop-blur'
               : 'mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl border border-black/10 bg-white/85 px-3 py-2.5'
           }`}
         >
@@ -547,14 +547,14 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
       <section
         className={`${
-          isFullscreen ? 'flex-1 min-h-0 bg-[#e9edf2] px-0 py-0' : 'flex-1 bg-[#e9edf2] px-0 py-2 sm:px-6 sm:py-6 lg:px-8'
+          isFullscreen ? 'flex-1 min-h-0 bg-transparent px-0 py-0' : 'flex-1 bg-[#e9edf2] px-0 py-2 sm:px-6 sm:py-6 lg:px-8'
         }`}
       >
         <div className={`${isFullscreen ? 'h-full w-full' : 'mx-auto w-full max-w-6xl'}`}>
           <div
             className={`${
               isFullscreen
-                ? 'flex h-full min-h-0 overflow-hidden bg-[#f7f8fa] lg:flex-row'
+                ? 'flex h-full min-h-0 overflow-hidden border-t border-black/5 bg-[#f7f8fa] lg:flex-row'
                 : 'flex min-h-[calc(100dvh-7.25rem)] overflow-hidden rounded-none border-y border-black/8 bg-[#f7f8fa] shadow-none sm:min-h-[80vh] sm:rounded-[24px] sm:border sm:shadow-[0_28px_60px_-34px_rgba(15,23,42,0.45)] lg:h-[calc(100dvh-9rem)] lg:min-h-0 lg:flex-row'
             }`}
           >
@@ -663,8 +663,18 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
               </div>
             </aside>
 
-              <section className="flex min-h-[72vh] flex-1 flex-col bg-[#f7f8fa]">
-                <header className="border-b border-black/6 bg-white/90 px-4 py-3 backdrop-blur-sm sm:px-6">
+              <section
+                className={`${
+                  isFullscreen ? 'flex min-h-0 flex-1 flex-col bg-[#f7f8fa]' : 'flex min-h-[72vh] flex-1 flex-col bg-[#f7f8fa]'
+                }`}
+              >
+                <header
+                  className={`${
+                    isFullscreen
+                      ? 'border-b border-black/6 bg-white/92 px-4 py-3 backdrop-blur-sm sm:px-6 lg:hidden'
+                      : 'border-b border-black/6 bg-white/90 px-4 py-3 backdrop-blur-sm sm:px-6'
+                  }`}
+                >
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                       <button
@@ -685,9 +695,17 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                 </header>
 
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <div className="flex-1 space-y-5 overflow-y-auto bg-[#f7f8fa] px-4 py-5 sm:px-8 sm:py-8">
+                  <div
+                    className={`flex-1 space-y-5 overflow-y-auto bg-[#f7f8fa] ${
+                      isFullscreen ? 'px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-8' : 'px-4 py-5 sm:px-8 sm:py-8'
+                    }`}
+                  >
                     {messages.length === 0 ? (
-                      <div className="flex h-full min-h-56 flex-col items-start justify-center px-0 sm:px-2">
+                      <div
+                        className={`flex h-full min-h-56 flex-col justify-center ${
+                          isFullscreen ? 'items-center px-4 text-center' : 'items-start px-0 sm:px-2'
+                        }`}
+                      >
                         <p
                           className={`text-[11px] font-extrabold uppercase tracking-[0.2em] text-neutral-400 ${outfit.className}`}
                         >
@@ -792,7 +810,13 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     <div ref={messagesEndRef} className="h-1 w-full shrink-0" aria-hidden />
                   </div>
 
-                  <div className="sticky bottom-0 z-10 border-t border-black/6 bg-white/92 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:px-8 sm:py-4">
+                  <div
+                    className={`sticky bottom-0 z-10 border-t border-black/6 bg-white/92 backdrop-blur-md ${
+                      isFullscreen
+                        ? 'px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4 lg:px-8'
+                        : 'px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-8 sm:py-4'
+                    }`}
+                  >
                     {replyTarget ? (
                       <div className="mb-3 rounded-xl border border-black/10 bg-[#f7f8fa] px-3 py-2.5">
                         <div className="flex items-start justify-between gap-3 text-xs">
@@ -848,7 +872,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
-                      className="relative mx-auto max-w-4xl"
+                      className={`relative mx-auto w-full ${isFullscreen ? 'max-w-5xl' : 'max-w-4xl'}`}
                     >
                       <div
                         className={`flex items-end gap-2 rounded-[22px] border bg-[#f3f4f6] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-colors sm:gap-3 sm:px-3 ${
