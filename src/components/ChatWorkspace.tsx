@@ -4,7 +4,7 @@ import { DragEvent, FormEvent, useCallback, useEffect, useRef, useState } from '
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Outfit } from 'next/font/google';
-import { ArrowLeft, Loader2, Plus, Send, Paperclip, X, Search, Menu } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Send, Paperclip, X, Search, Menu, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
 
@@ -148,7 +148,8 @@ function parseAdvisorContextParam(raw: string | null): ClientAdvisorContextPaylo
   return null;
 }
 
-export default function ChatWorkspace(_: ChatWorkspaceProps) {
+export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
+  void user;
   const router = useRouter();
   const searchParams = useSearchParams();
   const { language, t } = useLanguage();
@@ -166,6 +167,7 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [conversationQuery, setConversationQuery] = useState('');
   const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
+  const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
   const dragDepthRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
@@ -338,6 +340,52 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
     }
   };
 
+  const deleteConversation = async (conversationId: string) => {
+    if (deletingConversationId) return;
+    const targetConversation = conversations.find((conversation) => conversation.id === conversationId);
+    const confirmed = window.confirm(`Delete "${targetConversation?.title || 'this chat'}"?`);
+    if (!confirmed) return;
+
+    setError(null);
+    setReplyTarget(null);
+    setDeletingConversationId(conversationId);
+    try {
+      const response = await authFetch('/api/chat/conversations', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not delete chat.');
+      }
+
+      const remainingConversations = conversations.filter((conversation) => conversation.id !== conversationId);
+      setConversations(remainingConversations);
+
+      if (activeConversationId !== conversationId) return;
+
+      if (remainingConversations.length > 0) {
+        const nextConversationId = remainingConversations[0].id;
+        setActiveConversationId(nextConversationId);
+        await loadMessages(nextConversationId);
+        return;
+      }
+
+      const createResponse = await authFetch('/api/chat/conversations', { method: 'POST' });
+      if (!createResponse.ok) throw new Error('Could not create a replacement chat.');
+      const createPayload = (await createResponse.json()) as { conversation: ConversationItem };
+      const createdConversation = createPayload.conversation;
+      setConversations([createdConversation]);
+      setActiveConversationId(createdConversation.id);
+      setMessages([]);
+    } catch (deleteError: unknown) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Could not delete chat.');
+    } finally {
+      setDeletingConversationId(null);
+    }
+  };
+
   const sendMessage = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!activeConversationId || sending || (!input.trim() && !screenshotDataUrl)) return;
@@ -504,10 +552,8 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
 
               <div className="min-h-0 flex-1 space-y-1 overflow-y-auto lg:max-h-none">
                 {filteredConversations.map((conversation) => (
-                  <button
+                  <div
                     key={conversation.id}
-                    type="button"
-                    onClick={() => void openConversation(conversation.id)}
                     className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
                       activeConversationId === conversation.id
                         ? 'border-black/10 bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]'
@@ -515,24 +561,40 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
                     }`}
                   >
                     <div className="flex items-start gap-2">
-                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#d7ddea] text-[11px] font-bold uppercase text-[#3f4d63]">
-                        {conversation.title.trim().charAt(0) || 'C'}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="line-clamp-1 text-sm font-semibold leading-snug text-neutral-900">
-                            {conversation.title}
-                          </p>
-                          <span className="shrink-0 text-[10px] text-neutral-400">
-                            {formatConversationTime(conversation.updatedAt)}
-                          </span>
+                      <button
+                        type="button"
+                        onClick={() => void openConversation(conversation.id)}
+                        className="flex min-w-0 flex-1 items-start gap-2 text-left"
+                      >
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#d7ddea] text-[11px] font-bold uppercase text-[#3f4d63]">
+                          {conversation.title.trim().charAt(0) || 'C'}
                         </div>
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-neutral-500">
-                          {conversation.lastMessage || t('chat.noMessagesYet')}
-                        </p>
-                      </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="line-clamp-1 text-sm font-semibold leading-snug text-neutral-900">
+                              {conversation.title}
+                            </p>
+                            <span className="shrink-0 text-[10px] text-neutral-400">
+                              {formatConversationTime(conversation.updatedAt)}
+                            </span>
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-neutral-500">
+                            {conversation.lastMessage || t('chat.noMessagesYet')}
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteConversation(conversation.id)}
+                        disabled={Boolean(deletingConversationId)}
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        aria-label="Delete chat"
+                        title="Delete chat"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 ))}
                 {filteredConversations.length === 0 ? (
                   <p className="rounded-xl border border-dashed border-neutral-300 px-3 py-4 text-xs text-neutral-500">

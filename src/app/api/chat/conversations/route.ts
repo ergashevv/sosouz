@@ -21,6 +21,8 @@ type ConversationCreateRecord = {
 type ChatConversationRepository = {
   findMany: (args: unknown) => Promise<ConversationRecord[]>;
   create: (args: unknown) => Promise<ConversationCreateRecord>;
+  findFirst: (args: unknown) => Promise<ConversationCreateRecord | null>;
+  delete: (args: unknown) => Promise<{ id: string }>;
 };
 
 const chatConversationRepo =
@@ -75,4 +77,29 @@ export async function POST(request: Request) {
       lastMessage: null,
     },
   });
+}
+
+export async function DELETE(request: Request) {
+  const user = await getCurrentSessionUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const payload = (await request.json().catch(() => ({}))) as { conversationId?: unknown };
+  const conversationId =
+    typeof payload.conversationId === "string" ? payload.conversationId.trim() : "";
+  if (!conversationId) {
+    return NextResponse.json({ error: "conversationId is required." }, { status: 400 });
+  }
+
+  const conversation = await chatConversationRepo.findFirst({
+    where: { id: conversationId, user_id: user.id },
+    select: { id: true, title: true, updated_at: true },
+  });
+  if (!conversation) {
+    return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
+  }
+
+  await chatConversationRepo.delete({ where: { id: conversationId } });
+  return NextResponse.json({ ok: true, deletedConversationId: conversationId });
 }
