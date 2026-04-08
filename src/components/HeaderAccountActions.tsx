@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { MessageCircle, UserCircle2 } from 'lucide-react';
@@ -11,6 +12,7 @@ interface AuthState {
   user?: {
     firstName: string;
     lastName: string;
+    avatarUrl: string | null;
   };
 }
 
@@ -67,7 +69,19 @@ export default function HeaderAccountActions() {
         className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:text-black transition-colors"
         aria-label="Open profile"
       >
-        {initials ? <span className="text-[11px] font-black">{initials}</span> : <UserCircle2 size={17} />}
+        {authState.user?.avatarUrl ? (
+          <Image
+            src={authState.user.avatarUrl}
+            alt="Profile avatar"
+            width={36}
+            height={36}
+            className="h-full w-full rounded-full object-cover"
+          />
+        ) : initials ? (
+          <span className="text-[11px] font-black">{initials}</span>
+        ) : (
+          <UserCircle2 size={17} />
+        )}
       </Link>
     </div>
   );
