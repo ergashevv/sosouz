@@ -433,16 +433,25 @@ export async function performResearch(
     return withTuitionOverride(university, safeLang, cachedDetails);
   }
 
+  const existingPending = researchInflight.get(cacheKey);
+  if (existingPending) {
+    return existingPending;
+  }
+
   if (cachedDetails && !options?.forceRefresh) {
     const claimed = await tryClaimAiRefresh(cacheKey);
     if (!claimed) {
+      const pendingAfterClaim = researchInflight.get(cacheKey);
+      if (pendingAfterClaim) {
+        return pendingAfterClaim;
+      }
       return withTuitionOverride(university, safeLang, cachedDetails);
     }
   }
 
-  const pending = researchInflight.get(cacheKey);
-  if (pending) {
-    return pending;
+  const pendingBeforeFetch = researchInflight.get(cacheKey);
+  if (pendingBeforeFetch) {
+    return pendingBeforeFetch;
   }
 
   const remoteTask = (async (): Promise<CachedResearchDetailsRow | null> => {
