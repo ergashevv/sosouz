@@ -166,24 +166,10 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
   const dragDepthRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
-  /** When false and focus-university had a country, we show a compact summary instead of the full field. */
-  const [countryPickerOpen, setCountryPickerOpen] = useState(true);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, sending]);
-
-  useEffect(() => {
-    if (advisorContext?.country) {
-      setCountryPickerOpen(false);
-    }
-  }, [advisorContext?.country]);
-
-  useEffect(() => {
-    if (!advisorContext) {
-      setCountryPickerOpen(true);
-    }
-  }, [advisorContext]);
 
   const filteredConversations = conversations.filter((conversation) => {
     const q = conversationQuery.trim().toLowerCase();
@@ -193,8 +179,6 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
       (conversation.lastMessage || '').toLowerCase().includes(q)
     );
   });
-
-  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) || null;
 
   const handleMediaFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -322,7 +306,6 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
   const startNewChat = async () => {
     setError(null);
     setAdvisorContext(null);
-    setCountryPickerOpen(true);
     try {
       const response = await authFetch('/api/chat/conversations', { method: 'POST' });
       if (!response.ok) throw new Error('Could not create a new chat.');
@@ -438,7 +421,7 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
   return (
     <main className="flex min-h-screen flex-col bg-[#e9edf2] text-neutral-900 antialiased">
       <div className="px-4 pt-3 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-screen-2xl">
+        <div className="mx-auto w-full max-w-6xl">
           <button
             type="button"
             onClick={() => {
@@ -454,7 +437,7 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
       </div>
 
       <section className="flex-1 bg-[#e9edf2] px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <div className="mx-auto max-w-screen-2xl">
+        <div className="mx-auto w-full max-w-6xl">
           <div className="flex min-h-[80vh] overflow-hidden rounded-[24px] border border-black/8 bg-[#f7f8fa] shadow-[0_28px_60px_-34px_rgba(15,23,42,0.45)] lg:h-[calc(100dvh-9rem)] lg:min-h-0 lg:flex-row">
             {sidebarOpen ? (
               <button
@@ -563,51 +546,25 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
                         <h1 className={`text-xl font-extrabold leading-none tracking-tight text-neutral-900 ${outfit.className}`}>
                           {t('chat.title')}
                         </h1>
-                        {activeConversation ? (
-                          <p className="mt-1 line-clamp-1 text-xs text-neutral-500">
-                            {activeConversation.title}
-                          </p>
-                        ) : null}
                       </div>
-                      {advisorContext ? (
-                        <div className="hidden max-w-52 truncate rounded-full border border-black/10 bg-white px-3 py-1 text-xs text-neutral-700 sm:block">
-                          {advisorContext.name}
-                        </div>
-                      ) : null}
                     </div>
 
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                      {advisorContext?.country && !countryPickerOpen ? (
-                        <div className="flex items-center justify-between gap-3 rounded-xl border border-black/10 bg-[#f8fafc] px-3 py-2 text-sm">
-                          <p className="min-w-0 truncate text-neutral-700">
-                            <span className="text-neutral-500">{t('chat.regionInUse')}:</span>{' '}
-                            <span className="font-semibold text-neutral-900">{country}</span>
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setCountryPickerOpen(true)}
-                            className="shrink-0 text-xs font-bold uppercase tracking-wide text-neutral-700 hover:text-neutral-950"
-                          >
-                            {t('chat.regionChange')}
-                          </button>
+                      <label className="block" htmlFor="chat-region-country">
+                        <div className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2.5 transition-colors focus-within:border-black/30">
+                          <Search size={16} className="shrink-0 text-neutral-400" aria-hidden />
+                          <input
+                            id="chat-region-country"
+                            value={country}
+                            onChange={(event) => setCountry(event.target.value)}
+                            list="chat-country-options"
+                            autoComplete="off"
+                            className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0"
+                            placeholder={t('chat.regionPlaceholder')}
+                            aria-label={t('chat.regionLabel')}
+                          />
                         </div>
-                      ) : (
-                        <label className="block" htmlFor="chat-region-country">
-                          <div className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2.5 transition-colors focus-within:border-black/30">
-                            <Search size={16} className="shrink-0 text-neutral-400" aria-hidden />
-                            <input
-                              id="chat-region-country"
-                              value={country}
-                              onChange={(event) => setCountry(event.target.value)}
-                              list="chat-country-options"
-                              autoComplete="off"
-                              className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0"
-                              placeholder={t('chat.regionPlaceholder')}
-                              aria-label={t('chat.regionLabel')}
-                            />
-                          </div>
-                        </label>
-                      )}
+                      </label>
 
                       <div className="lg:hidden">
                         <select
