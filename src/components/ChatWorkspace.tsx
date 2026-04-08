@@ -168,6 +168,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [conversationQuery, setConversationQuery] = useState('');
   const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
   const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
+  const [deleteConfirmConversation, setDeleteConfirmConversation] = useState<ConversationItem | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const dragDepthRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -348,12 +349,19 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
     }
   };
 
-  const deleteConversation = async (conversationId: string) => {
+  const requestDeleteConversation = (conversationId: string) => {
     if (deletingConversationId) return;
     const targetConversation = conversations.find((conversation) => conversation.id === conversationId);
-    const confirmed = window.confirm(`Delete "${targetConversation?.title || 'this chat'}"?`);
-    if (!confirmed) return;
+    if (!targetConversation) return;
+    setDeleteConfirmConversation(targetConversation);
+  };
 
+  const deleteConversation = async () => {
+    const targetConversation = deleteConfirmConversation;
+    if (!targetConversation || deletingConversationId) return;
+    const conversationId = targetConversation.id;
+
+    setDeleteConfirmConversation(null);
     setError(null);
     setReplyTarget(null);
     setDeletingConversationId(conversationId);
@@ -631,7 +639,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void deleteConversation(conversation.id)}
+                        onClick={() => requestDeleteConversation(conversation.id)}
                         disabled={Boolean(deletingConversationId)}
                         className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                         aria-label="Delete chat"
@@ -893,6 +901,34 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             </div>
           </div>
       </section>
+
+      {deleteConfirmConversation ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-black/10 bg-white p-4 shadow-2xl">
+            <p className="text-sm font-semibold text-neutral-900">Chatni o‘chirasizmi?</p>
+            <p className="mt-1 text-xs text-neutral-600 line-clamp-2">
+              &quot;{deleteConfirmConversation.title || 'Yangi chat'}&quot; butunlay o‘chiriladi.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmConversation(null)}
+                className="rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+              >
+                Bekor qilish
+              </button>
+              <button
+                type="button"
+                onClick={() => void deleteConversation()}
+                disabled={Boolean(deletingConversationId)}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {deletingConversationId ? 'O‘chirilmoqda...' : 'Ha, o‘chirish'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
     </main>
   );
