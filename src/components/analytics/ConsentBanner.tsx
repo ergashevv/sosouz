@@ -68,7 +68,7 @@ declare global {
 
 export function ConsentBanner() {
   const { t } = useLanguage();
-  const [visible, setVisible] = useState(() => readStoredConsent() === null);
+  const [visible, setVisible] = useState(false);
 
   const applyConsent = (value: "granted" | "denied") => {
     try {
@@ -82,6 +82,7 @@ export function ConsentBanner() {
 
   useEffect(() => {
     const existing = readStoredConsent();
+    setVisible(existing === null);
     if (existing === "granted") {
       pushConsentToGtag(true);
       return;
