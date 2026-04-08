@@ -42,21 +42,17 @@ declare global {
 
 export function ConsentBanner() {
   const { t } = useLanguage();
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(() => readConsentCookie() === null);
 
   useEffect(() => {
     const existing = readConsentCookie();
     if (existing === "granted") {
       pushConsentToGtag(true);
-      setVisible(false);
       return;
     }
     if (existing === "denied") {
       pushConsentToGtag(false);
-      setVisible(false);
-      return;
     }
-    setVisible(true);
   }, []);
 
   if (!visible) return null;

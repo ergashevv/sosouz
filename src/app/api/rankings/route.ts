@@ -7,7 +7,7 @@ import {
   isCountryRankingSnapshotComplete,
   WORLD_RANKING_ENTRY_COUNT,
 } from "@/lib/rankings";
-import { countryFilterMatches, foldGeoLabel, inferRegionFromCountry } from "@/lib/geoFilters";
+import { foldGeoLabel, inferRegionFromCountry } from "@/lib/geoFilters";
 
 export const runtime = "nodejs";
 

@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest a product or engineering improvement.
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user or business problem are you solving?
+      placeholder: Users cannot ...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the preferred solution.
+      placeholder: We should add ...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: Other options evaluated ...
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected impact
+      description: Product, UX, reliability, performance, or growth impact.
+      placeholder: This will improve ...
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I searched existing issues and discussions first.
+          required: true

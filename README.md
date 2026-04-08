@@ -1,36 +1,161 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# soso
 
-## Getting Started
+AI-powered platform for discovering, comparing, and shortlisting universities for studying abroad.
 
-First, run the development server:
+[![CI](https://github.com/ergashevv/sosouz/actions/workflows/ci.yml/badge.svg)](https://github.com/ergashevv/sosouz/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Overview
+
+`soso` helps students move faster from search to decision by combining:
+
+- university discovery and country-based filtering,
+- AI-assisted chat guidance,
+- ranked/top university experiences,
+- multilingual UX (English, Uzbek, Russian).
+
+## Core Features
+
+- **University discovery** with country and query-based filtering.
+- **AI advisor chat** for study-abroad related guidance.
+- **Conversation and message APIs** for chat persistence.
+- **Top university/ranking views** with background sync endpoints.
+- **User auth + sessions** with PostgreSQL-backed persistence.
+- **Multilingual interface** (`en`, `uz`, `ru`).
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router), React 19, TypeScript
+- **Database:** PostgreSQL + Prisma
+- **Styling/UI:** Tailwind CSS 4, Framer Motion, Lucide
+- **AI:** Google Gemini API (`@google/generative-ai`)
+- **Data integrations:** Serper, YouTube Data API (optional)
+- **Deployment:** Vercel
+
+## Project Structure
+
+```text
+src/
+  app/                 # App Router pages and API routes
+  components/          # UI components and chat workspace
+  lib/                 # AI logic, API clients, utilities, i18n
+prisma/
+  schema.prisma        # Database schema
+scripts/               # Operational and data sync scripts
+docs/                  # Internal setup journals and notes
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js 20+
+- npm 10+
+- PostgreSQL database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Local Development
 
-## Learn More
+1. Install dependencies:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Create `.env` in project root and set required values.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Generate Prisma client and sync schema:
 
-## Deploy on Vercel
+   ```bash
+   npm run db:push
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Start the app:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000).
+
+## Environment Variables
+
+Set these in `.env` (and production environment settings).
+
+### Required
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `GEMINI_API_KEY`: Gemini API key
+
+### Recommended
+
+- `GEMINI_MODEL`: Gemini model name (default in code: `gemini-2.5-flash`)
+- `SITE_URL`: Canonical backend/site URL
+- `NEXT_PUBLIC_SITE_URL`: Public app URL
+- `NEXT_PUBLIC_APP_URL`: Alternative public URL
+
+### Optional Integrations
+
+- `SERPER_API_KEY`: Search enrichment for rankings/research logic
+- `YOUTUBE_DATA_API_KEY`: YouTube channel/content enrichment
+- `NEXT_PUBLIC_GTM_ID`: Google Tag Manager container id
+- `CRON_SECRET`: Protect scheduled sync endpoints
+- `NEXT_PUBLIC_CONTACT_EMAIL`: Public contact email override
+- `NEXT_PUBLIC_LOCAL_COUNTRY`: Default local country label
+
+### Optional Tuning
+
+- `ADVISOR_MAX_PROMPT_UNIVERSITIES`
+- `ADVISOR_MAX_MESSAGE_CHARS`
+- `GEMINI_RETRY_MAX`
+- `GEMINI_FALLBACK_MODELS`
+- `COUNTRY_RANKING_BATCH_SIZE`
+- `COUNTRY_RANKING_API_PREFETCH_BATCHES`
+- `RANKING_SOURCE_EXCERPT_MAX_CHARS`
+- `RESEARCH_REFRESH_COOLDOWN_MS`
+
+## Database Notes
+
+- Prisma client is generated automatically on install via `postinstall`.
+- For first-time local setup, `npm run db:push` is the fastest path.
+- For managed environments, use `npm run db:migrate`.
+
+## Available Scripts
+
+- `npm run dev` - start local development server
+- `npm run build` - create production build
+- `npm run start` - run production server
+- `npm run lint` - run ESLint
+- `npm run db:migrate` - apply Prisma migrations (deploy flow)
+- `npm run db:push` - push schema to database
+- `npm run db:baseline` - mark baseline migration as applied
+- `npm run db:sync-migration-checksums` - sync migration checksums
+- `npm run db:sync-nuu-tuition` - run tuition sync script
+
+## Deployment
+
+Primary target: **Vercel**.
+
+- Connect repository to Vercel.
+- Set all required environment variables.
+- Ensure production `DATABASE_URL` is configured.
+- Run migration strategy (`db:migrate`) as part of deployment/release flow.
+
+Live URL: [sosouz.vercel.app](https://sosouz.vercel.app)
+
+## Repository Standards
+
+This repository follows standard open-source and engineering governance files:
+
+- `LICENSE` - legal usage terms (MIT)
+- `SECURITY.md` - private vulnerability reporting process
+- `CONTRIBUTING.md` - contribution and quality workflow
+- `CODE_OF_CONDUCT.md` - community behavior expectations
+- `.github/ISSUE_TEMPLATE` - structured bug/feature intake
+- `.github/pull_request_template.md` - consistent PR quality checks
+- `.github/workflows/ci.yml` - automated lint/build verification
+
+## Security
+
+- Never commit `.env` or secret keys.
+- Rotate API keys immediately if exposed.
+- Keep `CRON_SECRET` set for any scheduled API endpoints.
