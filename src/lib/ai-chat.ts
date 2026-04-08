@@ -6,7 +6,7 @@ import { getAdvisorRankingUniversities } from "@/lib/rankings";
 import { canonicalCountryKey } from "@/lib/geoFilters";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 const MAX_SCREENSHOT_BYTES = 4 * 1024 * 1024;
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
@@ -34,6 +34,82 @@ export interface AdvisorContext {
   nationalRank?: number;
   worldRank?: number;
   rankingSourceUrl?: string | null;
+}
+
+type UiLanguage = "uz" | "ru" | "en";
+
+function extractErrorStatus(error: unknown): number | null {
+  if (!error || typeof error !== "object") return null;
+  const statusValue = (error as { status?: unknown; statusCode?: unknown }).status;
+  if (typeof statusValue === "number" && Number.isFinite(statusValue)) return statusValue;
+  const statusCodeValue = (error as { status?: unknown; statusCode?: unknown }).statusCode;
+  if (typeof statusCodeValue === "number" && Number.isFinite(statusCodeValue)) return statusCodeValue;
+  return null;
+}
+
+function getLocalizedBusyMessage(language: UiLanguage): string {
+  if (language === "ru") {
+    return "Сервис ИИ временно перегружен. Пожалуйста, попробуйте снова через 10-20 секунд.";
+  }
+  if (language === "en") {
+    return "AI service is temporarily busy. Please try again in 10-20 seconds.";
+  }
+  return "AI xizmati hozir band. Iltimos, 10-20 soniyadan keyin yana urinib ko'ring.";
+}
+
+function getLocalizedTemporaryErrorMessage(language: UiLanguage): string {
+  if (language === "ru") {
+    return "Временная ошибка AI сервиса. Попробуйте еще раз немного позже.";
+  }
+  if (language === "en") {
+    return "Temporary AI service error. Please try again shortly.";
+  }
+  return "AI xizmatida vaqtinchalik xatolik. Birozdan keyin qayta urinib ko'ring.";
+}
+
+function getLocalizedGenericErrorMessage(language: UiLanguage): string {
+  if (language === "ru") {
+    return "Не удалось получить ответ AI. Попробуйте снова.";
+  }
+  if (language === "en") {
+    return "Could not get AI response. Please try again.";
+  }
+  return "AI javobini olishda muammo bo'ldi. Qayta urinib ko'ring.";
+}
+
+export function toUserFacingAiError(
+  error: unknown,
+  language: UiLanguage = "uz",
+): { status: number; message: string } {
+  const rawMessage = error instanceof Error ? error.message : "";
+  const normalized = rawMessage.toLowerCase();
+  const status = extractErrorStatus(error);
+
+  if (
+    status === 503 ||
+    normalized.includes("503") ||
+    normalized.includes("service unavailable") ||
+    normalized.includes("high demand") ||
+    normalized.includes("overloaded")
+  ) {
+    return { status: 503, message: getLocalizedBusyMessage(language) };
+  }
+
+  if (status === 429 || normalized.includes("429") || normalized.includes("rate limit")) {
+    return { status: 429, message: getLocalizedBusyMessage(language) };
+  }
+
+  if (status && status >= 500) {
+    return { status: 503, message: getLocalizedTemporaryErrorMessage(language) };
+  }
+
+  if (normalized.includes("ai service is not configured")) {
+    if (language === "ru") return { status: 500, message: "AI сервис еще не настроен на сервере." };
+    if (language === "en") return { status: 500, message: "AI service is not configured on the server yet." };
+    return { status: 500, message: "AI xizmati serverda hali sozlanmagan." };
+  }
+
+  return { status: 500, message: getLocalizedGenericErrorMessage(language) };
 }
 
 interface PlatformUniversity {

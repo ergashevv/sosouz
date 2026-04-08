@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSessionUserFromRequest } from "@/lib/auth";
-import { generateAdvisorReply, type AdvisorContext } from "@/lib/ai-chat";
+import { generateAdvisorReply, toUserFacingAiError, type AdvisorContext } from "@/lib/ai-chat";
 import {
   parseChatMessageContent,
   serializeChatMessageContent,
@@ -147,6 +147,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  let language: "uz" | "ru" | "en" = "uz";
   try {
     const payload = (await request.json()) as SendMessagePayload;
     const conversationId = typeof payload.conversationId === "string" ? payload.conversationId : "";
@@ -186,7 +187,7 @@ export async function POST(request: Request) {
       take: 20,
     });
 
-    const language = coerceLanguage(payload.language);
+    language = coerceLanguage(payload.language);
     const advisorFromPayload = parseAdvisorContextPayload(payload.advisorContext);
     const recommendationCountry =
       typeof payload.recommendationCountry === "string" && payload.recommendationCountry.trim()
@@ -250,7 +251,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Chat message failed.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const userFacing = toUserFacingAiError(error, language);
+    return NextResponse.json({ error: userFacing.message }, { status: userFacing.status });
   }
 }

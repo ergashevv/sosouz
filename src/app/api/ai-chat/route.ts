@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateAdvisorReply } from "@/lib/ai-chat";
+import { generateAdvisorReply, toUserFacingAiError } from "@/lib/ai-chat";
 import { getCurrentSessionUserFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -48,6 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Authentication required for chat." }, { status: 401 });
   }
 
+  let language: "uz" | "ru" | "en" = "uz";
   try {
     const payload = (await request.json()) as AiChatPayload;
     const messages = sanitizeMessages(payload.messages);
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "At least one message is required." }, { status: 400 });
     }
 
-    const language = coerceLanguage(payload.language);
+    language = coerceLanguage(payload.language);
     const recommendationCountry =
       typeof payload.recommendationCountry === "string" && payload.recommendationCountry.trim()
         ? payload.recommendationCountry.trim()
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "AI chat failed.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const userFacing = toUserFacingAiError(error, language);
+    return NextResponse.json({ error: userFacing.message }, { status: userFacing.status });
   }
 }
