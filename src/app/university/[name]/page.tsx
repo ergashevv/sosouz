@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { fetchUniversityByName, getLogoUrl, getFallbackLogoUrl } from '@/lib/api';
+import { fetchUniversityByNameDirect, getLogoUrl, getFallbackLogoUrl } from '@/lib/api';
 import { getSiteUrl } from '@/lib/site';
 import { performResearch } from '@/lib/research';
 import { GraduationCap } from 'lucide-react';
@@ -9,7 +9,6 @@ import SearchHeader from '@/components/SearchHeader';
 import UniversityDetailView, { AIResearchData } from '@/components/UniversityDetailView';
 import { getUniversityYoutubeVideos } from '@/lib/university-youtube';
 import type { Language } from '@/lib/i18n';
-import { headers } from 'next/headers';
 
 interface UniversityPageProps {
   params: Promise<{ name: string }>;
@@ -23,7 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { name } = await params;
   const decodedName = decodeURIComponent(name);
-  const basicInfo = await fetchUniversityByName(decodedName);
+  const basicInfo = await fetchUniversityByNameDirect(decodedName);
   const site = getSiteUrl();
   const canonicalPath = `/university/${name}`;
 
@@ -117,34 +116,15 @@ function getNotFoundCopy(lang: Language): { title: string; message: string; acti
   };
 }
 
-function firstForwardedValue(value: string | null): string | null {
-  if (!value) return null;
-  const first = value.split(",")[0]?.trim();
-  return first || null;
-}
-
-function toSafeProto(value: string | null): "http" | "https" {
-  return value === "http" ? "http" : "https";
-}
-
-function toSafeHost(value: string | null): string | null {
-  if (!value) return null;
-  const normalized = value.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").trim();
-  if (!normalized) return null;
-  return /^[a-zA-Z0-9.-]+(?::\d+)?$/.test(normalized) ? normalized : null;
-}
-
 async function UniversityContent({
   name,
   lang = 'en',
-  apiOrigin,
 }: {
   name: string;
   lang?: Language;
-  apiOrigin?: string;
 }) {
   const decodedName = decodeURIComponent(name);
-  const basicInfo = await fetchUniversityByName(decodedName, apiOrigin);
+  const basicInfo = await fetchUniversityByNameDirect(decodedName);
   
   if (!basicInfo) {
     const copy = getNotFoundCopy(lang);
@@ -218,11 +198,6 @@ export default async function UniversityDetail({ params, searchParams }: Univers
   const { name } = await params;
   const sParams = await searchParams;
   const cookieStore = await cookies();
-  const headerStore = await headers();
-  const forwardedHost = toSafeHost(firstForwardedValue(headerStore.get("x-forwarded-host")));
-  const host = forwardedHost || toSafeHost(firstForwardedValue(headerStore.get("host")));
-  const proto = toSafeProto(firstForwardedValue(headerStore.get("x-forwarded-proto")));
-  const apiOrigin = host ? `${proto}://${host}` : undefined;
   const lang = coerceLanguage(sParams.lang || cookieStore.get('soso_lang')?.value);
   
   return (
@@ -230,7 +205,7 @@ export default async function UniversityDetail({ params, searchParams }: Univers
       <SearchHeader showSearchForm={false} />
       <div className="flex min-h-0 flex-1 flex-col">
         <Suspense fallback={<LoadingState />}>
-          <UniversityContent name={name} lang={lang} apiOrigin={apiOrigin} />
+          <UniversityContent name={name} lang={lang} />
         </Suspense>
       </div>
     </main>

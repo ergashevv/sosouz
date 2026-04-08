@@ -69,8 +69,58 @@ export const fetchUniversityByName = async (
   if (!response.ok) return null;
 
   const data: University[] = await response.json();
-  // Find exact match if multiple partial matches
   return data.find((u) => u.name === name) || data[0] || null;
+};
+
+const HIPO_BASE_URL = "http://universities.hipolabs.com/search";
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 800;
+
+/**
+ * Server-side direct fetch from Hipo API — avoids the self-fetch roundtrip
+ * through /api/hipo/search that can fail on cold starts or first loads.
+ */
+export const fetchUniversityByNameDirect = async (
+  name: string,
+): Promise<University | null> => {
+  const sanitized = name.trim().slice(0, 120);
+  if (!sanitized) return null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const url = new URL(HIPO_BASE_URL);
+      url.searchParams.set("name", sanitized);
+
+      const response = await fetch(url.toString(), {
+        headers: { Accept: "application/json" },
+        next: { revalidate: 3600 },
+      });
+
+      if (!response.ok) {
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+          continue;
+        }
+        return null;
+      }
+
+      const data: unknown = await response.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        return null;
+      }
+
+      const universities = data as University[];
+      return universities.find((u) => u.name === sanitized) || universities[0] || null;
+    } catch {
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
+        continue;
+      }
+      return null;
+    }
+  }
+
+  return null;
 };
 
 export const getLogoUrl = (domain: string) => {
