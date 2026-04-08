@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
@@ -67,8 +68,8 @@ function splitFullName(value: string | undefined): { firstName: string; lastName
   return { firstName: parts[0], lastName: parts.slice(1).join(" ").slice(0, 60) };
 }
 
-function syntheticPhoneFromGoogleSub(sub: string): string {
-  const hashHex = createHash("sha256").update(sub).digest("hex");
+function syntheticPhoneFromGoogleSub(sub: string, attempt = 0): string {
+  const hashHex = createHash("sha256").update(`${sub}:${attempt}`).digest("hex");
   // Keep this ES2019-compatible (no BigInt literal), while staying deterministic.
   const sampleHex = hashHex.slice(0, 13);
   const numeric = Number.parseInt(sampleHex, 16);
@@ -79,110 +80,136 @@ function syntheticPhoneFromGoogleSub(sub: string): string {
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-  const state = requestUrl.searchParams.get("state");
 
-  const cookieStore = await cookies();
-  const storedState = cookieStore.get(GOOGLE_STATE_COOKIE)?.value || null;
+  try {
+    const code = requestUrl.searchParams.get("code");
+    const state = requestUrl.searchParams.get("state");
 
-  if (!code || !state || !storedState || state !== storedState) {
-    const response = NextResponse.redirect(new URL("/login?error=google_state_mismatch", requestUrl.origin));
-    clearGoogleStateCookie(response);
-    return response;
-  }
+    const cookieStore = await cookies();
+    const storedState = cookieStore.get(GOOGLE_STATE_COOKIE)?.value || null;
 
-  const parsedState = (() => {
-    try {
-      const raw = Buffer.from(storedState, "base64url").toString("utf8");
-      const data = JSON.parse(raw) as { next?: string };
-      return { next: coerceRelativePath(data.next) };
-    } catch {
-      return { next: "/chat" };
+    if (!code || !state || !storedState || state !== storedState) {
+      const response = NextResponse.redirect(new URL("/login?error=google_state_mismatch", requestUrl.origin));
+      clearGoogleStateCookie(response);
+      return response;
     }
-  })();
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    const response = NextResponse.redirect(new URL("/login?error=google_not_configured", requestUrl.origin));
-    clearGoogleStateCookie(response);
-    return response;
-  }
+    const parsedState = (() => {
+      try {
+        const raw = Buffer.from(storedState, "base64url").toString("utf8");
+        const data = JSON.parse(raw) as { next?: string };
+        return { next: coerceRelativePath(data.next) };
+      } catch {
+        return { next: "/chat" };
+      }
+    })();
 
-  const redirectUri = new URL("/api/auth/google/callback", requestUrl.origin).toString();
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      const response = NextResponse.redirect(new URL("/login?error=google_not_configured", requestUrl.origin));
+      clearGoogleStateCookie(response);
+      return response;
+    }
 
-  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      grant_type: "authorization_code",
-    }),
-    cache: "no-store",
-  });
+    const redirectUri = new URL("/api/auth/google/callback", requestUrl.origin).toString();
 
-  const tokenJson = (await tokenResponse.json()) as GoogleTokenResponse;
-  if (!tokenResponse.ok || !tokenJson.access_token) {
-    const response = NextResponse.redirect(new URL("/login?error=google_token_failed", requestUrl.origin));
-    clearGoogleStateCookie(response);
-    return response;
-  }
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }),
+      cache: "no-store",
+    });
 
-  const userInfoResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
-    headers: { Authorization: `Bearer ${tokenJson.access_token}` },
-    cache: "no-store",
-  });
-  const userInfo = (await userInfoResponse.json()) as GoogleUserInfo;
+    const tokenJson = (await tokenResponse.json()) as GoogleTokenResponse;
+    if (!tokenResponse.ok || !tokenJson.access_token) {
+      const response = NextResponse.redirect(new URL("/login?error=google_token_failed", requestUrl.origin));
+      clearGoogleStateCookie(response);
+      return response;
+    }
 
-  if (!userInfoResponse.ok || !userInfo.sub) {
-    const response = NextResponse.redirect(new URL("/login?error=google_profile_failed", requestUrl.origin));
-    clearGoogleStateCookie(response);
-    return response;
-  }
+    const userInfoResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+      headers: { Authorization: `Bearer ${tokenJson.access_token}` },
+      cache: "no-store",
+    });
+    const userInfo = (await userInfoResponse.json()) as GoogleUserInfo;
 
-  const fallbackName = splitFullName(userInfo.name);
-  const firstName = safeName(userInfo.given_name, fallbackName.firstName);
-  const lastName = safeName(userInfo.family_name, fallbackName.lastName);
-  const email = typeof userInfo.email === "string" ? userInfo.email.trim().toLowerCase() : null;
+    if (!userInfoResponse.ok || !userInfo.sub) {
+      const response = NextResponse.redirect(new URL("/login?error=google_profile_failed", requestUrl.origin));
+      clearGoogleStateCookie(response);
+      return response;
+    }
 
-  let user = await userRepo.findFirst({
-    where: {
-      OR: [{ google_sub: userInfo.sub }, ...(email ? [{ email }] : [])],
-    },
-    select: { id: true, google_sub: true },
-  });
+    const fallbackName = splitFullName(userInfo.name);
+    const firstName = safeName(userInfo.given_name, fallbackName.firstName);
+    const lastName = safeName(userInfo.family_name, fallbackName.lastName);
+    const email = typeof userInfo.email === "string" ? userInfo.email.trim().toLowerCase() : null;
 
-  if (!user) {
-    const syntheticPassword = await bcrypt.hash(randomUUID(), 10);
-    user = await userRepo.create({
-      data: {
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        google_sub: userInfo.sub,
-        phone_country: FALLBACK_PHONE_COUNTRY,
-        phone_e164: syntheticPhoneFromGoogleSub(userInfo.sub),
-        password_hash: syntheticPassword,
+    let user = await userRepo.findFirst({
+      where: {
+        OR: [{ google_sub: userInfo.sub }, ...(email ? [{ email }] : [])],
       },
       select: { id: true, google_sub: true },
     });
-  } else if (!user.google_sub) {
-    user = await userRepo.update({
-      where: { id: user.id },
-      data: { google_sub: userInfo.sub, email: email ?? undefined },
-      select: { id: true, google_sub: true },
-    });
+
+    if (!user) {
+      const syntheticPassword = await bcrypt.hash(randomUUID(), 10);
+      for (let attempt = 0; attempt < 10; attempt++) {
+        try {
+          user = await userRepo.create({
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              email,
+              google_sub: userInfo.sub,
+              phone_country: FALLBACK_PHONE_COUNTRY,
+              phone_e164: syntheticPhoneFromGoogleSub(userInfo.sub, attempt),
+              password_hash: syntheticPassword,
+            },
+            select: { id: true, google_sub: true },
+          });
+          break;
+        } catch (error: unknown) {
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002"
+          ) {
+            continue;
+          }
+          throw error;
+        }
+      }
+    } else if (!user.google_sub) {
+      user = await userRepo.update({
+        where: { id: user.id },
+        data: { google_sub: userInfo.sub, email: email ?? undefined },
+        select: { id: true, google_sub: true },
+      });
+    }
+
+    if (!user) {
+      const response = NextResponse.redirect(new URL("/login?error=google_account_create_failed", requestUrl.origin));
+      clearGoogleStateCookie(response);
+      return response;
+    }
+
+    const token = await createSession(user.id);
+    const redirectDestination = new URL("/auth/google/callback", requestUrl.origin);
+    redirectDestination.searchParams.set("token", token);
+    redirectDestination.searchParams.set("next", parsedState.next);
+
+    const response = NextResponse.redirect(redirectDestination);
+    clearGoogleStateCookie(response);
+    return response;
+  } catch {
+    const response = NextResponse.redirect(new URL("/login?error=google_internal", requestUrl.origin));
+    clearGoogleStateCookie(response);
+    return response;
   }
-
-  const token = await createSession(user.id);
-  const redirectDestination = new URL("/auth/google/callback", requestUrl.origin);
-  redirectDestination.searchParams.set("token", token);
-  redirectDestination.searchParams.set("next", parsedState.next);
-
-  const response = NextResponse.redirect(redirectDestination);
-  clearGoogleStateCookie(response);
-  return response;
 }
