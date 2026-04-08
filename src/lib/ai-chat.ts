@@ -140,7 +140,12 @@ async function fetchHipoUniversities(country: string): Promise<PlatformUniversit
   const url = new URL("http://universities.hipolabs.com/search");
   url.searchParams.set("country", target);
 
-  const response = await fetch(url.toString(), { next: { revalidate: 3600 } });
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), { next: { revalidate: 3600 } });
+  } catch {
+    return [];
+  }
   if (!response.ok) return [];
 
   const payload: unknown = await response.json();
@@ -171,20 +176,24 @@ async function resolvePlatformUniversities(country: string): Promise<{
     return { universities: [], listOrigin: "hipolabs" };
   }
 
-  const ranking = await getAdvisorRankingUniversities({ filterCountry: target });
-  if (ranking.rows.length > 0) {
-    const listOrigin = ranking.source === "country-cache" ? "soso-country-ranking" : "soso-world-slice";
-    return {
-      listOrigin,
-      universities: ranking.rows.slice(0, 80).map((row) => ({
-        name: row.university_name,
-        country: row.country,
-        website: row.official_website,
-        national_rank: row.rank,
-        world_rank: row.world_rank,
-        ranking_source_url: row.source_url,
-      })),
-    };
+  try {
+    const ranking = await getAdvisorRankingUniversities({ filterCountry: target });
+    if (ranking.rows.length > 0) {
+      const listOrigin = ranking.source === "country-cache" ? "soso-country-ranking" : "soso-world-slice";
+      return {
+        listOrigin,
+        universities: ranking.rows.slice(0, 80).map((row) => ({
+          name: row.university_name,
+          country: row.country,
+          website: row.official_website,
+          national_rank: row.rank,
+          world_rank: row.world_rank,
+          ranking_source_url: row.source_url,
+        })),
+      };
+    }
+  } catch {
+    // Degrade gracefully: ranking cache can be unavailable transiently.
   }
 
   return {

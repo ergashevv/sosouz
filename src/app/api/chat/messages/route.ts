@@ -17,6 +17,7 @@ interface SendMessagePayload {
   screenshotDataUrl?: string;
   screenshotName?: string;
   advisorContext?: unknown;
+  replyToMessageId?: string;
 }
 
 const ChatRole = {
@@ -47,6 +48,7 @@ type ChatConversationRepository = {
 type ChatMessageRepository = {
   findMany: (args: unknown) => Promise<MessageRecord[]>;
   create: (args: unknown) => Promise<MessageRecord>;
+  findFirst: (args: unknown) => Promise<MessageRecord | null>;
 };
 
 const chatConversationRepo =
@@ -135,6 +137,9 @@ export async function GET(request: Request) {
         content: parsed.text,
         attachmentDataUrl: parsed.attachmentDataUrl,
         attachmentName: parsed.attachmentName,
+        replyToMessageId: parsed.replyToMessageId,
+        replyToRole: parsed.replyToRole,
+        replyToText: parsed.replyToText,
         createdAt: message.created_at,
       };
     }),
@@ -155,6 +160,8 @@ export async function POST(request: Request) {
     const screenshotDataUrl =
       typeof payload.screenshotDataUrl === "string" ? payload.screenshotDataUrl.trim() : "";
     const screenshotName = typeof payload.screenshotName === "string" ? payload.screenshotName : null;
+    const replyToMessageId =
+      typeof payload.replyToMessageId === "string" ? payload.replyToMessageId.trim() : "";
     if (!conversationId || (!content && !screenshotDataUrl)) {
       return NextResponse.json(
         { error: "conversationId and either content or screenshot are required." },
@@ -169,6 +176,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
     }
 
+    let replyToMeta:
+      | { messageId: string; role: "user" | "assistant"; text: string }
+      | null = null;
+    if (replyToMessageId) {
+      const replyTarget = await chatMessageRepo.findFirst({
+        where: { id: replyToMessageId, conversation_id: conversationId },
+      });
+      if (replyTarget) {
+        const parsedReplyTarget = parseChatMessageContent(replyTarget.content);
+        const previewText =
+          parsedReplyTarget.text.trim() ||
+          (parsedReplyTarget.attachmentDataUrl
+            ? `[Attached image: ${parsedReplyTarget.attachmentName || "image"}]`
+            : "");
+        if (previewText) {
+          replyToMeta = {
+            messageId: replyTarget.id,
+            role: replyTarget.role === ChatRole.assistant ? "assistant" : "user",
+            text: previewText.slice(0, 280),
+          };
+        }
+      }
+    }
+
     const savedUserMessage = await chatMessageRepo.create({
       data: {
         conversation_id: conversationId,
@@ -177,6 +208,9 @@ export async function POST(request: Request) {
           text: content,
           attachmentDataUrl: screenshotDataUrl || null,
           attachmentName: screenshotName,
+          replyToMessageId: replyToMeta?.messageId || null,
+          replyToRole: replyToMeta?.role || null,
+          replyToText: replyToMeta?.text || null,
         }),
       },
     });
@@ -204,9 +238,13 @@ export async function POST(request: Request) {
             parsed.text ||
             (parsed.attachmentDataUrl ? `[Attached image: ${parsed.attachmentName || "image"}]` : "");
           if (!normalizedContent) return null;
+          const replyPrefix =
+            parsed.replyToText && parsed.replyToRole
+              ? `Reply to ${parsed.replyToRole}: "${parsed.replyToText}"\n`
+              : "";
           return {
             role: item.role === ChatRole.assistant ? "assistant" : "user",
-            content: normalizedContent,
+            content: `${replyPrefix}${normalizedContent}`.trim(),
           };
         })
         .filter((item): item is { role: "user" | "assistant"; content: string } => Boolean(item)),
@@ -237,6 +275,9 @@ export async function POST(request: Request) {
         content: parsedSavedUserMessage.text,
         attachmentDataUrl: parsedSavedUserMessage.attachmentDataUrl,
         attachmentName: parsedSavedUserMessage.attachmentName,
+        replyToMessageId: parsedSavedUserMessage.replyToMessageId,
+        replyToRole: parsedSavedUserMessage.replyToRole,
+        replyToText: parsedSavedUserMessage.replyToText,
         id: savedUserMessage.id,
         role: savedUserMessage.role,
         createdAt: savedUserMessage.created_at,
@@ -247,6 +288,9 @@ export async function POST(request: Request) {
         content: assistantMessage.content,
         attachmentDataUrl: null,
         attachmentName: null,
+        replyToMessageId: null,
+        replyToRole: null,
+        replyToText: null,
         createdAt: assistantMessage.created_at,
       },
     });

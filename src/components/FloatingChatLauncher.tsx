@@ -40,7 +40,7 @@ export default function FloatingChatLauncher() {
     };
   }, [pathname]);
 
-  if (pathname === '/login' || pathname === '/signup') {
+  if (pathname === '/login' || pathname === '/signup' || pathname === '/chat') {
     return null;
   }
 
