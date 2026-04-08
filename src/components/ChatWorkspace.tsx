@@ -4,7 +4,7 @@ import { DragEvent, FormEvent, useCallback, useEffect, useRef, useState } from '
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Outfit } from 'next/font/google';
-import { ArrowLeft, Loader2, Plus, Send, Paperclip, X, Search, Menu, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Send, Paperclip, X, Search, Menu, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
 
@@ -168,6 +168,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [conversationQuery, setConversationQuery] = useState('');
   const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
   const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const dragDepthRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
@@ -175,6 +176,13 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, sending]);
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    syncFullscreen();
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
 
   const filteredConversations = conversations.filter((conversation) => {
     const q = conversationQuery.trim().toLowerCase();
@@ -467,6 +475,30 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
     event.currentTarget.form?.requestSubmit();
   };
 
+  const handleExitPage = () => {
+    if (window.history.length > 1) router.back();
+    else router.push('/');
+  };
+
+  const handleMinimizeChat = () => {
+    setSidebarOpen(false);
+    setReplyTarget(null);
+    const activeElement = document.activeElement as HTMLElement | null;
+    activeElement?.blur();
+  };
+
+  const handleToggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      setError('Could not toggle fullscreen mode on this browser.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#e9edf2]">
@@ -481,18 +513,32 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   return (
     <main className="flex min-h-screen flex-col bg-[#e9edf2] text-neutral-900 antialiased">
       <div className="px-3 pt-3 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-6xl">
-          <button
-            type="button"
-            onClick={() => {
-              if (window.history.length > 1) router.back();
-              else router.push('/');
-            }}
-            className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/85 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-white hover:text-neutral-900"
-          >
-            <ArrowLeft size={16} />
-            Back
-          </button>
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl border border-black/10 bg-white/85 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExitPage}
+              className="h-4 w-4 rounded-full bg-[#ff5f57] transition hover:brightness-95"
+              aria-label="Exit chat"
+              title="Exit"
+            />
+            <button
+              type="button"
+              onClick={handleMinimizeChat}
+              className="h-4 w-4 rounded-full bg-[#febc2e] transition hover:brightness-95"
+              aria-label="Minimize chat"
+              title="Minimize"
+            />
+            <button
+              type="button"
+              onClick={() => void handleToggleFullscreen()}
+              className="h-4 w-4 rounded-full bg-[#28c840] transition hover:brightness-95"
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            />
+          </div>
+          <p className="text-xs font-semibold tracking-wide text-neutral-500">soso.ai</p>
+          <div className="w-[56px]" />
         </div>
       </div>
 
