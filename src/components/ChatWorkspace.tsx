@@ -76,6 +76,12 @@ function AssistantMessageBody({ content }: { content: string }) {
   );
 }
 
+function formatConversationTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 async function fileToDataUrl(file: File): Promise<string> {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -424,7 +430,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f4f0]">
+      <div className="flex min-h-screen items-center justify-center bg-[#e9edf2]">
         <div className="flex items-center gap-3 text-sm text-neutral-500">
           <Loader2 size={18} className="animate-spin text-neutral-500" />
           {t('chat.loadingWorkspace')}
@@ -434,8 +440,8 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f5f4f0] text-neutral-900 antialiased">
-      <nav className="sticky top-0 z-40 border-b border-black/6 bg-[#f5f4f0]/92 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8 sm:py-4">
+    <main className="flex min-h-screen flex-col bg-[#e9edf2] text-neutral-900 antialiased">
+      <nav className="sticky top-0 z-40 border-b border-black/6 bg-[#e9edf2]/92 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8 sm:py-4">
         <div className="mx-auto flex max-w-7xl flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <button
@@ -519,8 +525,8 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
         </div>
       </nav>
 
-      <section className="flex-1 bg-[#edf0f4] px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+      <section className="flex-1 bg-[#e9edf2] px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <div className="mx-auto max-w-screen-2xl">
           <div className="flex min-h-[80vh] overflow-hidden rounded-[24px] border border-black/8 bg-[#f7f8fa] shadow-[0_28px_60px_-34px_rgba(15,23,42,0.45)] lg:h-[calc(100dvh-9rem)] lg:min-h-0 lg:flex-row">
             {sidebarOpen ? (
               <button
@@ -532,7 +538,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             ) : null}
 
             <aside
-              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-4 bg-[#f1f2f5] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-72 lg:max-w-none lg:translate-x-0 lg:border-r lg:border-black/10 lg:shadow-none ${
+              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-4 bg-[#f2f4f7] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-72 lg:max-w-none lg:translate-x-0 lg:border-r lg:border-black/10 lg:shadow-none ${
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
               }`}
             >
@@ -553,7 +559,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
               <button
                 type="button"
                 onClick={() => void startNewChat()}
-                className="group flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-500/50 bg-transparent py-3.5 text-[11px] font-bold uppercase tracking-[0.16em] text-neutral-700 transition-all hover:border-neutral-900 hover:bg-[#f5f4f0] hover:text-neutral-900"
+                className="group flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-500/50 bg-transparent py-3.5 text-[11px] font-bold uppercase tracking-[0.16em] text-neutral-700 transition-all hover:border-neutral-900 hover:bg-[#e9edf2] hover:text-neutral-900"
               >
                 <Plus size={15} strokeWidth={2} />
                 {t('chat.newChat')}
@@ -585,12 +591,24 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                         : 'border-transparent hover:border-black/8 hover:bg-white/80'
                     }`}
                   >
-                    <p className="line-clamp-2 text-sm font-semibold leading-snug text-neutral-900">
-                      {conversation.title}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-neutral-500">
-                      {conversation.lastMessage || t('chat.noMessagesYet')}
-                    </p>
+                    <div className="flex items-start gap-2">
+                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#d7ddea] text-[11px] font-bold uppercase text-[#3f4d63]">
+                        {conversation.title.trim().charAt(0) || 'C'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="line-clamp-1 text-sm font-semibold leading-snug text-neutral-900">
+                            {conversation.title}
+                          </p>
+                          <span className="shrink-0 text-[10px] text-neutral-400">
+                            {formatConversationTime(conversation.updatedAt)}
+                          </span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-neutral-500">
+                          {conversation.lastMessage || t('chat.noMessagesYet')}
+                        </p>
+                      </div>
+                    </div>
                   </button>
                 ))}
                 {filteredConversations.length === 0 ? (
@@ -602,7 +620,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             </aside>
 
               <section className="flex min-h-[72vh] flex-1 flex-col bg-[#f7f8fa]">
-                <header className="border-b border-black/6 bg-white/90 px-5 py-4 backdrop-blur-sm sm:px-6">
+                <header className="border-b border-black/6 bg-white/90 px-5 py-3 backdrop-blur-sm sm:px-6">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                       <button
@@ -691,7 +709,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                 </header>
 
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <div className="flex-1 space-y-6 overflow-y-auto bg-[#f7f8fa] px-5 py-8 sm:px-8 sm:py-10">
+                  <div className="flex-1 space-y-5 overflow-y-auto bg-[#f7f8fa] px-5 py-6 sm:px-8 sm:py-8">
                     {messages.length === 0 ? (
                       <div className="flex h-full min-h-56 flex-col items-start justify-center px-0 sm:px-2">
                         <p
@@ -798,7 +816,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
-                      className="relative mx-auto max-w-3xl"
+                      className="relative mx-auto max-w-4xl"
                     >
                       <div
                         className={`flex items-end gap-3 rounded-[24px] border bg-[#f3f4f6] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-colors ${
@@ -843,10 +861,6 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       {isDragActive ? (
                         <p className="mt-3 text-center text-[11px] text-neutral-500">{t('chat.dropImage')}</p>
                       ) : null}
-                      <p className="mt-2 text-center text-[11px] text-neutral-500">
-                        Press <span className="font-semibold text-neutral-700">Enter</span> to send,{' '}
-                        <span className="font-semibold text-neutral-700">Shift + Enter</span> for a new line.
-                      </p>
                     </form>
 
                     {error ? (
@@ -861,7 +875,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
           </div>
       </section>
 
-      <footer className="flex flex-col justify-center border-t border-neutral-900/10 bg-[#f5f4f0] px-4 py-8 sm:px-6 sm:py-10">
+      <footer className="flex flex-col justify-center border-t border-neutral-900/10 bg-[#e9edf2] px-4 py-8 sm:px-6 sm:py-10">
         <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
           <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left flex-1">
             {t('footer.copyright')}
