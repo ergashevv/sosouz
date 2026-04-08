@@ -26,6 +26,14 @@ const answerIconWrap =
 export default function AboutPage() {
   const { t } = useLanguage();
   const siteUrl = getSiteUrl();
+  const faqItems = [
+    { q: t('about.faq1Q'), a: t('about.faq1A') },
+    { q: t('about.faq2Q'), a: t('about.faq2A') },
+    { q: t('about.faq3Q'), a: t('about.faq3A') },
+    { q: t('about.faq4Q'), a: t('about.faq4A') },
+    { q: t('about.faq5Q'), a: t('about.faq5A') },
+    { q: t('about.faq6Q'), a: t('about.faq6A') },
+  ];
 
   return (
     <main className="min-h-screen bg-(--bg-main) flex flex-col">
@@ -103,6 +111,25 @@ export default function AboutPage() {
             <div className="mt-4 sm:mt-5 space-y-4 text-base sm:text-lg text-neutral-600 leading-relaxed font-medium">
               <p>{t('about.dataP1')}</p>
               <p>{t('about.dataP2')}</p>
+            </div>
+          </div>
+
+          <div className={softPanel}>
+            <div className="relative z-10 space-y-6">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">{t('about.faqTitle')}</h2>
+                <p className="mt-2 text-sm sm:text-base text-neutral-500">{t('about.faqSubtitle')}</p>
+              </div>
+              <div className="space-y-3">
+                {faqItems.map((item) => (
+                  <details key={item.q} className="group rounded-2xl border border-neutral-200 bg-white px-4 py-3 sm:px-5 sm:py-4">
+                    <summary className="cursor-pointer list-none pr-6 text-sm sm:text-base font-semibold text-neutral-900 marker:content-none">
+                      {item.q}
+                    </summary>
+                    <p className="mt-2 text-sm sm:text-base leading-relaxed text-neutral-600">{item.a}</p>
+                  </details>
+                ))}
+              </div>
             </div>
           </div>
 

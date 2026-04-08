@@ -371,6 +371,72 @@ export const translations: InternalDict = {
     ru: "SOSO — независимый инструмент поиска, а не госреестр и не сам университет. Если заметили ошибку, напишите нам — это поможет следующим пользователям.",
     uz: "SOSO mustaqil qidiruv vositasi; davlat reyestri yoki universitet emas. Xato koʻrsangiz, bizga yozing — bu sizdan keyingi talabalarga ham yordam beradi.",
   },
+  "about.faqTitle": { en: "FAQ", ru: "FAQ", uz: "Ko'p so'raladigan savollar" },
+  "about.faqSubtitle": {
+    en: "Short answers based on how SOSO works today.",
+    ru: "Короткие ответы на основе текущей работы SOSO.",
+    uz: "SOSO hozir qanday ishlashiga asoslangan qisqa javoblar.",
+  },
+  "about.faq1Q": {
+    en: "How does SOSO choose university recommendations?",
+    ru: "Как SOSO выбирает рекомендации по университетам?",
+    uz: "SOSO universitet tavsiyalarini qanday tanlaydi?",
+  },
+  "about.faq1A": {
+    en: "Recommendations are constrained to universities already available in SOSO for the selected country (rankings cache or open directory data).",
+    ru: "Рекомендации ограничены вузами, которые уже есть в SOSO для выбранной страны (кэш рейтингов или открытый каталог).",
+    uz: "Tavsiyalar tanlangan mamlakat bo'yicha SOSO bazasida bor universitetlar bilan cheklanadi (reyting keshi yoki ochiq katalog).",
+  },
+  "about.faq2Q": {
+    en: "Where does data come from?",
+    ru: "Откуда берутся данные?",
+    uz: "Ma'lumotlar qayerdan olinadi?",
+  },
+  "about.faq2A": {
+    en: "SOSO combines public university directories, ranking snapshots, and official university links. Profile pages also show source links and freshness hints when available.",
+    ru: "SOSO объединяет открытые каталоги вузов, снимки рейтингов и официальные ссылки университетов. В профилях также показываются источники и метки свежести, если доступны.",
+    uz: "SOSO ochiq universitet kataloglari, reyting snapshotlari va universitetlarning rasmiy havolalarini birlashtiradi. Profil sahifasida mavjud bo'lsa manbalar va dolzarblik belgisi ham ko'rsatiladi.",
+  },
+  "about.faq3Q": {
+    en: "How often are rankings and details refreshed?",
+    ru: "Как часто обновляются рейтинги и детали?",
+    uz: "Reyting va ma'lumotlar qanchalik tez yangilanadi?",
+  },
+  "about.faq3A": {
+    en: "Ranking snapshots are updated on a recurring cycle, and profile freshness is shown per university. If data is partial or stale, you should verify on official pages.",
+    ru: "Снимки рейтингов обновляются циклично, а свежесть профиля показывается для каждого вуза. Если данные частичные или устаревшие, проверьте на официальных страницах.",
+    uz: "Reyting snapshotlari davriy yangilanadi, profil dolzarbligi esa har universitet uchun ko'rsatiladi. Ma'lumot qisman yoki eskirgan bo'lsa, rasmiy sahifada tekshirish kerak.",
+  },
+  "about.faq4Q": {
+    en: "Can I rely only on SOSO for application deadlines and tuition?",
+    ru: "Можно ли полагаться только на SOSO по дедлайнам и оплате?",
+    uz: "Ariza muddati va to'lov bo'yicha faqat SOSO'ga tayansam bo'ladimi?",
+  },
+  "about.faq4A": {
+    en: "No. SOSO is a decision-support tool. Always confirm deadlines, fees, and admission requirements on the official university website before applying.",
+    ru: "Нет. SOSO — инструмент поддержки решений. Перед подачей всегда подтверждайте сроки, стоимость и требования на официальном сайте университета.",
+    uz: "Yo'q. SOSO qaror qabul qilishga yordam beruvchi vosita. Ariza topshirishdan oldin muddat, to'lov va talablarni universitetning rasmiy saytida tasdiqlang.",
+  },
+  "about.faq5Q": {
+    en: "Is SOSO free to use?",
+    ru: "SOSO бесплатный?",
+    uz: "SOSO'dan foydalanish bepulmi?",
+  },
+  "about.faq5A": {
+    en: "At the moment, core discovery and advisor flows are available without paid subscription in the product.",
+    ru: "На данный момент основные сценарии поиска и AI‑советника доступны в продукте без платной подписки.",
+    uz: "Hozircha mahsulotdagi asosiy qidiruv va AI maslahatchi oqimlari pullik obunasiz ishlaydi.",
+  },
+  "about.faq6Q": {
+    en: "Which languages are supported?",
+    ru: "Какие языки поддерживаются?",
+    uz: "Qaysi tillar qo'llab-quvvatlanadi?",
+  },
+  "about.faq6A": {
+    en: "SOSO UI and guidance support English, Uzbek, and Russian.",
+    ru: "Интерфейс и подсказки SOSO поддерживают английский, узбекский и русский языки.",
+    uz: "SOSO interfeysi va yo'l-yo'riqlari ingliz, o'zbek va rus tillarini qo'llab-quvvatlaydi.",
+  },
   "about.contactTitle": { en: "Contact", ru: "Контакты", uz: "Aloqa" },
   "about.contactLead": {
     en: "Questions about the platform, partnerships, or data corrections — reach us by email.",
