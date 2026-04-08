@@ -169,7 +169,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
   const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
   const [deleteConfirmConversation, setDeleteConfirmConversation] = useState<ConversationItem | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(true);
   const dragDepthRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
@@ -177,13 +177,6 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, sending]);
-
-  useEffect(() => {
-    const syncFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    syncFullscreen();
-    document.addEventListener('fullscreenchange', syncFullscreen);
-    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
-  }, []);
 
   const filteredConversations = conversations.filter((conversation) => {
     const q = conversationQuery.trim().toLowerCase();
@@ -495,16 +488,8 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
     activeElement?.blur();
   };
 
-  const handleToggleFullscreen = async () => {
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else {
-        await document.documentElement.requestFullscreen();
-      }
-    } catch {
-      setError('Could not toggle fullscreen mode on this browser.');
-    }
+  const handleToggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev);
   };
 
   if (loading) {
@@ -519,9 +504,19 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#e9edf2] text-neutral-900 antialiased">
-      <div className="px-3 pt-3 sm:px-6 lg:px-8">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl border border-black/10 bg-white/85 px-3 py-2.5">
+    <main
+      className={`${
+        isFullscreen ? 'fixed inset-0 z-70 h-dvh overflow-hidden' : 'flex min-h-screen'
+      } flex-col bg-[#e9edf2] text-neutral-900 antialiased`}
+    >
+      <div className={`${isFullscreen ? 'px-0 pt-0' : 'px-3 pt-3 sm:px-6 lg:px-8'}`}>
+        <div
+          className={`${
+            isFullscreen
+              ? 'flex w-full items-center justify-between border-b border-black/10 bg-white/90 px-3 py-2.5'
+              : 'mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl border border-black/10 bg-white/85 px-3 py-2.5'
+          }`}
+        >
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -539,7 +534,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             />
             <button
               type="button"
-              onClick={() => void handleToggleFullscreen()}
+              onClick={handleToggleFullscreen}
               className="h-4 w-4 rounded-full bg-[#28c840] transition hover:brightness-95"
               aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
               title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
@@ -550,9 +545,19 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
         </div>
       </div>
 
-      <section className="flex-1 bg-[#e9edf2] px-0 py-2 sm:px-6 sm:py-6 lg:px-8">
-        <div className="mx-auto w-full max-w-6xl">
-          <div className="flex min-h-[calc(100dvh-7.25rem)] overflow-hidden rounded-none border-y border-black/8 bg-[#f7f8fa] shadow-none sm:min-h-[80vh] sm:rounded-[24px] sm:border sm:shadow-[0_28px_60px_-34px_rgba(15,23,42,0.45)] lg:h-[calc(100dvh-9rem)] lg:min-h-0 lg:flex-row">
+      <section
+        className={`${
+          isFullscreen ? 'flex-1 min-h-0 bg-[#e9edf2] px-0 py-0' : 'flex-1 bg-[#e9edf2] px-0 py-2 sm:px-6 sm:py-6 lg:px-8'
+        }`}
+      >
+        <div className={`${isFullscreen ? 'h-full w-full' : 'mx-auto w-full max-w-6xl'}`}>
+          <div
+            className={`${
+              isFullscreen
+                ? 'flex h-full min-h-0 overflow-hidden bg-[#f7f8fa] lg:flex-row'
+                : 'flex min-h-[calc(100dvh-7.25rem)] overflow-hidden rounded-none border-y border-black/8 bg-[#f7f8fa] shadow-none sm:min-h-[80vh] sm:rounded-[24px] sm:border sm:shadow-[0_28px_60px_-34px_rgba(15,23,42,0.45)] lg:h-[calc(100dvh-9rem)] lg:min-h-0 lg:flex-row'
+            }`}
+          >
             {sidebarOpen ? (
               <button
                 type="button"
