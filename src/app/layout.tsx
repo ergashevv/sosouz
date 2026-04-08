@@ -96,6 +96,47 @@ gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personali
             <Script id="gtm-loader" strategy="afterInteractive">
               {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmContainerId}');`}
             </Script>
+            <Script id="consent-banner-fallback" strategy="afterInteractive">
+              {`(function(){
+var CONSENT_COOKIE='soso_analytics_consent';
+var CONSENT_STORAGE_KEY='soso_analytics_consent';
+var CONSENT_MAX_AGE_SEC=${60 * 60 * 24 * 180};
+function persistConsent(value){
+  try{
+    var secure=window.location.protocol==='https:'?'; Secure':'';
+    document.cookie=CONSENT_COOKIE+'='+value+'; path=/; max-age='+CONSENT_MAX_AGE_SEC+'; SameSite=Lax'+secure;
+  }catch(_){}
+  try{
+    window.localStorage.setItem(CONSENT_STORAGE_KEY,value);
+  }catch(_){}
+  try{
+    if(typeof window.gtag==='function'){
+      window.gtag('consent','update',{
+        analytics_storage:value==='granted'?'granted':'denied',
+        ad_storage:'denied',
+        ad_user_data:'denied',
+        ad_personalization:'denied',
+        personalization_storage:'denied'
+      });
+    }
+  }catch(_){}
+}
+function closeBanner(){
+  var banner=document.querySelector('[data-consent-banner="true"]');
+  if(banner) banner.remove();
+}
+document.addEventListener('click',function(event){
+  var target=event.target;
+  if(!(target instanceof Element)) return;
+  var actionElement=target.closest('[data-consent-action]');
+  if(!actionElement) return;
+  var value=actionElement.getAttribute('data-consent-action');
+  if(value!=='granted' && value!=='denied') return;
+  persistConsent(value);
+  closeBanner();
+},true);
+})();`}
+            </Script>
             <noscript>
               <iframe
                 src={`https://www.googletagmanager.com/ns.html?id=${gtmContainerId}`}

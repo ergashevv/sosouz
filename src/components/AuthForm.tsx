@@ -16,7 +16,7 @@ interface AuthFormProps {
 export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams?.get('next') || '/chat';
+  const next = searchParams?.get('next') || '/profile';
   const countryDropdownRef = useRef<HTMLDivElement | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');

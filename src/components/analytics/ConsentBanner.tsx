@@ -103,6 +103,7 @@ export function ConsentBanner() {
 
   return (
     <div
+      data-consent-banner="true"
       role="dialog"
       aria-label={t("cookie.analytics.title")}
       className="fixed bottom-0 left-0 right-0 z-9999 pointer-events-auto border-t border-neutral-200 bg-white/95 backdrop-blur-md shadow-[0_-8px_30px_rgba(15,23,42,0.08)]"
@@ -120,6 +121,7 @@ export function ConsentBanner() {
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
           <button
             type="button"
+            data-consent-action="denied"
             onClick={onReject}
             className="rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-xs font-bold text-neutral-800 transition-colors hover:bg-neutral-50"
           >
@@ -127,6 +129,7 @@ export function ConsentBanner() {
           </button>
           <button
             type="button"
+            data-consent-action="granted"
             onClick={onAccept}
             className="rounded-full bg-neutral-900 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-black"
           >

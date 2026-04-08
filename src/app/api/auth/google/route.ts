@@ -8,7 +8,7 @@ const GOOGLE_STATE_COOKIE = "soso_google_oauth_state";
 
 function coerceRelativePath(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/chat";
+    return "/profile";
   }
   return value;
 }

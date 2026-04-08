@@ -40,7 +40,7 @@ const userRepo = (prisma as unknown as { user: UserRepo }).user;
 
 function coerceRelativePath(value: string | null | undefined): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/chat";
+    return "/profile";
   }
   return value;
 }
@@ -100,7 +100,7 @@ export async function GET(request: Request) {
         const data = JSON.parse(raw) as { next?: string };
         return { next: coerceRelativePath(data.next) };
       } catch {
-        return { next: "/chat" };
+        return { next: "/profile" };
       }
     })();
 

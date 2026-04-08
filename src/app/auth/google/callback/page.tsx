@@ -6,7 +6,7 @@ import { setAuthToken } from "@/lib/client-auth";
 
 function coerceRelativePath(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/chat";
+    return "/profile";
   }
   return value;
 }
@@ -17,7 +17,7 @@ export default function GoogleAuthCallbackPage() {
 
   useEffect(() => {
     const token = searchParams?.get("token") || "";
-    const next = coerceRelativePath(searchParams?.get("next") || "/chat");
+    const next = coerceRelativePath(searchParams?.get("next") || "/profile");
     if (!token) {
       router.replace("/login?error=google_token_missing");
       return;
