@@ -7,7 +7,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 const CONSENT_COOKIE = "soso_analytics_consent";
 const CONSENT_STORAGE_KEY = "soso_analytics_consent";
 const CONSENT_MAX_AGE_SEC = 60 * 60 * 24 * 180;
-
 function readConsentCookie(): "granted" | "denied" | null {
   if (typeof document === "undefined") return null;
   const match = document.cookie.match(
