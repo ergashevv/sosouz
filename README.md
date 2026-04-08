@@ -98,6 +98,8 @@ Set these in `.env` (and production environment settings).
 - `SERPER_API_KEY`: Search enrichment for rankings/research logic
 - `YOUTUBE_DATA_API_KEY`: YouTube channel/content enrichment
 - `NEXT_PUBLIC_GTM_ID`: Google Tag Manager container id
+- `GOOGLE_CLIENT_ID`: Google OAuth client id (for "Continue with Google")
+- `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
 - `CRON_SECRET`: Protect scheduled sync endpoints
 - `NEXT_PUBLIC_CONTACT_EMAIL`: Public contact email override
 - `NEXT_PUBLIC_LOCAL_COUNTRY`: Default local country label

@@ -29,6 +29,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [phoneLengthError, setPhoneLengthError] = useState<string | null>(null);
 
   const isSignup = mode === 'signup';
+  const googleAuthHref = `/api/auth/google?next=${encodeURIComponent(next)}`;
   const countryOptions = useMemo(() => {
     return countries
       .map((country) => {
@@ -166,6 +167,22 @@ export default function AuthForm({ mode }: AuthFormProps) {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <Link
+            href={googleAuthHref}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white hover:bg-neutral-50 py-2.5 text-sm font-semibold text-neutral-800"
+          >
+            Continue with Google
+          </Link>
+
+          <div className="relative py-1">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-neutral-200" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-2 text-xs uppercase tracking-wide text-neutral-400">or</span>
+            </div>
+          </div>
+
           {isSignup ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
