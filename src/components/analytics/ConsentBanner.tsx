@@ -45,15 +45,19 @@ function persistConsent(value: "granted" | "denied") {
 
 function pushConsentToGtag(granted: boolean) {
   if (typeof window === "undefined") return;
-  const g = window.gtag;
-  if (typeof g !== "function") return;
-  g("consent", "update", {
-    analytics_storage: granted ? "granted" : "denied",
-    ad_storage: "denied",
-    ad_user_data: "denied",
-    ad_personalization: "denied",
-    personalization_storage: "denied",
-  });
+  try {
+    const g = window.gtag;
+    if (typeof g !== "function") return;
+    g("consent", "update", {
+      analytics_storage: granted ? "granted" : "denied",
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+      personalization_storage: "denied",
+    });
+  } catch {
+    // Consent UI should still work if analytics scripts misbehave.
+  }
 }
 
 declare global {
@@ -65,6 +69,16 @@ declare global {
 export function ConsentBanner() {
   const { t } = useLanguage();
   const [visible, setVisible] = useState(() => readStoredConsent() === null);
+
+  const applyConsent = (value: "granted" | "denied") => {
+    try {
+      persistConsent(value);
+      pushConsentToGtag(value === "granted");
+    } finally {
+      // Always close the banner even if analytics call fails.
+      setVisible(false);
+    }
+  };
 
   useEffect(() => {
     const existing = readStoredConsent();
@@ -80,15 +94,11 @@ export function ConsentBanner() {
   if (!visible) return null;
 
   const onAccept = () => {
-    setVisible(false);
-    persistConsent("granted");
-    pushConsentToGtag(true);
+    applyConsent("granted");
   };
 
   const onReject = () => {
-    setVisible(false);
-    persistConsent("denied");
-    pushConsentToGtag(false);
+    applyConsent("denied");
   };
 
   return (
