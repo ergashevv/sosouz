@@ -6,7 +6,7 @@ import { getAdvisorRankingUniversities } from "@/lib/rankings";
 import { canonicalCountryKey } from "@/lib/geoFilters";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const MAX_SCREENSHOT_BYTES = 4 * 1024 * 1024;
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
@@ -77,6 +77,37 @@ function getLocalizedGenericErrorMessage(language: UiLanguage): string {
   return "AI javobini olishda muammo bo'ldi. Qayta urinib ko'ring.";
 }
 
+function getLocalizedConfigErrorMessage(language: UiLanguage): string {
+  if (language === "ru") {
+    return "AI servisda konfiguratsiya xatosi bor (model yoki API kalit). Iltimos, admin bilan tekshiring.";
+  }
+  if (language === "en") {
+    return "AI service has a configuration issue (model or API key). Please contact admin.";
+  }
+  return "AI xizmatida sozlama xatosi bor (model yoki API key). Iltimos, admin bilan tekshiring.";
+}
+
+function isModelNotFoundError(normalizedMessage: string): boolean {
+  return (
+    normalizedMessage.includes("model") &&
+    (normalizedMessage.includes("not found") ||
+      normalizedMessage.includes("unknown model") ||
+      normalizedMessage.includes("is not supported") ||
+      normalizedMessage.includes("unsupported model") ||
+      normalizedMessage.includes("does not exist"))
+  );
+}
+
+function isAuthOrConfigError(normalizedMessage: string): boolean {
+  return (
+    normalizedMessage.includes("api key") ||
+    normalizedMessage.includes("permission denied") ||
+    normalizedMessage.includes("unauthorized") ||
+    normalizedMessage.includes("invalid argument") ||
+    isModelNotFoundError(normalizedMessage)
+  );
+}
+
 export function toUserFacingAiError(
   error: unknown,
   language: UiLanguage = "uz",
@@ -107,6 +138,10 @@ export function toUserFacingAiError(
     if (language === "ru") return { status: 500, message: "AI сервис еще не настроен на сервере." };
     if (language === "en") return { status: 500, message: "AI service is not configured on the server yet." };
     return { status: 500, message: "AI xizmati serverda hali sozlanmagan." };
+  }
+
+  if (isAuthOrConfigError(normalized)) {
+    return { status: 500, message: getLocalizedConfigErrorMessage(language) };
   }
 
   return { status: 500, message: getLocalizedGenericErrorMessage(language) };
@@ -326,7 +361,9 @@ export async function generateAdvisorReply(args: {
   const screenshot =
     typeof args.screenshotDataUrl === "string" ? parseDataUrl(args.screenshotDataUrl) : null;
 
-  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+  const modelCandidates = Array.from(
+    new Set([GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"]),
+  );
   const parts: Array<
     | { text: string }
     | {
@@ -349,13 +386,33 @@ export async function generateAdvisorReply(args: {
     });
   }
 
-  const response = await model.generateContent({
-    contents: [{ role: "user", parts }],
-    generationConfig: {
-      temperature: 0.35,
-      maxOutputTokens: 900,
-    },
-  });
+  let response:
+    | Awaited<ReturnType<ReturnType<typeof genAI.getGenerativeModel>["generateContent"]>>
+    | null = null;
+  let lastError: unknown = null;
+  for (const modelName of modelCandidates) {
+    const model = genAI.getGenerativeModel({ model: modelName });
+    try {
+      response = await model.generateContent({
+        contents: [{ role: "user", parts }],
+        generationConfig: {
+          temperature: 0.35,
+          maxOutputTokens: 900,
+        },
+      });
+      break;
+    } catch (error: unknown) {
+      lastError = error;
+      const normalized = (error instanceof Error ? error.message : String(error)).toLowerCase();
+      if (!isModelNotFoundError(normalized)) {
+        throw error;
+      }
+    }
+  }
+
+  if (!response) {
+    throw (lastError || new Error("No available Gemini model produced a response."));
+  }
 
   const text = response.response.text().trim();
   if (!text) {
