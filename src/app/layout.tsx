@@ -11,6 +11,8 @@ import { getSiteUrl } from "@/lib/site";
 import { ConsentBanner } from "@/components/analytics/ConsentBanner";
 
 const gtmContainerId = process.env.NEXT_PUBLIC_GTM_ID;
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const analyticsEnabled = Boolean(gtmContainerId || gaMeasurementId);
 
 const inter = Inter({
   variable: "--font-inter",
@@ -87,15 +89,28 @@ export default async function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {gtmContainerId ? (
+        {analyticsEnabled ? (
           <>
             <Script id="google-consent-default" strategy="beforeInteractive">
-              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+              {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments);};
 gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',functionality_storage:'granted',personalization_storage:'denied',security_storage:'granted',wait_for_update:500});`}
             </Script>
-            <Script id="gtm-loader" strategy="afterInteractive">
-              {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmContainerId}');`}
-            </Script>
+            {gtmContainerId ? (
+              <Script id="gtm-loader" strategy="afterInteractive">
+                {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmContainerId}');`}
+              </Script>
+            ) : gaMeasurementId ? (
+              <>
+                <Script
+                  id="ga-loader"
+                  src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+                  strategy="afterInteractive"
+                />
+                <Script id="ga-config" strategy="afterInteractive">
+                  {`window.gtag('js', new Date());window.gtag('config','${gaMeasurementId}');`}
+                </Script>
+              </>
+            ) : null}
             <Script id="consent-banner-fallback" strategy="afterInteractive">
               {`(function(){
 var CONSENT_COOKIE='soso_analytics_consent';
@@ -137,22 +152,24 @@ document.addEventListener('click',function(event){
 },true);
 })();`}
             </Script>
-            <noscript>
-              <iframe
-                src={`https://www.googletagmanager.com/ns.html?id=${gtmContainerId}`}
-                height="0"
-                width="0"
-                style={{ display: "none", visibility: "hidden" }}
-                title="Google Tag Manager"
-              />
-            </noscript>
+            {gtmContainerId ? (
+              <noscript>
+                <iframe
+                  src={`https://www.googletagmanager.com/ns.html?id=${gtmContainerId}`}
+                  height="0"
+                  width="0"
+                  style={{ display: "none", visibility: "hidden" }}
+                  title="Google Tag Manager"
+                />
+              </noscript>
+            ) : null}
           </>
         ) : null}
         <LanguageProvider initialLanguage={initialLanguage}>
           <JsonLd siteUrl={siteUrl} />
           {children}
           <FloatingChatLauncher />
-          {gtmContainerId ? <ConsentBanner /> : null}
+          {analyticsEnabled ? <ConsentBanner /> : null}
         </LanguageProvider>
       </body>
     </html>
