@@ -17,8 +17,12 @@ function readConsentCookie(): "granted" | "denied" | null {
 }
 
 function writeConsentCookie(value: "granted" | "denied") {
-  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${CONSENT_COOKIE}=${value}; path=/; max-age=${CONSENT_MAX_AGE_SEC}; SameSite=Lax${secure}`;
+  try {
+    const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `${CONSENT_COOKIE}=${value}; path=/; max-age=${CONSENT_MAX_AGE_SEC}; SameSite=Lax${secure}`;
+  } catch {
+    // Ignore cookie write failures and still allow UI dismissal.
+  }
 }
 
 function readStoredConsent(): "granted" | "denied" | null {
@@ -31,7 +35,11 @@ function readStoredConsent(): "granted" | "denied" | null {
 function persistConsent(value: "granted" | "denied") {
   writeConsentCookie(value);
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(CONSENT_STORAGE_KEY, value);
+    try {
+      window.localStorage.setItem(CONSENT_STORAGE_KEY, value);
+    } catch {
+      // localStorage may be unavailable in restrictive browser modes.
+    }
   }
 }
 
@@ -72,15 +80,15 @@ export function ConsentBanner() {
   if (!visible) return null;
 
   const onAccept = () => {
+    setVisible(false);
     persistConsent("granted");
     pushConsentToGtag(true);
-    setVisible(false);
   };
 
   const onReject = () => {
+    setVisible(false);
     persistConsent("denied");
     pushConsentToGtag(false);
-    setVisible(false);
   };
 
   return (
