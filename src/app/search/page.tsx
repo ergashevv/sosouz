@@ -3,13 +3,14 @@
 import useSWR from 'swr';
 import { fetchUniversities } from '@/lib/api';
 import UniversityCard from '@/components/UniversityCard';
-import { use, useState } from 'react';
+import { use, useMemo, useState } from 'react';
 import { Activity, Shield, Info, Database, Search, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import SearchHeader from '@/components/SearchHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { countries } from '@/lib/countries';
 import ContactMailtoLink from '@/components/ContactMailtoLink';
+import { useRecommendedUniversities } from '@/lib/useRecommendedUniversities';
 
 const PAGE_SIZE = 12;
 
@@ -135,6 +136,14 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
   const page = parseInt((params.page as string)) || 1;
   const [searchCountry, setSearchCountry] = useState(country);
   const [searchQuery, setSearchQuery] = useState(query || '');
+  const { universities: recommendedUniversities, isLoading: isUniversitiesLoading } =
+    useRecommendedUniversities(searchCountry);
+  const universityOptions = useMemo(() => {
+    if (!searchQuery || recommendedUniversities.includes(searchQuery)) {
+      return recommendedUniversities;
+    }
+    return [searchQuery, ...recommendedUniversities];
+  }, [recommendedUniversities, searchQuery]);
 
   const handleRefineSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +168,10 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
                   <MapPin size={16} className="text-neutral-400" />
                   <select
                     value={searchCountry}
-                    onChange={(e) => setSearchCountry(e.target.value)}
+                    onChange={(e) => {
+                      setSearchCountry(e.target.value);
+                      setSearchQuery('');
+                    }}
                     className="bg-transparent text-sm font-semibold text-neutral-700 outline-none cursor-pointer py-2.5 md:py-3.5 w-full min-w-0"
                   >
                     {countries.map((c) => (
@@ -172,13 +184,20 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
 
                 <div className="flex-1 px-4 flex items-center gap-3 min-h-11">
                   <Search size={16} className="text-neutral-400" />
-                  <input
-                    type="text"
+                  <select
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('home.search.placeholder')}
-                    className="bg-transparent w-full py-2.5 md:py-3.5 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
-                  />
+                    className="bg-transparent w-full py-2.5 md:py-3.5 text-sm font-medium text-neutral-800 outline-none"
+                  >
+                    <option value="">
+                      {isUniversitiesLoading ? t('home.search.loadingUniversities') : t('home.search.selectUniversity')}
+                    </option>
+                    {universityOptions.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="px-2 pb-2 md:pb-0 md:pr-2">

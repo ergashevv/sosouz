@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, MapPin, Menu, X } from 'lucide-react';
 import { countries } from '@/lib/countries';
@@ -8,6 +8,7 @@ import { Outfit } from 'next/font/google';
 import { useLanguage } from '@/contexts/LanguageContext';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import Link from 'next/link';
+import { useRecommendedUniversities } from '@/lib/useRecommendedUniversities';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
@@ -23,7 +24,6 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
   const searchParams = useSearchParams();
   const { t, language, setLanguage } = useLanguage();
   const logoHeaderRef = useRef<HTMLElement | null>(null);
-  const queryInputRef = useRef<HTMLInputElement | null>(null);
   const [logoHeaderHeight, setLogoHeaderHeight] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchStickyActive, setIsSearchStickyActive] = useState(true);
@@ -33,8 +33,18 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
   const isSearchPinned = fixed && shouldShowSearchForm;
   const shouldStickHeader = fixed;
   const shouldStickSearchBar = isSearchPinned && isSearchStickyActive;
-  const selectedCountry = searchParams?.get('country') || 'United Kingdom';
-  const initialQuery = searchParams?.get('q') || '';
+  const selectedCountryParam = searchParams?.get('country') || 'United Kingdom';
+  const selectedUniversityParam = searchParams?.get('q') || '';
+  const [selectedCountry, setSelectedCountry] = useState(selectedCountryParam);
+  const [selectedUniversity, setSelectedUniversity] = useState(selectedUniversityParam);
+  const { universities: recommendedUniversities, isLoading: isUniversitiesLoading } =
+    useRecommendedUniversities(selectedCountry);
+  const universityOptions = useMemo(() => {
+    if (!selectedUniversity || recommendedUniversities.includes(selectedUniversity)) {
+      return recommendedUniversities;
+    }
+    return [selectedUniversity, ...recommendedUniversities];
+  }, [recommendedUniversities, selectedUniversity]);
   const mobileLinks = [
     { href: '/', label: t('nav.home') },
     { href: '/search', label: t('nav.search') },
@@ -114,17 +124,22 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
     return () => window.removeEventListener('keydown', onEsc);
   }, [mobileMenuOpen]);
 
+  useEffect(() => {
+    setSelectedCountry(selectedCountryParam);
+  }, [selectedCountryParam]);
+
+  useEffect(() => {
+    setSelectedUniversity(selectedUniversityParam);
+  }, [selectedUniversityParam]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const query = queryInputRef.current?.value || '';
-    window.location.assign(buildSearchHref(selectedCountry, query));
+    window.location.assign(buildSearchHref(selectedCountry, selectedUniversity));
   };
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newCountry = e.target.value;
-    const query = queryInputRef.current?.value || '';
-    // Hard navigation avoids mixed-content issues caused by misreported protocol upstream.
-    window.location.assign(buildSearchHref(newCountry, query));
+    setSelectedCountry(e.target.value);
+    setSelectedUniversity('');
   };
 
   const handleLanguageChange = (lang: 'en' | 'ru' | 'uz') => {
@@ -279,14 +294,20 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
 
                   <div className="flex-1 px-4 flex items-center gap-3 min-h-11">
                     <Search size={16} className="text-neutral-400" />
-                    <input
-                      type="text"
-                      key={initialQuery}
-                      ref={queryInputRef}
-                      defaultValue={initialQuery}
-                      placeholder={t('home.search.placeholder')}
-                      className={`bg-transparent w-full text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400 transition-all duration-300 ${isSearchPinned ? 'py-2 md:py-2.5' : 'py-2.5 md:py-3.5'}`}
-                    />
+                    <select
+                      value={selectedUniversity}
+                      onChange={(event) => setSelectedUniversity(event.target.value)}
+                      className={`bg-transparent w-full text-sm font-medium text-neutral-800 outline-none cursor-pointer transition-all duration-300 ${isSearchPinned ? 'py-2 md:py-2.5' : 'py-2.5 md:py-3.5'}`}
+                    >
+                      <option value="">
+                        {isUniversitiesLoading ? t('home.search.loadingUniversities') : t('home.search.selectUniversity')}
+                      </option>
+                      {universityOptions.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="px-2 pb-2 md:pb-0 md:pr-2">

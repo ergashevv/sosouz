@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Outfit } from 'next/font/google';
-import { Loader2, MessageCircle, Plus, Send, Paperclip, X, Search, Menu } from 'lucide-react';
+import { Loader2, Plus, Send, Paperclip, X, Search, Menu } from 'lucide-react';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
@@ -159,6 +159,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [conversationQuery, setConversationQuery] = useState('');
   const dragDepthRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
@@ -180,6 +181,17 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
       setCountryPickerOpen(true);
     }
   }, [advisorContext]);
+
+  const filteredConversations = conversations.filter((conversation) => {
+    const q = conversationQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      conversation.title.toLowerCase().includes(q) ||
+      (conversation.lastMessage || '').toLowerCase().includes(q)
+    );
+  });
+
+  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) || null;
 
   const handleMediaFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -401,6 +413,14 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
     }
   };
 
+  const handleComposerKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Enter') return;
+    if (event.shiftKey) return;
+    event.preventDefault();
+    if (!activeConversationId || sending || (!input.trim() && !screenshotDataUrl)) return;
+    event.currentTarget.form?.requestSubmit();
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f5f4f0]">
@@ -498,9 +518,9 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
         </div>
       </nav>
 
-      <section className="flex-1 px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+      <section className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="flex min-h-[72vh] flex-col overflow-hidden lg:flex-row lg:ring-1 lg:ring-neutral-900/10 lg:shadow-[0_2px_28px_-6px_rgba(0,0,0,0.07)]">
+          <div className="flex min-h-[80vh] overflow-hidden rounded-2xl border border-black/10 bg-[#f5f4f0] shadow-[0_12px_40px_-20px_rgba(0,0,0,0.35)] lg:h-[calc(100dvh-9rem)] lg:min-h-0 lg:flex-row">
             {sidebarOpen ? (
               <button
                 type="button"
@@ -511,7 +531,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             ) : null}
 
             <aside
-              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-5 bg-[#eae8e3] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-70 lg:max-w-none lg:translate-x-0 lg:shadow-none ${
+              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-4 bg-[#ece9e4] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-72 lg:max-w-none lg:translate-x-0 lg:border-r lg:border-black/10 lg:shadow-none ${
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
               }`}
             >
@@ -532,22 +552,36 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
               <button
                 type="button"
                 onClick={() => void startNewChat()}
-                className="group flex w-full items-center justify-center gap-2 border border-dashed border-neutral-500/50 bg-transparent py-3.5 text-[11px] font-bold uppercase tracking-[0.16em] text-neutral-700 transition-all hover:border-neutral-900 hover:bg-[#f5f4f0] hover:text-neutral-900"
+                className="group flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-500/50 bg-transparent py-3.5 text-[11px] font-bold uppercase tracking-[0.16em] text-neutral-700 transition-all hover:border-neutral-900 hover:bg-[#f5f4f0] hover:text-neutral-900"
               >
                 <Plus size={15} strokeWidth={2} />
                 {t('chat.newChat')}
               </button>
 
-              <div className="min-h-0 flex-1 space-y-0 overflow-y-auto lg:max-h-[calc(72vh-10rem)]">
-                {conversations.map((conversation) => (
+              <label className="block">
+                <span className="sr-only">Search chats</span>
+                <div className="flex items-center gap-2 rounded-xl border border-black/10 bg-white/70 px-3 py-2.5">
+                  <Search size={15} className="text-neutral-400" />
+                  <input
+                    value={conversationQuery}
+                    onChange={(event) => setConversationQuery(event.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
+                    placeholder="Search chats..."
+                    aria-label="Search chats"
+                  />
+                </div>
+              </label>
+
+              <div className="min-h-0 flex-1 space-y-1 overflow-y-auto lg:max-h-none">
+                {filteredConversations.map((conversation) => (
                   <button
                     key={conversation.id}
                     type="button"
                     onClick={() => void openConversation(conversation.id)}
-                    className={`w-full border-l-2 py-3.5 pl-4 pr-2 text-left transition-colors ${
+                    className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
                       activeConversationId === conversation.id
-                        ? 'border-neutral-900 bg-white/50'
-                        : 'border-transparent hover:border-neutral-400/80 hover:bg-white/25'
+                        ? 'border-neutral-900/40 bg-white'
+                        : 'border-transparent hover:border-neutral-300 hover:bg-white/70'
                     }`}
                   >
                     <p className="line-clamp-2 text-sm font-semibold leading-snug text-neutral-900">
@@ -558,11 +592,16 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     </p>
                   </button>
                 ))}
+                {filteredConversations.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-neutral-300 px-3 py-4 text-xs text-neutral-500">
+                    No chats found.
+                  </p>
+                ) : null}
               </div>
             </aside>
 
               <section className="flex min-h-[72vh] flex-1 flex-col bg-[#f5f4f0]">
-                <header className="border-b border-black/[0.07] px-5 py-6 sm:px-8 sm:py-8">
+                <header className="border-b border-black/[0.07] bg-[#f5f4f0] px-5 py-6 sm:px-8 sm:py-8">
                   <div className="flex items-start gap-4 sm:gap-5">
                     <button
                       type="button"
@@ -584,7 +623,34 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                         {t('chat.title')}
                       </h1>
                       <p className="mt-3 max-w-xl text-sm leading-[1.65] text-neutral-600">{t('chat.subtitle')}</p>
+                      {activeConversation ? (
+                        <p className="mt-3 text-xs text-neutral-500">
+                          Current chat: <span className="font-semibold text-neutral-700">{activeConversation.title}</span>
+                        </p>
+                      ) : null}
                       <div className="mt-6 h-px max-w-18 bg-neutral-900" aria-hidden />
+                      <div className="mt-5 lg:hidden">
+                        <label className="block">
+                          <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-500">
+                            Recent chats
+                          </span>
+                          <select
+                            value={activeConversationId || ''}
+                            onChange={(event) => {
+                              const nextId = event.target.value;
+                              if (!nextId) return;
+                              void openConversation(nextId);
+                            }}
+                            className="w-full rounded-lg border border-black/12 bg-white/75 px-3 py-2.5 text-sm text-neutral-900 outline-none"
+                          >
+                            {conversations.map((conversation) => (
+                              <option key={conversation.id} value={conversation.id}>
+                                {conversation.title}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
                     </div>
                   </div>
 
@@ -649,7 +715,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                 </header>
 
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <div className="flex-1 space-y-10 overflow-y-auto px-5 py-8 sm:px-8 sm:py-10">
+                  <div className="flex-1 space-y-8 overflow-y-auto px-5 py-8 sm:px-8 sm:py-10">
                     {messages.length === 0 ? (
                       <div className="flex h-full min-h-56 flex-col items-start justify-center px-0 sm:px-2">
                         <p
@@ -735,7 +801,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     <div ref={messagesEndRef} className="h-1 w-full shrink-0" aria-hidden />
                   </div>
 
-                  <div className="border-t border-black/[0.07] bg-[#ebe8e2]/40 px-5 py-6 sm:px-8">
+                  <div className="sticky bottom-0 z-10 border-t border-black/[0.07] bg-[#ebe8e2]/90 px-5 py-5 backdrop-blur-sm sm:px-8">
                     {screenshotDataUrl ? (
                       <div className="mb-4 border border-black/10 bg-white/70 p-3 sm:p-4">
                         <div className="flex items-center justify-between text-xs text-neutral-500">
@@ -772,7 +838,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       className="relative mx-auto max-w-3xl"
                     >
                       <div
-                        className={`flex items-end gap-3 border-b-2 pb-2 transition-colors ${
+                        className={`flex items-end gap-3 rounded-2xl border bg-white/85 px-3 py-2 transition-colors ${
                           isDragActive ? 'border-neutral-900' : 'border-neutral-900/20'
                         }`}
                       >
@@ -793,6 +859,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                         <textarea
                           value={input}
                           onChange={(event) => setInput(event.target.value)}
+                          onKeyDown={handleComposerKeyDown}
                           rows={2}
                           placeholder={t('chat.messagePlaceholder')}
                           className="max-h-40 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-base text-neutral-900 placeholder:text-neutral-400 outline-none focus:ring-0 sm:text-[15px]"
@@ -813,6 +880,10 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       {isDragActive ? (
                         <p className="mt-3 text-center text-[11px] text-neutral-500">{t('chat.dropImage')}</p>
                       ) : null}
+                      <p className="mt-2 text-center text-[11px] text-neutral-500">
+                        Press <span className="font-semibold text-neutral-700">Enter</span> to send,{' '}
+                        <span className="font-semibold text-neutral-700">Shift + Enter</span> for a new line.
+                      </p>
                     </form>
 
                     {error ? (
@@ -827,7 +898,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
           </div>
       </section>
 
-      <footer className="flex flex-col justify-center border-t border-neutral-900/10 bg-[#f5f4f0] px-4 py-10 sm:px-6 sm:py-12">
+      <footer className="flex flex-col justify-center border-t border-neutral-900/10 bg-[#f5f4f0] px-4 py-8 sm:px-6 sm:py-10">
         <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
           <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left flex-1">
             {t('footer.copyright')}

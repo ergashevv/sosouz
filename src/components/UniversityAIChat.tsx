@@ -190,6 +190,14 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
     }
   };
 
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Enter') return;
+    if (event.shiftKey) return;
+    event.preventDefault();
+    if (!canSend) return;
+    event.currentTarget.form?.requestSubmit();
+  };
+
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-5">
       <div className="space-y-2">
@@ -264,10 +272,15 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
         <textarea
           value={input}
           onChange={(event) => setInput(event.target.value)}
+          onKeyDown={handleInputKeyDown}
           placeholder={copy.placeholder}
           rows={3}
           className="w-full rounded-2xl border border-white/15 bg-black/30 text-sm text-white placeholder:text-neutral-500 px-3 py-3 outline-none focus:border-blue-300 resize-none"
         />
+        <p className="text-[11px] text-neutral-400">
+          Press <span className="font-semibold text-neutral-300">Enter</span> to send,{' '}
+          <span className="font-semibold text-neutral-300">Shift + Enter</span> for a new line.
+        </p>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <label className="inline-flex items-center gap-2 text-xs text-neutral-300 hover:text-white cursor-pointer">

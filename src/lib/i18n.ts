@@ -35,7 +35,9 @@ export const translations: InternalDict = {
   "home.hero.title": { en: "Find the perfect university", ru: "Найдите идеальный университет", uz: "O'zingiz uchun mukammal universitetni toping" },
   "home.hero.subtitle": { en: "for your future.", ru: "для вашего будущего.", uz: "kelajagingiz uchun." },
   "home.hero.desc": { en: "Search through our verified global catalog to explore tuition fees, admission deadlines, and scholarship opportunities anywhere in the world.", ru: "Просматривайте наш глобальный проверенный каталог: стоимость обучения, сроки поступления и стипендии по всему миру.", uz: "Dunyo bo'ylab kontrakt narxlari, qabul muddatlari va grant imkoniyatlarini tasdiqlangan global katalogimiz orqali qidiring va o'rganing." },
-  "home.search.placeholder": { en: "Ask for a university...", ru: "Найти университет...", uz: "Universitet nomini qidiring..." },
+  "home.search.placeholder": { en: "Select a university...", ru: "Выберите университет...", uz: "Universitetni tanlang..." },
+  "home.search.selectUniversity": { en: "Select a university...", ru: "Выберите университет...", uz: "Universitetni tanlang..." },
+  "home.search.loadingUniversities": { en: "Loading universities...", ru: "Загрузка университетов...", uz: "Universitetlar yuklanmoqda..." },
   "home.search.btn": { en: "Search", ru: "Искать", uz: "Izlash" },
 
   "home.stats.verified": { en: "Verified Universities", ru: "Проверенные Университеты", uz: "Tasdiqlangan Universitetlar" },

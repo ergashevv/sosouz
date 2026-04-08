@@ -24,6 +24,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import TopRankingsSection from '@/components/TopRankingsSection';
 import ContactMailtoLink from '@/components/ContactMailtoLink';
+import { useRecommendedUniversities } from '@/lib/useRecommendedUniversities';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 const INDEX_START_VALUE = 0;
@@ -146,11 +147,13 @@ function formatBadgeIndex(nowMs: number): string {
 export default function Home() {
   const router = useRouter();
   const { t, language, setLanguage } = useLanguage();
-  const [query, setQuery] = useState('');
+  const [selectedUniversity, setSelectedUniversity] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('United Kingdom');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dynamicIndex, setDynamicIndex] = useState('00');
   const copy = homeIntentCopy[language] ?? homeIntentCopy.en;
+  const { universities: recommendedUniversities, isLoading: isUniversitiesLoading } =
+    useRecommendedUniversities(selectedCountry);
 
   const buildSearchHref = (country: string, searchQuery?: string) => {
     const params = new URLSearchParams({ country });
@@ -162,7 +165,7 @@ export default function Home() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.assign(buildSearchHref(selectedCountry, query));
+    window.location.assign(buildSearchHref(selectedCountry, selectedUniversity));
   };
 
   useEffect(() => {
@@ -329,7 +332,10 @@ export default function Home() {
                 <MapPin size={18} className="text-neutral-400" />
                 <select
                   value={selectedCountry}
-                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedCountry(e.target.value);
+                    setSelectedUniversity('');
+                  }}
                   className="bg-transparent text-sm font-semibold text-neutral-700 outline-none cursor-pointer py-2 w-full"
                 >
                   {countries.map(c => <option key={c.code} value={c.name}>{c.name}</option>)}
@@ -337,13 +343,20 @@ export default function Home() {
               </div>
               <div className="hero-search-row">
                 <Search size={18} className="text-neutral-400" />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('home.search.placeholder')}
-                  className="bg-transparent w-full py-3 md:py-2 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
-                />
+                <select
+                  value={selectedUniversity}
+                  onChange={(e) => setSelectedUniversity(e.target.value)}
+                  className="bg-transparent w-full py-3 md:py-2 text-sm font-medium text-neutral-800 outline-none"
+                >
+                  <option value="">
+                    {isUniversitiesLoading ? t('home.search.loadingUniversities') : t('home.search.selectUniversity')}
+                  </option>
+                  {recommendedUniversities.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <button type="submit" className="hero-search-btn">
                 {t('home.search.btn')}
@@ -376,7 +389,7 @@ export default function Home() {
 
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <a
-                  href={buildSearchHref(selectedCountry, query)}
+                  href={buildSearchHref(selectedCountry, selectedUniversity)}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-neutral-800"
                 >
                   {copy.ctaPrimary}
