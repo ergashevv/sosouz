@@ -7,7 +7,6 @@ import { Outfit } from 'next/font/google';
 import { ArrowLeft, Loader2, Plus, Send, Paperclip, X, Search, Menu } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
-import { countries } from '@/lib/countries';
 
 interface ChatWorkspaceProps {
   user: {
@@ -544,52 +543,10 @@ export default function ChatWorkspace(_: ChatWorkspaceProps) {
                       </button>
                       <div className="min-w-0 flex-1">
                         <h1 className={`text-xl font-extrabold leading-none tracking-tight text-neutral-900 ${outfit.className}`}>
-                          {t('chat.title')}
+                          soso. ai
                         </h1>
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                      <label className="block" htmlFor="chat-region-country">
-                        <div className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2.5 transition-colors focus-within:border-black/30">
-                          <Search size={16} className="shrink-0 text-neutral-400" aria-hidden />
-                          <input
-                            id="chat-region-country"
-                            value={country}
-                            onChange={(event) => setCountry(event.target.value)}
-                            list="chat-country-options"
-                            autoComplete="off"
-                            className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:ring-0"
-                            placeholder={t('chat.regionPlaceholder')}
-                            aria-label={t('chat.regionLabel')}
-                          />
-                        </div>
-                      </label>
-
-                      <div className="lg:hidden">
-                        <select
-                          value={activeConversationId || ''}
-                          onChange={(event) => {
-                            const nextId = event.target.value;
-                            if (!nextId) return;
-                            void openConversation(nextId);
-                          }}
-                          className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none sm:min-w-56"
-                          aria-label="Recent chats"
-                        >
-                          {conversations.map((conversation) => (
-                            <option key={conversation.id} value={conversation.id}>
-                              {conversation.title}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <datalist id="chat-country-options">
-                      {countries.map((item) => (
-                        <option key={item.code} value={item.name} />
-                      ))}
-                    </datalist>
                   </div>
                 </header>
 
