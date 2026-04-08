@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { AsYouType, CountryCode, getCountryCallingCode, parsePhoneNumberFromString, validatePhoneNumberLength } from 'libphonenumber-js';
 import { AlertTriangle, ArrowLeft, KeyRound, LogOut, Save, ShieldAlert, UserRoundCheck } from 'lucide-react';
@@ -12,6 +13,10 @@ interface ProfilePanelProps {
   user: {
     firstName: string;
     lastName: string;
+    email: string | null;
+    avatarUrl: string | null;
+    authProvider: string;
+    hasPassword: boolean;
     phoneE164: string;
     phoneCountry: string;
   };
@@ -22,6 +27,8 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const isGoogleOnly = user.authProvider === 'google' && !user.hasPassword;
 
   const countryOptions = useMemo(() => {
     return countries
@@ -126,22 +133,31 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
     setProfileSuccess(null);
 
     try {
-      const nextPhone = buildPhoneE164();
-      const lengthStatus = validatePhoneNumberLength(nextPhone, countryCode as CountryCode);
-      if (lengthStatus) {
-        setProfileError('Please provide a valid phone number.');
-        return;
+      const payload: {
+        firstName: string;
+        lastName: string;
+        countryCode?: string;
+        phoneNumber?: string;
+      } = {
+        firstName,
+        lastName,
+      };
+
+      if (!isGoogleOnly) {
+        const nextPhone = buildPhoneE164();
+        const lengthStatus = validatePhoneNumberLength(nextPhone, countryCode as CountryCode);
+        if (lengthStatus) {
+          setProfileError('Please provide a valid phone number.');
+          return;
+        }
+        payload.countryCode = countryCode;
+        payload.phoneNumber = nextPhone;
       }
 
       const response = await authFetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          countryCode,
-          phoneNumber: nextPhone,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = (await response.json()) as {
         error?: string;
@@ -160,8 +176,10 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
       if (data.user) {
         setFirstName(data.user.firstName);
         setLastName(data.user.lastName);
-        setCountryCode(data.user.phoneCountry);
-        setPhoneNumber(getNationalNumber(data.user.phoneE164, data.user.phoneCountry));
+        if (!isGoogleOnly) {
+          setCountryCode(data.user.phoneCountry);
+          setPhoneNumber(getNationalNumber(data.user.phoneE164, data.user.phoneCountry));
+        }
       }
 
       setProfileSuccess('Profile updated successfully.');
@@ -204,7 +222,7 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setPasswordSuccess('Password changed successfully. Other sessions were logged out.');
+      setPasswordSuccess('Password updated successfully.');
       router.refresh();
     } catch (error: unknown) {
       setPasswordError(error instanceof Error ? error.message : 'Password reset failed.');
@@ -245,36 +263,56 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white px-4 py-10 sm:px-6">
-      <div className="mx-auto w-full max-w-4xl space-y-5">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f8fafc,#ffffff_48%)] px-4 py-8 sm:px-6 sm:py-10 text-neutral-900">
+      <div className="mx-auto w-full max-w-3xl space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-neutral-200 hover:bg-white/10"
+            className="inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 hover:border-neutral-300"
           >
             <ArrowLeft size={14} />
             Back home
           </Link>
           <button
             onClick={() => void handleLogout()}
-            className="inline-flex items-center gap-2 rounded-xl border border-red-300/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/20"
+            className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
           >
             <LogOut size={15} />
             Logout
           </button>
         </div>
 
-        <section className="rounded-3xl border border-white/10 bg-black/40 p-6 sm:p-8">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Profile settings</h1>
-          <p className="mt-2 text-sm text-neutral-300">
-            Account ma&apos;lumotlaringizni yangilang, parolni almashtiring va kerak bo&apos;lsa profilingizni o&apos;chiring.
-          </p>
+        <section className="rounded-3xl border border-neutral-200 bg-white p-5 sm:p-7 shadow-[0_20px_80px_rgba(15,23,42,0.07)]">
+          <div className="flex items-center gap-4">
+            {user.avatarUrl ? (
+              <Image
+                src={user.avatarUrl}
+                alt="Profile avatar"
+                width={56}
+                height={56}
+                className="h-14 w-14 rounded-full border border-neutral-200 object-cover"
+              />
+            ) : (
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 text-lg font-bold text-neutral-700">
+                {(user.firstName[0] || '') + (user.lastName[0] || '')}
+              </div>
+            )}
+            <div className="min-w-0">
+              <h1 className="text-2xl font-extrabold tracking-tight">Profile settings</h1>
+              <p className="truncate text-sm text-neutral-500">
+                {user.email || `${user.firstName} ${user.lastName}`}
+              </p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                {user.authProvider === 'google' ? 'Google account' : 'Phone account'}
+              </p>
+            </div>
+          </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-black/30 p-6 sm:p-8">
+        <section className="rounded-3xl border border-neutral-200 bg-white p-5 sm:p-7 shadow-[0_20px_80px_rgba(15,23,42,0.06)]">
           <div className="mb-4 flex items-center gap-2">
-            <UserRoundCheck size={16} className="text-emerald-300" />
-            <h2 className="text-lg font-semibold">Profile CRUD</h2>
+            <UserRoundCheck size={16} className="text-emerald-600" />
+            <h2 className="text-lg font-semibold">Personal info</h2>
           </div>
 
           <form className="space-y-4" onSubmit={handleProfileUpdate}>
@@ -284,47 +322,61 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
                 onChange={(event) => setFirstName(event.target.value)}
                 placeholder="First name"
                 required
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-white/30"
+                className="rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
               />
               <input
                 value={lastName}
                 onChange={(event) => setLastName(event.target.value)}
                 placeholder="Last name"
                 required
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-white/30"
+                className="rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_2fr]">
-              <select
-                value={countryCode}
-                onChange={(event) => handleCountryChange(event.target.value)}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-white/30"
-              >
-                {countryOptions.map((country) => (
-                  <option key={country.code} value={country.code} className="text-black">
-                    {country.code} ({country.dialCode}) - {country.name}
-                  </option>
-                ))}
-              </select>
+            {user.email ? (
               <input
-                value={phoneNumber}
-                onChange={(event) => handlePhoneChange(event.target.value)}
-                placeholder="Phone number"
-                inputMode="tel"
-                required
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-white/30"
+                value={user.email}
+                disabled
+                className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-500"
               />
-            </div>
+            ) : null}
 
-            {phoneLengthError ? <p className="text-sm text-amber-300">{phoneLengthError}</p> : null}
-            {profileError ? <p className="text-sm text-red-300">{profileError}</p> : null}
-            {profileSuccess ? <p className="text-sm text-emerald-300">{profileSuccess}</p> : null}
+            {!isGoogleOnly ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_2fr]">
+                <select
+                  value={countryCode}
+                  onChange={(event) => handleCountryChange(event.target.value)}
+                  className="rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
+                >
+                  {countryOptions.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.code} ({country.dialCode}) - {country.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  value={phoneNumber}
+                  onChange={(event) => handlePhoneChange(event.target.value)}
+                  placeholder="Phone number"
+                  inputMode="tel"
+                  required
+                  className="rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
+                />
+              </div>
+            ) : (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                Phone number is managed by Google sign-in for now. You can still update your name.
+              </p>
+            )}
+
+            {phoneLengthError ? <p className="text-sm text-amber-700">{phoneLengthError}</p> : null}
+            {profileError ? <p className="text-sm text-red-600">{profileError}</p> : null}
+            {profileSuccess ? <p className="text-sm text-emerald-700">{profileSuccess}</p> : null}
 
             <button
               type="submit"
               disabled={profileLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/20 px-4 py-2.5 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/30 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50"
             >
               <Save size={15} />
               {profileLoading ? 'Saving...' : 'Save changes'}
@@ -332,21 +384,29 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
           </form>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-black/30 p-6 sm:p-8">
+        <section className="rounded-3xl border border-neutral-200 bg-white p-5 sm:p-7 shadow-[0_20px_80px_rgba(15,23,42,0.06)]">
           <div className="mb-4 flex items-center gap-2">
-            <KeyRound size={16} className="text-blue-300" />
-            <h2 className="text-lg font-semibold">Reset password</h2>
+            <KeyRound size={16} className="text-blue-600" />
+            <h2 className="text-lg font-semibold">{user.hasPassword ? 'Change password' : 'Set password'}</h2>
           </div>
 
+          {!user.hasPassword ? (
+            <p className="mb-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+              You signed in with Google. Set a password to enable password-based login as a backup.
+            </p>
+          ) : null}
+
           <form className="space-y-3" onSubmit={handlePasswordReset}>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              placeholder="Current password (optional)"
-              minLength={8}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-white/30"
-            />
+            {user.hasPassword ? (
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                placeholder="Current password"
+                minLength={8}
+                className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
+              />
+            ) : null}
             <input
               type="password"
               value={newPassword}
@@ -354,7 +414,7 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
               placeholder="New password"
               minLength={8}
               required
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-white/30"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
             />
             <input
               type="password"
@@ -363,55 +423,57 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
               placeholder="Confirm new password"
               minLength={8}
               required
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-white/30"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
             />
 
-            {passwordError ? <p className="text-sm text-red-300">{passwordError}</p> : null}
-            {passwordSuccess ? <p className="text-sm text-emerald-300">{passwordSuccess}</p> : null}
+            {passwordError ? <p className="text-sm text-red-600">{passwordError}</p> : null}
+            {passwordSuccess ? <p className="text-sm text-emerald-700">{passwordSuccess}</p> : null}
 
             <button
               type="submit"
               disabled={passwordLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-500/20 px-4 py-2.5 text-sm font-semibold text-blue-200 hover:bg-blue-500/30 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {passwordLoading ? 'Updating...' : 'Update password'}
+              {passwordLoading ? 'Updating...' : user.hasPassword ? 'Update password' : 'Set password'}
             </button>
           </form>
         </section>
 
-        <section className="rounded-3xl border border-red-300/25 bg-red-950/20 p-6 sm:p-8">
+        <section className="rounded-3xl border border-red-200 bg-red-50 p-5 sm:p-7">
           <div className="mb-4 flex items-center gap-2">
-            <ShieldAlert size={16} className="text-red-300" />
-            <h2 className="text-lg font-semibold text-red-200">Danger zone</h2>
+            <ShieldAlert size={16} className="text-red-700" />
+            <h2 className="text-lg font-semibold text-red-800">Danger zone</h2>
           </div>
-          <p className="mb-4 text-sm text-red-100/80">
-            Bu amal qaytarib bo&apos;lmaydi. Profil, sessiyalar va chat tarixingiz o&apos;chib ketadi.
+          <p className="mb-4 text-sm text-red-700">
+            This action is permanent. Profile, sessions, and chat history will be removed.
           </p>
 
           <form className="space-y-3" onSubmit={handleDeleteAccount}>
-            <input
-              type="password"
-              value={deletePassword}
-              onChange={(event) => setDeletePassword(event.target.value)}
-              placeholder="Enter your password"
-              minLength={8}
-              required
-              className="w-full rounded-xl border border-red-200/20 bg-red-500/10 px-3 py-2.5 text-sm outline-none focus:border-red-200/40"
-            />
+            {user.hasPassword ? (
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(event) => setDeletePassword(event.target.value)}
+                placeholder="Enter your password"
+                minLength={8}
+                required
+                className="w-full rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-red-400"
+              />
+            ) : null}
             <input
               value={deleteConfirm}
               onChange={(event) => setDeleteConfirm(event.target.value)}
               placeholder='Type "DELETE" to confirm'
               required
-              className="w-full rounded-xl border border-red-200/20 bg-red-500/10 px-3 py-2.5 text-sm outline-none focus:border-red-200/40"
+              className="w-full rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-red-400"
             />
 
-            {deleteError ? <p className="text-sm text-red-200">{deleteError}</p> : null}
+            {deleteError ? <p className="text-sm text-red-700">{deleteError}</p> : null}
 
             <button
               type="submit"
               disabled={deleteLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-500/20 px-4 py-2.5 text-sm font-semibold text-red-100 hover:bg-red-500/30 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
             >
               <AlertTriangle size={15} />
               {deleteLoading ? 'Deleting...' : 'Delete account'}

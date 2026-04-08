@@ -56,6 +56,9 @@ model User {
   last_name        String
   email            String?            @unique
   google_sub       String?            @unique
+  avatar_url       String?
+  auth_provider    String             @default("phone")
+  has_password     Boolean            @default(true)
   phone_country    String
   phone_e164       String             @unique
   password_hash    String

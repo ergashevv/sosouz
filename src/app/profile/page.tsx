@@ -8,6 +8,10 @@ import { authFetch } from "@/lib/client-auth";
 interface ProfileUser {
   firstName: string;
   lastName: string;
+  email: string | null;
+  avatarUrl: string | null;
+  authProvider: string;
+  hasPassword: boolean;
   phoneE164: string;
   phoneCountry: string;
 }
@@ -17,6 +21,10 @@ interface MePayload {
   user?: {
     firstName: string;
     lastName: string;
+    email: string | null;
+    avatarUrl: string | null;
+    authProvider: string;
+    hasPassword: boolean;
     phoneE164: string;
     phoneCountry: string;
   };
@@ -58,7 +66,7 @@ export default function ProfilePage() {
   }, [router]);
 
   if (loading || !user) {
-    return <div className="min-h-screen bg-neutral-950" />;
+    return <div className="min-h-screen bg-white" />;
   }
 
   return <ProfilePanel user={user} />;

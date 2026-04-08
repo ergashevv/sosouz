@@ -19,6 +19,8 @@ type AuthUserRecord = {
   id: string;
   first_name: string;
   last_name: string;
+  auth_provider: string;
+  has_password: boolean;
   phone_e164: string;
   password_hash: string;
 };
@@ -50,6 +52,12 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Account not found." }, { status: 404 });
+    }
+    if (!user.has_password) {
+      return NextResponse.json(
+        { error: "This account uses Google sign-in. Continue with Google to access it." },
+        { status: 400 }
+      );
     }
 
     const isValidPassword = await verifyPassword(password, user.password_hash);

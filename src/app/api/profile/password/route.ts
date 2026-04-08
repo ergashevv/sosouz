@@ -20,6 +20,7 @@ type SessionRecord = {
   expires_at: Date;
   user: {
     password_hash: string;
+    has_password: boolean;
   };
 };
 
@@ -64,6 +65,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: passwordCheck.error }, { status: 400 });
     }
 
+    if (session.user.has_password && !currentPassword) {
+      return NextResponse.json({ error: "Current password is required." }, { status: 400 });
+    }
+
     if (currentPassword) {
       const validCurrentPassword = await verifyPassword(currentPassword, session.user.password_hash);
       if (!validCurrentPassword) {
@@ -81,7 +86,10 @@ export async function POST(request: Request) {
       const typedTx = tx as unknown as TransactionClient;
       await typedTx.user.update({
         where: { id: session.user_id },
-        data: { password_hash: passwordHash },
+        data: {
+          password_hash: passwordHash,
+          has_password: true,
+        },
       });
       await typedTx.userSession.deleteMany({
         where: { user_id: session.user_id },

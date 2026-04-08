@@ -15,6 +15,10 @@ export interface SessionUser {
   id: string;
   firstName: string;
   lastName: string;
+  email: string | null;
+  avatarUrl: string | null;
+  authProvider: string;
+  hasPassword: boolean;
   phoneE164: string;
   phoneCountry: string;
 }
@@ -33,6 +37,10 @@ type UserSessionRecord = {
     id: string;
     first_name: string;
     last_name: string;
+    email: string | null;
+    avatar_url: string | null;
+    auth_provider: string;
+    has_password: boolean;
     phone_e164: string;
     phone_country: string;
   };
@@ -185,6 +193,10 @@ export async function getSessionUserByToken(token: string | null): Promise<Sessi
     id: session.user.id,
     firstName: session.user.first_name,
     lastName: session.user.last_name,
+    email: session.user.email,
+    avatarUrl: session.user.avatar_url,
+    authProvider: session.user.auth_provider,
+    hasPassword: session.user.has_password,
     phoneE164: session.user.phone_e164,
     phoneCountry: session.user.phone_country,
   };

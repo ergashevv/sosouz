@@ -48,6 +48,8 @@ export async function POST(request: Request) {
           data: {
             first_name: string;
             last_name: string;
+            auth_provider: string;
+            has_password: boolean;
             phone_country: string;
             phone_e164: string;
             password_hash: string;
@@ -64,6 +66,8 @@ export async function POST(request: Request) {
       data: {
         first_name: firstName,
         last_name: lastName,
+        auth_provider: "phone",
+        has_password: true,
         phone_country: countryCode,
         phone_e164: phoneValidation.phoneE164,
         password_hash: passwordHash,

@@ -15,10 +15,14 @@ type UserRepository = {
     id: string;
     first_name: string;
     last_name: string;
+    email: string | null;
+    avatar_url: string | null;
+    auth_provider: string;
+    has_password: boolean;
     phone_e164: string;
     phone_country: string;
   }>;
-  findUnique: (args: unknown) => Promise<{ id: string; password_hash: string } | null>;
+  findUnique: (args: unknown) => Promise<{ id: string; password_hash: string; has_password: boolean } | null>;
   delete: (args: unknown) => Promise<unknown>;
 };
 
@@ -67,9 +71,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "First name and last name are required." }, { status: 400 });
     }
 
+    const isGoogleOnly = user.authProvider === "google" && !user.hasPassword;
     const nextCountryCode = countryProvided ? normalizeCountryCode(payload.countryCode) : user.phoneCountry;
     const nextPhoneRaw = phoneProvided ? payload.phoneNumber : user.phoneE164;
-    const phoneValidation = validatePhoneNumberByCountry(nextCountryCode, nextPhoneRaw);
+    const phoneValidation = isGoogleOnly
+      ? { ok: true as const, phoneE164: user.phoneE164 }
+      : validatePhoneNumberByCountry(nextCountryCode, nextPhoneRaw);
     if (!phoneValidation.ok) {
       return NextResponse.json({ error: phoneValidation.error }, { status: 400 });
     }
@@ -103,6 +110,10 @@ export async function PATCH(request: Request) {
         id: updated.id,
         firstName: updated.first_name,
         lastName: updated.last_name,
+        email: updated.email,
+        avatarUrl: updated.avatar_url,
+        authProvider: updated.auth_provider,
+        hasPassword: updated.has_password,
         phoneE164: updated.phone_e164,
         phoneCountry: updated.phone_country,
       },
@@ -125,22 +136,25 @@ export async function DELETE(request: Request) {
 
     const payload = (await request.json()) as ProfileDeletePayload;
     const password = typeof payload.password === "string" ? payload.password : "";
-    if (!password) {
-      return NextResponse.json({ error: "Password is required to delete account." }, { status: 400 });
-    }
 
     const dbUser = await userRepo.findUnique({
       where: { id: user.id },
-      select: { id: true, password_hash: true },
+      select: { id: true, password_hash: true, has_password: true },
     });
 
     if (!dbUser) {
       return NextResponse.json({ error: "Account not found." }, { status: 404 });
     }
 
-    const passwordValid = await verifyPassword(password, dbUser.password_hash);
-    if (!passwordValid) {
-      return NextResponse.json({ error: "Invalid password." }, { status: 401 });
+    if (dbUser.has_password && !password) {
+      return NextResponse.json({ error: "Password is required to delete account." }, { status: 400 });
+    }
+
+    if (dbUser.has_password) {
+      const passwordValid = await verifyPassword(password, dbUser.password_hash);
+      if (!passwordValid) {
+        return NextResponse.json({ error: "Invalid password." }, { status: 401 });
+      }
     }
 
     await userRepo.delete({ where: { id: dbUser.id } });

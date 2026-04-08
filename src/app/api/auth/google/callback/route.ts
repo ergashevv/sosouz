@@ -23,11 +23,13 @@ type GoogleUserInfo = {
   given_name?: string;
   family_name?: string;
   name?: string;
+  picture?: string;
 };
 
 type AuthUserRecord = {
   id: string;
   google_sub?: string | null;
+  has_password?: boolean;
 };
 
 type UserRepo = {
@@ -155,7 +157,7 @@ export async function GET(request: Request) {
       where: {
         OR: [{ google_sub: userInfo.sub }, ...(email ? [{ email }] : [])],
       },
-      select: { id: true, google_sub: true },
+      select: { id: true, google_sub: true, has_password: true },
     });
 
     if (!user) {
@@ -167,12 +169,15 @@ export async function GET(request: Request) {
               first_name: firstName,
               last_name: lastName,
               email,
+              avatar_url: typeof userInfo.picture === "string" ? userInfo.picture : null,
               google_sub: userInfo.sub,
+              auth_provider: "google",
+              has_password: false,
               phone_country: FALLBACK_PHONE_COUNTRY,
               phone_e164: syntheticPhoneFromGoogleSub(userInfo.sub, attempt),
               password_hash: syntheticPassword,
             },
-            select: { id: true, google_sub: true },
+            select: { id: true, google_sub: true, has_password: true },
           });
           break;
         } catch (error: unknown) {
@@ -188,8 +193,13 @@ export async function GET(request: Request) {
     } else if (!user.google_sub) {
       user = await userRepo.update({
         where: { id: user.id },
-        data: { google_sub: userInfo.sub, email: email ?? undefined },
-        select: { id: true, google_sub: true },
+        data: {
+          google_sub: userInfo.sub,
+          email: email ?? undefined,
+          avatar_url: typeof userInfo.picture === "string" ? userInfo.picture : undefined,
+          auth_provider: "google",
+        },
+        select: { id: true, google_sub: true, has_password: true },
       });
     }
 
