@@ -16,6 +16,7 @@ import {
   urlMatchesOfficialBases,
 } from '@/lib/official-url';
 import { highlightInlinePrices } from '@/lib/highlight-inline-prices';
+import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
 
 export interface AIResearchData {
   tuition_fees?: string | null;
@@ -420,6 +421,14 @@ export default function UniversityDetailView({
   const [summaryExpandedMobile, setSummaryExpandedMobile] = useState(false);
   const [programsExpandedMobile, setProgramsExpandedMobile] = useState(false);
   const [sourcesExpandedMobile, setSourcesExpandedMobile] = useState(false);
+  const trackOfficialClick = (targetType: 'official' | 'apply' | 'program' | 'tuition' | 'source') => {
+    bumpOutcomeMetric('official_link_clicked');
+    trackEvent('soso_official_link_clicked', {
+      target_type: targetType,
+      country: basicInfo.country,
+      university_name: basicInfo.name,
+    });
+  };
   const websiteFallback = basicInfo.web_pages?.[0] || null;
   const officialBases = collectOfficialBases({
     primaryDomain: domain,
@@ -603,6 +612,7 @@ export default function UniversityDetailView({
                     href={websiteFallback}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackOfficialClick('official')}
                     className="text-role-link-surface inline-flex items-center gap-1.5 text-sm"
                   >
                     <span className="line-clamp-2">{heroOfficialNotice}</span>
@@ -617,6 +627,7 @@ export default function UniversityDetailView({
                 href={websiteFallback}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackOfficialClick('official')}
                 className="edge-btn-primary mt-4 w-full px-4 py-2.5 text-[10px]"
               >
                 {t('uni.visit', lang)}
@@ -736,6 +747,7 @@ export default function UniversityDetailView({
                   href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackOfficialClick(item.id === 'apply' ? 'apply' : item.id === 'tuition' ? 'tuition' : 'program')}
                   className="text-role-link-card block rounded-none border border-neutral-200 bg-white px-4 py-3"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -759,6 +771,7 @@ export default function UniversityDetailView({
                   href={source.link}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackOfficialClick('source')}
                   className="text-role-link-card block rounded-none border border-neutral-200 bg-white px-4 py-3"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -873,6 +886,7 @@ export default function UniversityDetailView({
                   href={websiteFallback}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackOfficialClick('official')}
                   className="text-role-link-surface inline-flex items-center gap-1.5 text-sm"
                 >
                   <span className="line-clamp-2 sm:line-clamp-none">{heroOfficialNotice}</span>
@@ -1265,6 +1279,7 @@ export default function UniversityDetailView({
                     href={websiteFallback}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackOfficialClick('official')}
                     className="edge-btn-primary w-full px-6 py-3.5 text-sm sm:text-base"
                   >
                     {t('uni.visit', lang)}
@@ -1318,6 +1333,7 @@ export default function UniversityDetailView({
                       href={item.link}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => trackOfficialClick(item.id === 'apply' ? 'apply' : item.id === 'tuition' ? 'tuition' : 'program')}
                       className="text-role-link-card group block cursor-pointer rounded-none border border-neutral-200 bg-neutral-50 px-4 py-3.5 transition-all hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 focus-visible:ring-offset-2"
                     >
                       <div className="flex items-start justify-between gap-3 min-w-0">
@@ -1350,6 +1366,7 @@ export default function UniversityDetailView({
                       href={source.link}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => trackOfficialClick('source')}
                       className="text-role-link-card group block cursor-pointer rounded-none border border-neutral-200 bg-white px-4 py-3.5 transition-all hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 focus-visible:ring-offset-2"
                     >
                       <div className="flex items-start justify-between gap-3 min-w-0">

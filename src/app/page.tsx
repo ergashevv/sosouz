@@ -25,6 +25,8 @@ import HeaderAccountActions from '@/components/HeaderAccountActions';
 import TopRankingsSection from '@/components/TopRankingsSection';
 import ContactMailtoLink from '@/components/ContactMailtoLink';
 import { useRecommendedUniversities } from '@/lib/useRecommendedUniversities';
+import OutcomeMetricsPanel from '@/components/OutcomeMetricsPanel';
+import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 const INDEX_START_VALUE = 0;
@@ -38,9 +40,9 @@ const homeIntentCopy = {
     lead: "Soso — chet eldagi universitetlar bo'yicha qarorni tezroq va aniqroq qilish uchun qurilgan qidiruv maydoni. Bu yerda siz variantlarni topasiz, taqqoslaysiz va keyingi qadamni yo'qotmasdan harakat qilasiz.",
     valueTitle: "Bu qanday ishlaydi?",
     valueSteps: [
-      "Mamlakat va yo'nalishni tanlaysiz.",
-      "Universitet variantlarini bir joyda ko'rasiz.",
-      "O'zingizga mos yo'nalishga tez o'tasiz.",
+      "Mamlakat bo'yicha faqat platformadagi tekshirilgan universitetlar tavsiya qilinadi.",
+      "Rasmiy havolalar va dolzarblik belgisi bilan xatolik riski kamayadi.",
+      "Qidiruv → profil → AI maslahat → rasmiy saytga o'tish oqimi bir joyda ishlaydi.",
     ],
     answers: [
       {
@@ -73,9 +75,9 @@ const homeIntentCopy = {
     lead: 'Soso is a focused discovery space for studying abroad. Instead of scattered research, you get one clear flow: find options, compare quickly, and move to your next step with confidence.',
     valueTitle: 'How does it work?',
     valueSteps: [
-      'Choose country and study direction.',
-      'See relevant university options in one place.',
-      'Move to the best-fit path without losing momentum.',
+      'Recommendations are constrained to verified universities in SOSO for the selected country.',
+      'Official links and freshness cues reduce misinformation risk.',
+      'One flow: discovery -> profile -> AI advisor -> official next step.',
     ],
     answers: [
       {
@@ -108,9 +110,9 @@ const homeIntentCopy = {
     lead: 'Soso — это платформа для быстрого выбора зарубежного вуза. Вместо разрозненного поиска вы получаете понятный путь: найти варианты, сравнить и перейти к следующему шагу.',
     valueTitle: 'Как это работает?',
     valueSteps: [
-      'Выбираете страну и направление.',
-      'Смотрите подходящие варианты вузов в одном месте.',
-      'Быстро переходите к наиболее подходящему пути.',
+      'Рекомендации ограничены проверенными вузами SOSO по выбранной стране.',
+      'Официальные ссылки и метки свежести снижают риск ошибок.',
+      'Единая воронка: поиск -> профиль -> AI‑советник -> официальный следующий шаг.',
     ],
     answers: [
       {
@@ -165,6 +167,12 @@ export default function Home() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    bumpOutcomeMetric('discovery_search_started');
+    trackEvent('soso_discovery_search_started', {
+      country: selectedCountry,
+      has_query: Boolean(selectedUniversity.trim()),
+      page: 'home',
+    });
     window.location.assign(buildSearchHref(selectedCountry, selectedUniversity));
   };
 
@@ -390,6 +398,14 @@ export default function Home() {
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <a
                   href={buildSearchHref(selectedCountry, selectedUniversity)}
+                  onClick={() => {
+                    bumpOutcomeMetric('discovery_search_started');
+                    trackEvent('soso_discovery_search_started', {
+                      country: selectedCountry,
+                      has_query: Boolean(selectedUniversity.trim()),
+                      trigger: 'home_cta',
+                    });
+                  }}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-neutral-800"
                 >
                   {copy.ctaPrimary}
@@ -421,6 +437,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <OutcomeMetricsPanel />
 
       <TopRankingsSection language={language} />
 

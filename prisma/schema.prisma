@@ -103,3 +103,18 @@ model ChatMessage {
 
   @@index([conversation_id, created_at])
 }
+
+model ChatMessageFeedback {
+  id                     String   @id @default(uuid())
+  user_id                String
+  conversation_id        String
+  message_id             String   @unique
+  helpful                Boolean
+  language               String?
+  recommendation_country String?
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  @@index([user_id, created_at])
+  @@index([conversation_id, created_at])
+}

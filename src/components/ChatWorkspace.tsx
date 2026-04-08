@@ -4,9 +4,10 @@ import { DragEvent, FormEvent, useCallback, useEffect, useRef, useState } from '
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Outfit } from 'next/font/google';
-import { Loader2, Plus, Send, Paperclip, X, Search, Menu, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Send, Paperclip, X, Search, Menu, Trash2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
+import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
 
 interface ChatWorkspaceProps {
   user: {
@@ -46,6 +47,8 @@ interface ChatMessage {
   replyToText?: string | null;
   createdAt: string;
 }
+
+type FeedbackState = 'idle' | 'sending' | 'sent_positive' | 'sent_negative';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
@@ -170,6 +173,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
   const [deleteConfirmConversation, setDeleteConfirmConversation] = useState<ConversationItem | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(true);
+  const [feedbackByMessageId, setFeedbackByMessageId] = useState<Record<string, FeedbackState>>({});
   const dragDepthRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [advisorContext, setAdvisorContext] = useState<ClientAdvisorContextPayload | null>(null);
@@ -322,6 +326,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
       setConversations((prev) => [createdConversation, ...prev]);
       setActiveConversationId(createdConversation.id);
       setMessages([]);
+      setFeedbackByMessageId({});
       if (searchParams.get('advisorContext')) {
         router.replace('/chat', { scroll: false });
       }
@@ -337,6 +342,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
     setError(null);
     try {
       await loadMessages(conversationId);
+      setFeedbackByMessageId({});
     } catch (loadError: unknown) {
       setError(loadError instanceof Error ? loadError.message : 'Could not load chat messages.');
     }
@@ -392,6 +398,45 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
       setError(deleteError instanceof Error ? deleteError.message : 'Could not delete chat.');
     } finally {
       setDeletingConversationId(null);
+    }
+  };
+
+  const submitAssistantFeedback = async (
+    message: ChatMessage,
+    sentiment: 'sent_positive' | 'sent_negative',
+  ) => {
+    if (!activeConversationId) return;
+    if (feedbackByMessageId[message.id] === 'sending') return;
+    if (feedbackByMessageId[message.id] === 'sent_positive' || feedbackByMessageId[message.id] === 'sent_negative') {
+      return;
+    }
+
+    setFeedbackByMessageId((prev) => ({ ...prev, [message.id]: 'sending' }));
+    const helpful = sentiment === 'sent_positive';
+
+    try {
+      const response = await authFetch('/api/chat/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId: message.id,
+          conversationId: activeConversationId,
+          helpful,
+          language,
+          recommendationCountry: country,
+        }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not save feedback.');
+      }
+      setFeedbackByMessageId((prev) => ({ ...prev, [message.id]: sentiment }));
+      trackEvent('soso_chat_feedback_submitted', {
+        helpful,
+        country,
+      });
+    } catch {
+      setFeedbackByMessageId((prev) => ({ ...prev, [message.id]: 'idle' }));
     }
   };
 
@@ -455,6 +500,12 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
           message.id === optimisticUserMessage.id ? savedUserMessage : message,
         ),
       );
+      bumpOutcomeMetric('chat_message_sent');
+      trackEvent('soso_chat_message_sent', {
+        has_screenshot: Boolean(pendingScreenshotDataUrl),
+        has_reply_to: Boolean(pendingReplyTarget),
+        country,
+      });
       setScreenshotDataUrl(null);
       setScreenshotName(null);
       await refreshConversations();
@@ -603,7 +654,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     value={conversationQuery}
                     onChange={(event) => setConversationQuery(event.target.value)}
                     className="min-w-0 flex-1 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
-                    placeholder="Search chats..."
+                    placeholder={t('chat.searchChats')}
                     aria-label="Search chats"
                   />
                 </div>
@@ -657,7 +708,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                 ))}
                 {filteredConversations.length === 0 ? (
                   <p className="rounded-xl border border-dashed border-neutral-300 px-3 py-4 text-xs text-neutral-500">
-                    No chats found.
+                    {t('chat.noChatsFound')}
                   </p>
                 ) : null}
               </div>
@@ -696,6 +747,10 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       isFullscreen ? 'px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-8' : 'px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7'
                     }`}
                   >
+                    <div className="max-w-[min(100%,40rem)] rounded-2xl border border-black/10 bg-white px-4 py-3 text-xs leading-relaxed text-neutral-600">
+                      {t('chat.trustBanner')}
+                    </div>
+
                     {messages.length === 0 ? (
                       <div
                         className={`flex h-full min-h-56 flex-col justify-center ${
@@ -718,7 +773,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                             {message.replyToText ? (
                               <div className="mb-2 rounded-lg border border-black/8 bg-[#f4f6f9] px-3 py-2 text-xs text-neutral-600">
                                 <p className="font-semibold">
-                                  Reply to {message.replyToRole === 'assistant' ? 'soso. ai' : t('chat.youLabel')}
+                                  {t('chat.replyTo')} {message.replyToRole === 'assistant' ? 'soso. ai' : t('chat.youLabel')}
                                 </p>
                                 <p className="line-clamp-2">{message.replyToText}</p>
                               </div>
@@ -741,14 +796,40 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                                 />
                               </div>
                             ) : null}
-                            <div className="mt-2">
-                              <button
-                                type="button"
-                                onClick={() => setReplyTarget(message)}
-                                className="text-xs font-medium text-neutral-500 hover:text-neutral-800"
-                              >
-                                Reply
-                              </button>
+                            <div className="mt-3 border-t border-black/6 pt-2.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setReplyTarget(message)}
+                                  className="inline-flex items-center rounded-full border border-neutral-200 px-2.5 py-1 text-[11px] font-semibold text-neutral-600 hover:border-neutral-300 hover:text-neutral-900"
+                                >
+                                  {t('chat.reply')}
+                                </button>
+                                <span className="text-[11px] text-neutral-500">{t('chat.feedbackPrompt')}</span>
+                                <button
+                                  type="button"
+                                  disabled={feedbackByMessageId[message.id] === 'sending' || feedbackByMessageId[message.id] === 'sent_positive' || feedbackByMessageId[message.id] === 'sent_negative'}
+                                  onClick={() => void submitAssistantFeedback(message, 'sent_positive')}
+                                  className="inline-flex items-center gap-1 rounded-full border border-neutral-200 px-2.5 py-1 text-[11px] font-semibold text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 disabled:opacity-50"
+                                  aria-label="Helpful answer"
+                                >
+                                  <ThumbsUp size={12} />
+                                  {t('chat.feedbackHelpful')}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={feedbackByMessageId[message.id] === 'sending' || feedbackByMessageId[message.id] === 'sent_positive' || feedbackByMessageId[message.id] === 'sent_negative'}
+                                  onClick={() => void submitAssistantFeedback(message, 'sent_negative')}
+                                  className="inline-flex items-center gap-1 rounded-full border border-neutral-200 px-2.5 py-1 text-[11px] font-semibold text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 disabled:opacity-50"
+                                  aria-label="Not helpful answer"
+                                >
+                                  <ThumbsDown size={12} />
+                                  {t('chat.feedbackNotHelpful')}
+                                </button>
+                                {feedbackByMessageId[message.id] === 'sent_positive' || feedbackByMessageId[message.id] === 'sent_negative' ? (
+                                  <span className="text-[11px] font-medium text-emerald-700">{t('chat.feedbackThanks')}</span>
+                                ) : null}
+                              </div>
                             </div>
                           </div>
                         </article>
@@ -758,7 +839,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                             {message.replyToText ? (
                               <div className="mb-2 rounded-lg border border-white/30 bg-white/18 px-3 py-2 text-xs text-blue-50">
                                 <p className="font-semibold">
-                                  Reply to {message.replyToRole === 'assistant' ? 'soso. ai' : t('chat.youLabel')}
+                                  {t('chat.replyTo')} {message.replyToRole === 'assistant' ? 'soso. ai' : t('chat.youLabel')}
                                 </p>
                                 <p className="line-clamp-2">{message.replyToText}</p>
                               </div>
@@ -787,7 +868,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                                 onClick={() => setReplyTarget(message)}
                                 className="text-xs font-medium text-blue-100 hover:text-white"
                               >
-                                Reply
+                                {t('chat.reply')}
                               </button>
                             </div>
                           </div>
@@ -818,7 +899,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                         <div className="flex items-start justify-between gap-3 text-xs">
                           <div className="min-w-0">
                             <p className="font-semibold text-neutral-700">
-                              Replying to {replyTarget.role === 'assistant' ? 'soso. ai' : t('chat.youLabel')}
+                              {t('chat.replyingTo')} {replyTarget.role === 'assistant' ? 'soso. ai' : t('chat.youLabel')}
                             </p>
                             <p className="line-clamp-2 text-neutral-500">
                               {replyTarget.content || replyTarget.attachmentName || '[image]'}

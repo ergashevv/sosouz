@@ -6,6 +6,7 @@ import { MapPin, Globe, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import SmartImage from './SmartImage';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
 
 interface UniversityCardProps {
   university: University;
@@ -26,7 +27,17 @@ export default function UniversityCard({ university, index }: UniversityCardProp
       transition={{ delay: index * 0.05, duration: 0.6 }}
       className="group"
     >
-      <Link href={`/university/${encodeURIComponent(university.name)}?lang=${language}`}>
+      <Link
+        href={`/university/${encodeURIComponent(university.name)}?lang=${language}`}
+        onClick={() => {
+          bumpOutcomeMetric('profile_opened');
+          trackEvent('soso_profile_opened', {
+            source: 'search_results',
+            country: university.country,
+            university_name: university.name,
+          });
+        }}
+      >
         <div className="university-card-hover relative min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] flex flex-col justify-between rounded-none border border-neutral-200 bg-white p-5 sm:p-8 lg:p-10">
            <div className="space-y-6 sm:space-y-8 lg:space-y-9">
               <div className="flex items-start justify-between">

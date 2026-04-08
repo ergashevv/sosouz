@@ -365,6 +365,8 @@ Hard rules:
 4) Never invent fees, deadlines, or scholarship facts.
 5) When national_rank or world_rank appear on a row, you may cite them as shown—do not extrapolate ranks for other schools.
 6) End every answer with "Next steps" checklist (2-5 bullets).
+7) Add a "Sources used" block with 2-5 links from the provided data. If you lack links, explicitly say "No official source link found in current data".
+8) Add a one-line "Trust note" reminding the student to verify deadlines/fees on official websites before applying.
 
 Data note:
 ${originNote}

@@ -156,6 +156,7 @@ This repository follows standard open-source and engineering governance files:
 - `.github/ISSUE_TEMPLATE` - structured bug/feature intake
 - `.github/pull_request_template.md` - consistent PR quality checks
 - `.github/workflows/ci.yml` - automated lint/build verification
+- `docs/product-focus-plan.md` - differentiation, funnel, monetization focus, and data moat plan
 
 ## Security
 

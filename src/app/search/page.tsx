@@ -11,6 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { countries } from '@/lib/countries';
 import ContactMailtoLink from '@/components/ContactMailtoLink';
 import { useRecommendedUniversities } from '@/lib/useRecommendedUniversities';
+import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
 
 const PAGE_SIZE = 12;
 
@@ -147,6 +148,12 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
 
   const handleRefineSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    bumpOutcomeMetric('discovery_search_started');
+    trackEvent('soso_discovery_search_started', {
+      page: 'search',
+      country: searchCountry,
+      has_query: Boolean(searchQuery.trim()),
+    });
     window.location.assign(buildSearchHref(searchCountry, 1, searchQuery || undefined));
   };
 
