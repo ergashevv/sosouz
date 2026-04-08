@@ -1,15 +1,12 @@
 'use client';
 
 import { DragEvent, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Outfit } from 'next/font/google';
-import { Loader2, Plus, Send, Paperclip, X, Search, Menu } from 'lucide-react';
-import HeaderAccountActions from '@/components/HeaderAccountActions';
+import { ArrowLeft, Loader2, Plus, Send, Paperclip, X, Search, Menu } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
-import ContactMailtoLink from '@/components/ContactMailtoLink';
 import { countries } from '@/lib/countries';
 
 interface ChatWorkspaceProps {
@@ -149,10 +146,10 @@ function parseAdvisorContextParam(raw: string | null): ClientAdvisorContextPaylo
   return null;
 }
 
-export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
+export default function ChatWorkspace(_: ChatWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, t } = useLanguage();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -164,7 +161,6 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const [screenshotName, setScreenshotName] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [conversationQuery, setConversationQuery] = useState('');
   const dragDepthRef = useRef(0);
@@ -441,89 +437,21 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e9edf2] text-neutral-900 antialiased">
-      <nav className="sticky top-0 z-40 border-b border-black/6 bg-[#e9edf2]/92 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8 sm:py-4">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => router.push('/')}
-              className={`text-left text-3xl sm:text-4xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}
-            >
-              soso.
-            </button>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <p className="hidden text-right text-[11px] text-neutral-500 sm:block">
-                <span className="font-medium text-neutral-800">
-                  {user.firstName} {user.lastName}
-                </span>
-              </p>
-              <HeaderAccountActions />
-              <button
-                type="button"
-                onClick={() => setHeaderMenuOpen((prev) => !prev)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-700 sm:hidden"
-                aria-label={headerMenuOpen ? 'Close header menu' : 'Open header menu'}
-              >
-                {headerMenuOpen ? <X size={16} /> : <Menu size={16} />}
-              </button>
-            </div>
-          </div>
-
-          <div
-            className={`${headerMenuOpen ? 'flex' : 'hidden'} flex-col gap-3 border-t border-neutral-100 pt-3 sm:flex sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:border-0 sm:pt-0`}
+      <div className="px-4 pt-3 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-screen-2xl">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) router.back();
+              else router.push('/');
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/85 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-white hover:text-neutral-900"
           >
-            <div className="flex items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:pb-0">
-              <Link
-                href="/search"
-                onClick={() => setHeaderMenuOpen(false)}
-                className="shrink-0 rounded-lg px-2 py-1 text-[10px] sm:text-[11px] font-bold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-black uppercase tracking-widest"
-              >
-                {t('nav.search')}
-              </Link>
-              <Link
-                href="/about"
-                onClick={() => setHeaderMenuOpen(false)}
-                className="shrink-0 rounded-lg px-2 py-1 text-[10px] sm:text-[11px] font-bold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-black uppercase tracking-widest"
-              >
-                {t('nav.about')}
-              </Link>
-              <Link
-                href="/students"
-                onClick={() => setHeaderMenuOpen(false)}
-                className="shrink-0 rounded-lg px-2 py-1 text-[10px] sm:text-[11px] font-bold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-black uppercase tracking-widest"
-              >
-                {t('nav.students')}
-              </Link>
-              <span className="shrink-0 border border-neutral-900 bg-neutral-900 px-2.5 py-1 text-[10px] sm:text-[11px] font-black text-white uppercase tracking-[0.18em]">
-                {t('chat.navActive')}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1 border-t border-neutral-100 pt-2 sm:border-t-0 sm:border-l sm:border-neutral-200 sm:pl-4 sm:pt-0">
-              <span className="pr-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                {t('chat.langShort')}
-              </span>
-              {(['en', 'ru', 'uz'] as const).map((lang) => (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => {
-                    setLanguage(lang);
-                    setHeaderMenuOpen(false);
-                  }}
-                  className={`rounded-md px-2 py-1 text-[10px] font-black uppercase tracking-wider transition-colors ${
-                    language === lang
-                      ? 'bg-neutral-900 text-white'
-                      : 'text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700'
-                  }`}
-                >
-                  {lang}
-                </button>
-              ))}
-            </div>
-          </div>
+            <ArrowLeft size={16} />
+            Back
+          </button>
         </div>
-      </nav>
+      </div>
 
       <section className="flex-1 bg-[#e9edf2] px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mx-auto max-w-screen-2xl">
@@ -875,25 +803,6 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
           </div>
       </section>
 
-      <footer className="flex flex-col justify-center border-t border-neutral-900/10 bg-[#e9edf2] px-4 py-8 sm:px-6 sm:py-10">
-        <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
-          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left flex-1">
-            {t('footer.copyright')}
-          </div>
-          <div className="flex flex-1 justify-center items-center gap-6 sm:gap-8 flex-wrap">
-            <Link href="/about" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">
-              {t('nav.about')}
-            </Link>
-            <Link href="/terms" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">
-              {t('nav.terms')}
-            </Link>
-            <ContactMailtoLink className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black" />
-          </div>
-          <div className="flex flex-1 justify-center md:justify-end items-center gap-2 text-black font-bold text-[10px] uppercase tracking-widest">
-            {t('footer.status')}
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }
