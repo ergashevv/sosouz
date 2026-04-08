@@ -199,42 +199,42 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
   };
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-5">
+    <div className="space-y-5 rounded-3xl border border-black/10 bg-[#f7f8fa] p-6 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.45)]">
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-white">
+        <div className="flex items-center gap-2 text-neutral-900">
           <MessageCircle size={16} />
           <h4 className="text-sm font-bold tracking-wide uppercase">{copy.title}</h4>
         </div>
-        <p className="text-xs text-neutral-300 leading-relaxed">{copy.subtitle}</p>
+        <p className="text-xs leading-relaxed text-neutral-600">{copy.subtitle}</p>
       </div>
 
-      <label className="block text-[11px] text-neutral-400">
+      <label className="block text-[11px] text-neutral-500">
         {copy.country}
         <div className="mt-2 relative">
           <Globe2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
           <input
             value={recommendationCountry}
             onChange={(event) => setRecommendationCountry(event.target.value)}
-            className="w-full rounded-xl border border-white/15 bg-black/30 text-sm text-white pl-9 pr-3 py-2.5 outline-none focus:border-blue-300"
+            className="w-full rounded-xl border border-black/12 bg-white pl-9 pr-3 py-2.5 text-sm text-neutral-900 outline-none focus:border-[#0a84ff]"
           />
         </div>
       </label>
 
-      <div className="rounded-2xl border border-white/10 bg-black/20 p-3 space-y-3 max-h-72 overflow-y-auto">
+      <div className="max-h-72 space-y-3 overflow-y-auto rounded-2xl border border-black/10 bg-white p-3">
         {visibleMessages.map((message, index) => (
           <div
             key={`${message.role}-${index}`}
-            className={`rounded-xl px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap ${
+            className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-xs leading-relaxed ${
               message.role === 'assistant'
-                ? 'bg-white/10 text-neutral-100'
-                : 'bg-blue-500/20 border border-blue-300/20 text-blue-100'
+                ? 'rounded-bl-md border border-black/8 bg-[#eef0f4] text-neutral-800'
+                : 'ml-auto max-w-[85%] rounded-br-md bg-[#0a84ff] text-white'
             }`}
           >
             {message.content}
           </div>
         ))}
         {loading ? (
-          <div className="flex items-center gap-2 text-xs text-neutral-300">
+          <div className="flex items-center gap-2 text-xs text-neutral-500">
             <Loader2 size={14} className="animate-spin" />
             {copy.thinking}
           </div>
@@ -242,8 +242,8 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
       </div>
 
       {screenshotDataUrl ? (
-        <div className="rounded-xl border border-white/10 bg-black/25 p-3">
-          <div className="flex items-center justify-between gap-3 text-xs text-neutral-300">
+        <div className="rounded-xl border border-black/10 bg-white p-3">
+          <div className="flex items-center justify-between gap-3 text-xs text-neutral-500">
             <span className="truncate">{screenshotName || 'screenshot'}</span>
             <button
               type="button"
@@ -251,7 +251,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
                 setScreenshotDataUrl(null);
                 setScreenshotName(null);
               }}
-              className="inline-flex items-center gap-1 text-neutral-300 hover:text-white"
+              className="inline-flex items-center gap-1 text-neutral-500 hover:text-neutral-900"
             >
               <X size={13} />
               {copy.remove}
@@ -263,7 +263,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
             width={640}
             height={360}
             unoptimized
-            className="mt-3 rounded-lg max-h-40 w-full object-contain bg-black/20"
+            className="mt-3 max-h-40 w-full rounded-lg border border-black/8 bg-[#f7f8fa] object-contain"
           />
         </div>
       ) : null}
@@ -275,15 +275,15 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
           onKeyDown={handleInputKeyDown}
           placeholder={copy.placeholder}
           rows={3}
-          className="w-full rounded-2xl border border-white/15 bg-black/30 text-sm text-white placeholder:text-neutral-500 px-3 py-3 outline-none focus:border-blue-300 resize-none"
+          className="w-full resize-none rounded-2xl border border-black/10 bg-white px-3 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#0a84ff]"
         />
-        <p className="text-[11px] text-neutral-400">
-          Press <span className="font-semibold text-neutral-300">Enter</span> to send,{' '}
-          <span className="font-semibold text-neutral-300">Shift + Enter</span> for a new line.
+        <p className="text-[11px] text-neutral-500">
+          Press <span className="font-semibold text-neutral-700">Enter</span> to send,{' '}
+          <span className="font-semibold text-neutral-700">Shift + Enter</span> for a new line.
         </p>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <label className="inline-flex items-center gap-2 text-xs text-neutral-300 hover:text-white cursor-pointer">
+          <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-neutral-500 hover:text-neutral-900">
             <Paperclip size={14} />
             <span>{copy.attach}</span>
             <input
@@ -301,7 +301,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
           <button
             type="submit"
             disabled={!canSend}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-400 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#0a84ff] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0077ed] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Send size={14} />
             {copy.send}
@@ -309,7 +309,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
         </div>
       </form>
 
-      {error ? <p className="text-xs text-red-300">{error}</p> : null}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }

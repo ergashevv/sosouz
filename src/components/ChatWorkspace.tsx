@@ -518,9 +518,9 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
         </div>
       </nav>
 
-      <section className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+      <section className="flex-1 bg-[#edf0f4] px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="flex min-h-[80vh] overflow-hidden rounded-2xl border border-black/10 bg-[#f5f4f0] shadow-[0_12px_40px_-20px_rgba(0,0,0,0.35)] lg:h-[calc(100dvh-9rem)] lg:min-h-0 lg:flex-row">
+          <div className="flex min-h-[80vh] overflow-hidden rounded-[24px] border border-black/8 bg-[#f7f8fa] shadow-[0_28px_60px_-34px_rgba(15,23,42,0.45)] lg:h-[calc(100dvh-9rem)] lg:min-h-0 lg:flex-row">
             {sidebarOpen ? (
               <button
                 type="button"
@@ -531,7 +531,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
             ) : null}
 
             <aside
-              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-4 bg-[#ece9e4] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-72 lg:max-w-none lg:translate-x-0 lg:border-r lg:border-black/10 lg:shadow-none ${
+              className={`fixed inset-y-0 left-0 z-30 flex w-[min(100%,19.5rem)] flex-col gap-4 bg-[#f1f2f5] p-4 shadow-2xl transition-transform duration-200 ease-out lg:static lg:w-72 lg:max-w-none lg:translate-x-0 lg:border-r lg:border-black/10 lg:shadow-none ${
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
               }`}
             >
@@ -578,10 +578,10 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     key={conversation.id}
                     type="button"
                     onClick={() => void openConversation(conversation.id)}
-                    className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
+                    className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
                       activeConversationId === conversation.id
-                        ? 'border-neutral-900/40 bg-white'
-                        : 'border-transparent hover:border-neutral-300 hover:bg-white/70'
+                        ? 'border-black/10 bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)]'
+                        : 'border-transparent hover:border-black/8 hover:bg-white/80'
                     }`}
                   >
                     <p className="line-clamp-2 text-sm font-semibold leading-snug text-neutral-900">
@@ -600,8 +600,8 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
               </div>
             </aside>
 
-              <section className="flex min-h-[72vh] flex-1 flex-col bg-[#f5f4f0]">
-                <header className="border-b border-black/[0.07] bg-[#f5f4f0] px-5 py-6 sm:px-8 sm:py-8">
+              <section className="flex min-h-[72vh] flex-1 flex-col bg-[#f7f8fa]">
+                <header className="border-b border-black/6 bg-white/85 px-5 py-6 backdrop-blur-sm sm:px-8 sm:py-8">
                   <div className="flex items-start gap-4 sm:gap-5">
                     <button
                       type="button"
@@ -654,13 +654,13 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     </div>
                   </div>
 
-                  <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:max-w-3xl">
+                  <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:max-w-3xl">
                     {advisorContext ? (
                       <div>
                         <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                           {t('chat.focus')}
                         </p>
-                        <div className="border border-black/9 bg-white/60 px-3 py-3 text-sm text-neutral-900">
+                        <div className="rounded-xl border border-black/8 bg-white px-3 py-3 text-sm text-neutral-900">
                           <span className="font-semibold">{advisorContext.name}</span>
                           {typeof advisorContext.nationalRank === 'number' ? (
                             <span className="text-neutral-500"> · #{advisorContext.nationalRank}</span>
@@ -674,7 +674,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                           <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                             {t('chat.regionLabel')}
                           </p>
-                          <div className="flex flex-col gap-2 border border-black/9 bg-white/60 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                          <div className="flex flex-col gap-2 rounded-xl border border-black/8 bg-white px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                             <p className="min-w-0 text-neutral-800">
                               <span className="text-neutral-500">{t('chat.regionInUse')}:</span>{' '}
                               <span className="font-semibold text-neutral-900">{country}</span>
@@ -695,7 +695,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                             <span className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-neutral-500">
                               {t('chat.regionLabel')}
                             </span>
-                            <div className="flex items-center gap-2 border border-black/9 border-b-2 border-b-neutral-900/15 bg-white/60 px-3 py-2.5 transition-colors focus-within:border-b-neutral-900">
+                            <div className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2.5 transition-colors focus-within:border-black/30">
                               <Search size={16} className="shrink-0 text-neutral-400" aria-hidden />
                               <input
                                 id="chat-region-country"
@@ -715,7 +715,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                 </header>
 
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <div className="flex-1 space-y-8 overflow-y-auto px-5 py-8 sm:px-8 sm:py-10">
+                  <div className="flex-1 space-y-6 overflow-y-auto bg-[#f7f8fa] px-5 py-8 sm:px-8 sm:py-10">
                     {messages.length === 0 ? (
                       <div className="flex h-full min-h-56 flex-col items-start justify-center px-0 sm:px-2">
                         <p
@@ -730,15 +730,10 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     {messages.map((message) =>
                       message.role === 'assistant' ? (
                         <article key={message.id} className="max-w-[min(100%,40rem)]">
-                          <p
-                            className={`mb-3 text-[11px] font-extrabold uppercase tracking-[0.18em] text-neutral-400 ${outfit.className}`}
-                          >
-                            soso.
-                          </p>
-                          <div className="border-l-2 border-neutral-900 pl-5 sm:pl-6">
+                          <div className="rounded-[20px] rounded-bl-md border border-black/8 bg-white px-4 py-3 text-[15px] leading-[1.65] text-neutral-900 shadow-[0_2px_8px_rgba(15,23,42,0.05)] sm:px-5">
                             {message.content ? <AssistantMessageBody content={message.content} /> : null}
                             {message.attachmentDataUrl ? (
-                              <div className="mt-5 space-y-1 border-t border-black/6 pt-5">
+                              <div className="mt-4 space-y-1 border-t border-black/6 pt-4">
                                 {message.attachmentName ? (
                                   <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
                                     {message.attachmentName}
@@ -750,25 +745,22 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                                   width={640}
                                   height={360}
                                   unoptimized
-                                  className="max-h-52 w-full border border-black/8 bg-white object-contain"
+                                  className="max-h-52 w-full rounded-xl border border-black/8 bg-[#f8fafc] object-contain"
                                 />
                               </div>
                             ) : null}
                           </div>
                         </article>
                       ) : (
-                        <div key={message.id} className="flex flex-col items-end gap-1.5">
-                          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-neutral-400">
-                            {t('chat.youLabel')}
-                          </span>
-                          <div className="max-w-[min(100%,34rem)] border border-black/10 bg-white/80 px-4 py-4 text-[15px] leading-[1.65] text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+                        <div key={message.id} className="flex justify-end">
+                          <div className="max-w-[min(100%,34rem)] rounded-[20px] rounded-br-md bg-[#0a84ff] px-4 py-3 text-[15px] leading-[1.65] text-white shadow-[0_8px_20px_-12px_rgba(10,132,255,0.9)] sm:px-5">
                             {message.content ? (
                               <p className="whitespace-pre-wrap">{message.content}</p>
                             ) : null}
                             {message.attachmentDataUrl ? (
                               <div className="mt-3 space-y-1">
                                 {message.attachmentName ? (
-                                  <p className="text-[11px] text-neutral-500">{message.attachmentName}</p>
+                                  <p className="text-[11px] text-blue-100">{message.attachmentName}</p>
                                 ) : null}
                                 <Image
                                   src={message.attachmentDataUrl}
@@ -776,7 +768,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                                   width={640}
                                   height={360}
                                   unoptimized
-                                  className="max-h-52 w-full border border-black/8 bg-neutral-50 object-contain"
+                                  className="max-h-52 w-full rounded-xl border border-white/35 bg-white/90 object-contain"
                                 />
                               </div>
                             ) : null}
@@ -786,13 +778,8 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     )}
 
                     {sending ? (
-                      <div className="max-w-[min(100%,40rem)] border-l-2 border-neutral-900/30 pl-5 sm:pl-6">
-                        <p
-                          className={`mb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-neutral-400 ${outfit.className}`}
-                        >
-                          soso.
-                        </p>
-                        <div className="flex items-center gap-2 text-sm text-neutral-500">
+                      <div className="max-w-[min(100%,40rem)] rounded-[20px] rounded-bl-md border border-black/8 bg-white px-4 py-3 text-neutral-600 shadow-[0_2px_8px_rgba(15,23,42,0.05)]">
+                        <div className="flex items-center gap-2 text-sm">
                           <Loader2 size={16} className="animate-spin text-neutral-400" />
                           {t('chat.thinking')}
                         </div>
@@ -801,9 +788,9 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     <div ref={messagesEndRef} className="h-1 w-full shrink-0" aria-hidden />
                   </div>
 
-                  <div className="sticky bottom-0 z-10 border-t border-black/[0.07] bg-[#ebe8e2]/90 px-5 py-5 backdrop-blur-sm sm:px-8">
+                  <div className="sticky bottom-0 z-10 border-t border-black/6 bg-white/92 px-5 py-4 backdrop-blur-md sm:px-8">
                     {screenshotDataUrl ? (
-                      <div className="mb-4 border border-black/10 bg-white/70 p-3 sm:p-4">
+                      <div className="mb-4 rounded-2xl border border-black/10 bg-[#f7f8fa] p-3 sm:p-4">
                         <div className="flex items-center justify-between text-xs text-neutral-500">
                           <span className="truncate pr-2 font-medium">{screenshotName || 'screenshot'}</span>
                           <button
@@ -824,7 +811,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                           width={640}
                           height={360}
                           unoptimized
-                          className="mt-2 max-h-44 w-full rounded-lg border border-neutral-200 object-contain"
+                          className="mt-2 max-h-44 w-full rounded-xl border border-neutral-200 bg-white object-contain"
                         />
                       </div>
                     ) : null}
@@ -838,11 +825,11 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                       className="relative mx-auto max-w-3xl"
                     >
                       <div
-                        className={`flex items-end gap-3 rounded-2xl border bg-white/85 px-3 py-2 transition-colors ${
-                          isDragActive ? 'border-neutral-900' : 'border-neutral-900/20'
+                        className={`flex items-end gap-3 rounded-[24px] border bg-[#f3f4f6] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-colors ${
+                          isDragActive ? 'border-[#0a84ff]' : 'border-black/10'
                         }`}
                       >
-                        <label className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center text-neutral-500 transition-colors hover:text-neutral-900">
+                        <label className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-white hover:text-neutral-900">
                           <Paperclip size={20} strokeWidth={1.5} />
                           <input
                             type="file"
@@ -867,10 +854,10 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                         <button
                           type="submit"
                           disabled={(!input.trim() && !screenshotDataUrl) || sending}
-                          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center border transition-all disabled:opacity-35 ${
+                          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all disabled:opacity-35 ${
                             !input.trim() && !screenshotDataUrl
-                              ? 'border-neutral-300 text-neutral-300'
-                              : 'border-neutral-900 bg-neutral-900 text-white hover:bg-neutral-800'
+                              ? 'border-neutral-300 bg-white text-neutral-300'
+                              : 'border-[#0a84ff] bg-[#0a84ff] text-white hover:bg-[#0077ed]'
                           }`}
                           aria-label="Send message"
                         >
