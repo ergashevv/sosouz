@@ -69,7 +69,10 @@ function splitFullName(value: string | undefined): { firstName: string; lastName
 
 function syntheticPhoneFromGoogleSub(sub: string): string {
   const hashHex = createHash("sha256").update(sub).digest("hex");
-  const raw = BigInt(`0x${hashHex}`) % 10000000000n;
+  // Keep this ES2019-compatible (no BigInt literal), while staying deterministic.
+  const sampleHex = hashHex.slice(0, 13);
+  const numeric = Number.parseInt(sampleHex, 16);
+  const raw = Number.isFinite(numeric) ? numeric % 10_000_000_000 : 0;
   const tenDigits = raw.toString().padStart(10, "0");
   return `+1${tenDigits}`;
 }
