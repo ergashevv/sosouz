@@ -8,6 +8,15 @@ import { canonicalCountryKey } from "@/lib/geoFilters";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const MAX_SCREENSHOT_BYTES = 4 * 1024 * 1024;
+const ADVISOR_MAX_PROMPT_UNIVERSITIES = Math.min(
+  60,
+  Math.max(10, Number(process.env.ADVISOR_MAX_PROMPT_UNIVERSITIES || 30)),
+);
+const ADVISOR_MAX_MESSAGE_CHARS = Math.min(
+  1600,
+  Math.max(300, Number(process.env.ADVISOR_MAX_MESSAGE_CHARS || 700)),
+);
+const GEMINI_RETRY_MAX = Math.min(5, Math.max(1, Number(process.env.GEMINI_RETRY_MAX || 3)));
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
@@ -106,6 +115,38 @@ function isAuthOrConfigError(normalizedMessage: string): boolean {
     normalizedMessage.includes("invalid argument") ||
     isModelNotFoundError(normalizedMessage)
   );
+}
+
+function isRetryableGeminiError(normalizedMessage: string): boolean {
+  return (
+    normalizedMessage.includes("503") ||
+    normalizedMessage.includes("429") ||
+    normalizedMessage.includes("500") ||
+    normalizedMessage.includes("high demand") ||
+    normalizedMessage.includes("overloaded") ||
+    normalizedMessage.includes("service unavailable") ||
+    normalizedMessage.includes("try again later") ||
+    normalizedMessage.includes("too many requests") ||
+    normalizedMessage.includes("resource exhausted") ||
+    normalizedMessage.includes("deadline exceeded") ||
+    normalizedMessage.includes("fetch failed") ||
+    normalizedMessage.includes("econnreset") ||
+    normalizedMessage.includes("etimedout") ||
+    normalizedMessage.includes("socket hang up")
+  );
+}
+
+function delay(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+function getModelCandidates(): string[] {
+  const fallbackFromEnv = (process.env.GEMINI_FALLBACK_MODELS || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([GEMINI_MODEL, ...fallbackFromEnv, "gemini-2.5-flash"]));
 }
 
 export function toUserFacingAiError(
@@ -248,7 +289,12 @@ function domainFromWebsite(url: string | null | undefined): string | undefined {
 
 function buildConversationLog(messages: AdvisorMessage[]) {
   return messages
-    .map((message) => `${message.role === "assistant" ? "AI" : "User"}: ${message.content}`)
+    .map((message) => {
+      const clipped = message.content.length > ADVISOR_MAX_MESSAGE_CHARS
+        ? `${message.content.slice(0, ADVISOR_MAX_MESSAGE_CHARS)}...`
+        : message.content;
+      return `${message.role === "assistant" ? "AI" : "User"}: ${clipped}`;
+    })
     .join("\n");
 }
 
@@ -284,7 +330,9 @@ function buildSystemPrompt(
     2,
   );
 
-  const universityList = platformUniversities.map((uni, index) => ({
+  const universityList = platformUniversities
+    .slice(0, ADVISOR_MAX_PROMPT_UNIVERSITIES)
+    .map((uni, index) => ({
     index: index + 1,
     name: uni.name,
     country: uni.country,
@@ -361,9 +409,7 @@ export async function generateAdvisorReply(args: {
   const screenshot =
     typeof args.screenshotDataUrl === "string" ? parseDataUrl(args.screenshotDataUrl) : null;
 
-  const modelCandidates = Array.from(
-    new Set([GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"]),
-  );
+  const modelCandidates = getModelCandidates();
   const parts: Array<
     | { text: string }
     | {
@@ -391,23 +437,33 @@ export async function generateAdvisorReply(args: {
     | null = null;
   let lastError: unknown = null;
   for (const modelName of modelCandidates) {
-    const model = genAI.getGenerativeModel({ model: modelName });
-    try {
-      response = await model.generateContent({
-        contents: [{ role: "user", parts }],
-        generationConfig: {
-          temperature: 0.35,
-          maxOutputTokens: 900,
-        },
-      });
-      break;
-    } catch (error: unknown) {
-      lastError = error;
-      const normalized = (error instanceof Error ? error.message : String(error)).toLowerCase();
-      if (!isModelNotFoundError(normalized)) {
-        throw error;
+    for (let attempt = 1; attempt <= GEMINI_RETRY_MAX; attempt += 1) {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      try {
+        response = await model.generateContent({
+          contents: [{ role: "user", parts }],
+          generationConfig: {
+            temperature: 0.35,
+            maxOutputTokens: 900,
+          },
+        });
+        break;
+      } catch (error: unknown) {
+        lastError = error;
+        const normalized = (error instanceof Error ? error.message : String(error)).toLowerCase();
+        if (isModelNotFoundError(normalized)) {
+          // Try next model if this model alias is unavailable in this project.
+          break;
+        }
+        if (!isRetryableGeminiError(normalized) || attempt === GEMINI_RETRY_MAX) {
+          throw error;
+        }
+        const base = Math.min(7000, 600 * 2 ** (attempt - 1));
+        const jitter = Math.floor(Math.random() * 400);
+        await delay(base + jitter);
       }
     }
+    if (response) break;
   }
 
   if (!response) {

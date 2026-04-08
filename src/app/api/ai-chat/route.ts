@@ -72,6 +72,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply });
   } catch (error: unknown) {
+    const errorStatus =
+      typeof (error as { status?: unknown })?.status === "number"
+        ? (error as { status: number }).status
+        : typeof (error as { statusCode?: unknown })?.statusCode === "number"
+          ? (error as { statusCode: number }).statusCode
+          : null;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[ai-chat] AI request failed", {
+      status: errorStatus,
+      message: errorMessage,
+    });
     const userFacing = toUserFacingAiError(error, language);
     return NextResponse.json({ error: userFacing.message }, { status: userFacing.status });
   }
