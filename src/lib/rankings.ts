@@ -1,13 +1,15 @@
 import "server-only";
 
-import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai";
 import { Prisma } from "@prisma/client";
 import { canonicalCountryKey, countryFilterMatches, foldGeoLabel } from "@/lib/geoFilters";
 import { prisma } from "@/lib/prisma";
+import {
+  generateAzureChatCompletionText,
+  getAzureOpenAIDeploymentByPurpose,
+  isAzureOpenAiConfigured,
+} from "@/lib/azure-openai";
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const SERPER_SEARCH_ENDPOINT = "https://google.serper.dev/search";
 const HIPO_BASE_URL = "http://universities.hipolabs.com/search";
@@ -20,7 +22,7 @@ export const WORLD_RANKING_ENTRY_COUNT = 400;
 /** Max universities stored per country (matches UI “top” cap of 100). */
 export const COUNTRY_RANKING_ENTRY_COUNT = 100;
 
-/** Gemini requests this many rows per call (then merged + saved to DB). */
+/** LLM extraction requests this many rows per call (then merged + saved to DB). */
 const COUNTRY_RANKING_BATCH_SIZE = Math.min(
   25,
   Math.max(5, Number(process.env.COUNTRY_RANKING_BATCH_SIZE || 10)),
@@ -39,11 +41,7 @@ const TRUSTED_DOMAINS = [
   "wikipedia.org",
 ];
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
-
-const GEMINI_RETRY_MAX = Math.min(10, Math.max(2, Number(process.env.GEMINI_RETRY_MAX || 6)));
-
-/** Cap HTML→text excerpts sent to Gemini (large pages blow input token budgets). */
+/** Cap HTML→text excerpts sent to LLM (large pages blow input token budgets). */
 const SOURCE_EXCERPT_MAX_CHARS = Math.min(
   24_000,
   Math.max(4000, Number(process.env.RANKING_SOURCE_EXCERPT_MAX_CHARS || 7000)),
@@ -55,45 +53,6 @@ function sleepMs(ms: number) {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
   });
-}
-
-function isRetryableGeminiError(err: unknown): boolean {
-  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
-  return (
-    msg.includes("503") ||
-    msg.includes("429") ||
-    msg.includes("500") ||
-    msg.includes("high demand") ||
-    msg.includes("overloaded") ||
-    msg.includes("service unavailable") ||
-    msg.includes("try again later") ||
-    msg.includes("try again") ||
-    msg.includes("fetch failed") ||
-    msg.includes("econnreset") ||
-    msg.includes("etimedout") ||
-    msg.includes("socket hang up") ||
-    msg.includes("too many requests") ||
-    msg.includes("resource exhausted") ||
-    msg.includes("deadline exceeded")
-  );
-}
-
-async function generateContentWithRetry(model: GenerativeModel, prompt: string) {
-  let last: unknown;
-  for (let attempt = 1; attempt <= GEMINI_RETRY_MAX; attempt += 1) {
-    try {
-      return await model.generateContent(prompt);
-    } catch (e) {
-      last = e;
-      if (!isRetryableGeminiError(e) || attempt === GEMINI_RETRY_MAX) {
-        throw e;
-      }
-      const base = Math.min(20_000, 1200 * 2 ** (attempt - 1));
-      const jitter = Math.floor(Math.random() * 800);
-      await sleepMs(base + jitter);
-    }
-  }
-  throw last;
 }
 
 type CoreRankingDataset = "world-top-100" | "south-korea-top-10";
@@ -241,13 +200,13 @@ async function fetchSourceExcerpt(url: string): Promise<string> {
   return text.slice(0, SOURCE_EXCERPT_MAX_CHARS);
 }
 
-async function extractRankingsWithGemini(args: {
+async function extractRankingsWithLlm(args: {
   dataset: "world-top-100" | "south-korea-top-10";
   year: number;
   sources: Array<{ title: string; link: string; snippet: string; excerpt: string }>;
 }): Promise<RankingEntry[]> {
-  if (!GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is missing.");
+  if (!isAzureOpenAiConfigured()) {
+    throw new Error("Azure OpenAI is not configured.");
   }
 
   const targetCount = args.dataset === "world-top-100" ? WORLD_RANKING_ENTRY_COUNT : 10;
@@ -256,7 +215,6 @@ async function extractRankingsWithGemini(args: {
       ? `world top ${WORLD_RANKING_ENTRY_COUNT} universities`
       : "South Korea top 10";
 
-  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
   const sourceBlock = args.sources
     .map(
       (source, index) =>
@@ -295,8 +253,13 @@ Rules:
 Sources:
 ${sourceBlock}`;
 
-  const result = await generateContentWithRetry(model, prompt);
-  const text = result.response.text();
+  const text = await generateAzureChatCompletionText({
+    messages: [{ role: "user", content: prompt }],
+    deployment: getAzureOpenAIDeploymentByPurpose("reasoning"),
+    temperature: 0.1,
+    maxTokens: 3000,
+    responseFormat: "json_object",
+  });
   const parsed = JSON.parse(extractJson(text)) as { entries?: unknown[] };
   const rows = Array.isArray(parsed.entries) ? parsed.entries : [];
 
@@ -463,20 +426,19 @@ function normalizeCountryBatchFromParsedRows(
   }));
 }
 
-async function extractCountryRankingsBatchWithGemini(args: {
+async function extractCountryRankingsBatchWithLlm(args: {
   countryEnglish: string;
   year: number;
   rankStart: number;
   rankEnd: number;
   sources: Array<{ title: string; link: string; snippet: string; excerpt: string }>;
 }): Promise<RankingEntry[]> {
-  if (!GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is missing.");
+  if (!isAzureOpenAiConfigured()) {
+    throw new Error("Azure OpenAI is not configured.");
   }
 
   const { countryEnglish, year, rankStart, rankEnd, sources } = args;
   const batchSize = rankEnd - rankStart + 1;
-  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
   const sourceBlock = sources
     .map(
       (source, index) =>
@@ -524,8 +486,13 @@ Sources:
 ${sourceBlock}`;
 
   const run = async (prompt: string) => {
-    const result = await generateContentWithRetry(model, prompt);
-    const text = result.response.text();
+    const text = await generateAzureChatCompletionText({
+      messages: [{ role: "user", content: prompt }],
+      deployment: getAzureOpenAIDeploymentByPurpose("reasoning"),
+      temperature: 0.1,
+      maxTokens: 2400,
+      responseFormat: "json_object",
+    });
     const parsed = JSON.parse(extractJson(text)) as { entries?: unknown[] };
     const rows = Array.isArray(parsed.entries) ? parsed.entries : [];
     return normalizeCountryBatchFromParsedRows(rows, rankStart, rankEnd);
@@ -737,7 +704,7 @@ async function buildCountryRankingSnapshot(
     batchIterations += 1;
 
     const rankEnd = Math.min(nextRank + COUNTRY_RANKING_BATCH_SIZE - 1, targetCount);
-    const batchRaw = await extractCountryRankingsBatchWithGemini({
+    const batchRaw = await extractCountryRankingsBatchWithLlm({
       countryEnglish: label,
       year,
       rankStart: nextRank,
@@ -919,7 +886,7 @@ function pickWorldRank(entry: RankingEntry): number | undefined {
 }
 
 /**
- * Read-only: universities from SOSO ranking snapshots for a country (no Serper/Gemini).
+ * Read-only: universities from SOSO ranking snapshots for a country (no live Serper/LLM call).
  * Prefers national cache when present; otherwise slices the world snapshot by country.
  */
 export async function getAdvisorRankingUniversities(args: {
@@ -991,13 +958,13 @@ export async function getAdvisorRankingUniversities(args: {
 }
 
 /**
- * Returns a country-national ranking from cache, or builds and caches it (Serper + Gemini).
+ * Returns a country-national ranking from cache, or builds and caches it (Serper + Azure OpenAI).
  */
 export async function ensureCountryRankingSnapshot(args: {
   filterCountry: string;
   year: number;
   monthSnapshot?: string;
-  /** Limit Gemini+Hipo batch rounds (undefined = run until full 100). */
+  /** Limit LLM+Hipo batch rounds (undefined = run until full 100). */
   maxBatches?: number;
 }): Promise<RankingSnapshotLoadResult | null> {
   const slug = canonicalCountryKey(args.filterCountry);
@@ -1019,7 +986,7 @@ export async function ensureCountryRankingSnapshot(args: {
       }
     }
 
-    if (!SERPER_API_KEY || !GEMINI_API_KEY) {
+    if (!SERPER_API_KEY || !isAzureOpenAiConfigured()) {
       return cached && cached.snapshot.entries.length >= 1 ? cached : null;
     }
 
@@ -1082,7 +1049,7 @@ async function buildSnapshot(dataset: CoreRankingDataset, year: number): Promise
     })),
   );
 
-  const extracted = await extractRankingsWithGemini({
+  const extracted = await extractRankingsWithLlm({
     dataset,
     year,
     sources: sourcesWithExcerpts,
@@ -1129,8 +1096,8 @@ async function saveSnapshot(snapshot: RankingSnapshotPayload) {
 }
 
 export async function syncMonthlyRankings(targetYear = new Date().getUTCFullYear()) {
-  if (!SERPER_API_KEY || !GEMINI_API_KEY) {
-    throw new Error("SERPER_API_KEY or GEMINI_API_KEY is missing.");
+  if (!SERPER_API_KEY || !isAzureOpenAiConfigured()) {
+    throw new Error("SERPER_API_KEY or Azure OpenAI configuration is missing.");
   }
 
   const [worldSnapshot, koreaSnapshot] = await Promise.all([
@@ -1174,7 +1141,7 @@ async function findRankingCacheRow(dataset: CoreRankingDataset, year: number, mo
   return { row, query, year };
 }
 
-/** Reads only from `search_cache` — never calls Serper or Gemini. */
+/** Reads only from `search_cache` — never calls Serper or Azure OpenAI. */
 export async function getRankingSnapshot(args: {
   dataset: CoreRankingDataset;
   year?: number;

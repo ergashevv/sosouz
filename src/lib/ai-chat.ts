@@ -1,12 +1,14 @@
 import "server-only";
 
 import { Buffer } from "buffer";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getAdvisorRankingUniversities } from "@/lib/rankings";
 import { canonicalCountryKey } from "@/lib/geoFilters";
+import {
+  generateAzureChatCompletionText,
+  getAzureOpenAIDeploymentByPurpose,
+  isAzureOpenAiConfigured,
+} from "@/lib/azure-openai";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const MAX_SCREENSHOT_BYTES = 4 * 1024 * 1024;
 const ADVISOR_MAX_PROMPT_UNIVERSITIES = Math.min(
   60,
@@ -16,9 +18,6 @@ const ADVISOR_MAX_MESSAGE_CHARS = Math.min(
   1600,
   Math.max(300, Number(process.env.ADVISOR_MAX_MESSAGE_CHARS || 700)),
 );
-const GEMINI_RETRY_MAX = Math.min(5, Math.max(1, Number(process.env.GEMINI_RETRY_MAX || 3)));
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
 export type AdvisorRole = "user" | "assistant";
 
@@ -115,38 +114,6 @@ function isAuthOrConfigError(normalizedMessage: string): boolean {
     normalizedMessage.includes("invalid argument") ||
     isModelNotFoundError(normalizedMessage)
   );
-}
-
-function isRetryableGeminiError(normalizedMessage: string): boolean {
-  return (
-    normalizedMessage.includes("503") ||
-    normalizedMessage.includes("429") ||
-    normalizedMessage.includes("500") ||
-    normalizedMessage.includes("high demand") ||
-    normalizedMessage.includes("overloaded") ||
-    normalizedMessage.includes("service unavailable") ||
-    normalizedMessage.includes("try again later") ||
-    normalizedMessage.includes("too many requests") ||
-    normalizedMessage.includes("resource exhausted") ||
-    normalizedMessage.includes("deadline exceeded") ||
-    normalizedMessage.includes("fetch failed") ||
-    normalizedMessage.includes("econnreset") ||
-    normalizedMessage.includes("etimedout") ||
-    normalizedMessage.includes("socket hang up")
-  );
-}
-
-function delay(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
-}
-
-function getModelCandidates(): string[] {
-  const fallbackFromEnv = (process.env.GEMINI_FALLBACK_MODELS || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  return Array.from(new Set([GEMINI_MODEL, ...fallbackFromEnv, "gemini-2.5-flash"]));
 }
 
 export function toUserFacingAiError(
@@ -349,6 +316,8 @@ function buildSystemPrompt(
         ? "PLATFORM_UNIVERSITIES is the intersection of SOSO world ranking data with this country (may be shorter than a full national list)."
         : "PLATFORM_UNIVERSITIES is from the Hipolabs open directory for this country (broad list, not a formal ranking). Do not treat list order as world rank.";
 
+  const effectiveCountry = recommendationCountry.trim() || "not set";
+
   return `You are SOSO AI Student Advisor.
 Language: ${language.toUpperCase()}.
 
@@ -359,14 +328,18 @@ Main job:
 - Keep answer concise, practical, and easy to follow.
 
 Hard rules:
-1) For university recommendations, ONLY use universities from PLATFORM_UNIVERSITIES.
-2) If user asks universities outside the list, clearly say you can only recommend from platform data.
-3) Prefer official links (website / ranking_source_url when present) and provided platform links.
-4) Never invent fees, deadlines, or scholarship facts.
-5) When national_rank or world_rank appear on a row, you may cite them as shown—do not extrapolate ranks for other schools.
-6) End every answer with "Next steps" checklist (2-5 bullets).
-7) Add a "Sources used" block with 2-5 links from the provided data. If you lack links, explicitly say "No official source link found in current data".
-8) Add a one-line "Trust note" reminding the student to verify deadlines/fees on official websites before applying.
+1) Use two response modes:
+   - GENERAL mode: greetings, "who are you", how admissions works, how to choose countries/programs, visa/checklist questions.
+   - RECOMMENDATION mode: when user asks to recommend/compare/list specific universities or programs.
+2) In GENERAL mode, do NOT force country-filtered recommendations and do NOT mention a specific country unless user asked for it.
+3) In RECOMMENDATION mode, ONLY use universities from PLATFORM_UNIVERSITIES.
+4) If user asks for universities outside current filter/list, explain the active country filter and ask them to switch country; still provide useful general guidance steps.
+5) Prefer official links (website / ranking_source_url when present) and provided platform links.
+6) Never invent fees, deadlines, or scholarship facts.
+7) When national_rank or world_rank appear on a row, you may cite them as shown—do not extrapolate ranks for other schools.
+8) End every answer with "Next steps" checklist (2-5 bullets).
+9) Add a "Sources used" block with 2-5 links from the provided data. If you lack links, explicitly say "No official source link found in current data".
+10) Add a one-line "Trust note" reminding the student to verify deadlines/fees on official websites before applying.
 
 Data note:
 ${originNote}
@@ -375,7 +348,7 @@ Current context:
 ${contextBlock}
 
 Recommendation country (filter):
-${recommendationCountry}
+${effectiveCountry}
 Canonical country key (for matching): ${canonicalCountryKey(recommendationCountry)}
 
 PLATFORM_UNIVERSITIES:
@@ -390,7 +363,7 @@ export async function generateAdvisorReply(args: {
   screenshotDataUrl?: string;
   context?: AdvisorContext;
 }) {
-  if (!GEMINI_API_KEY) {
+  if (!isAzureOpenAiConfigured()) {
     throw new Error("AI service is not configured.");
   }
   if (args.messages.length === 0) {
@@ -411,70 +384,34 @@ export async function generateAdvisorReply(args: {
   const screenshot =
     typeof args.screenshotDataUrl === "string" ? parseDataUrl(args.screenshotDataUrl) : null;
 
-  const modelCandidates = getModelCandidates();
-  const parts: Array<
-    | { text: string }
-    | {
-        inlineData: {
-          mimeType: string;
-          data: string;
-        };
-      }
-  > = [{ text: `${systemPrompt}\nConversation:\n${conversationLog}` }];
+  const userContent: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [
+    { type: "text", text: `Conversation:\n${conversationLog}` },
+  ];
 
   if (screenshot) {
-    parts.push({
+    userContent.push({
+      type: "text",
       text: "Screenshot is attached. Explain where to click and why.",
     });
-    parts.push({
-      inlineData: {
-        mimeType: screenshot.mimeType,
-        data: screenshot.base64,
+    userContent.push({
+      type: "image_url",
+      image_url: {
+        url: `data:${screenshot.mimeType};base64,${screenshot.base64}`,
       },
     });
   }
 
-  let response:
-    | Awaited<ReturnType<ReturnType<typeof genAI.getGenerativeModel>["generateContent"]>>
-    | null = null;
-  let lastError: unknown = null;
-  for (const modelName of modelCandidates) {
-    for (let attempt = 1; attempt <= GEMINI_RETRY_MAX; attempt += 1) {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      try {
-        response = await model.generateContent({
-          contents: [{ role: "user", parts }],
-          generationConfig: {
-            temperature: 0.35,
-            maxOutputTokens: 900,
-          },
-        });
-        break;
-      } catch (error: unknown) {
-        lastError = error;
-        const normalized = (error instanceof Error ? error.message : String(error)).toLowerCase();
-        if (isModelNotFoundError(normalized)) {
-          // Try next model if this model alias is unavailable in this project.
-          break;
-        }
-        if (!isRetryableGeminiError(normalized) || attempt === GEMINI_RETRY_MAX) {
-          throw error;
-        }
-        const base = Math.min(7000, 600 * 2 ** (attempt - 1));
-        const jitter = Math.floor(Math.random() * 400);
-        await delay(base + jitter);
-      }
-    }
-    if (response) break;
-  }
-
-  if (!response) {
-    throw (lastError || new Error("No available Gemini model produced a response."));
-  }
-
-  const text = response.response.text().trim();
+  const text = await generateAzureChatCompletionText({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent },
+    ],
+    deployment: getAzureOpenAIDeploymentByPurpose("chat_fast"),
+    temperature: 0.35,
+    maxTokens: 900,
+  });
   if (!text) {
     throw new Error("AI returned empty response.");
   }
-  return text;
+  return text.trim();
 }

@@ -11,7 +11,7 @@ import { foldGeoLabel, inferRegionFromCountry } from "@/lib/geoFilters";
 
 export const runtime = "nodejs";
 
-/** First request for a new country can run Serper + Gemini — allow long execution. */
+/** First request for a new country can run Serper + Azure OpenAI — allow long execution. */
 export const maxDuration = 300;
 
 function toDataset(value: string | null): "world-top-100" | "south-korea-top-10" {
@@ -125,7 +125,7 @@ export async function GET(request: Request) {
         return NextResponse.json(
           {
             error: "Could not load national ranking for this country.",
-            hint: "Check SERPER_API_KEY and GEMINI_API_KEY, then try again.",
+            hint: "Check SERPER_API_KEY and Azure OpenAI env vars, then try again.",
           },
           { status: 503 },
         );

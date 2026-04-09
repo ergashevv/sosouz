@@ -7,7 +7,7 @@ import {
 } from "@/lib/rankings";
 
 export const runtime = "nodejs";
-/** Ranking sync runs Serper + Gemini twice; allow long runs on Vercel (configure plan limits). */
+/** Ranking sync runs Serper + Azure OpenAI twice; allow long runs on Vercel (configure plan limits). */
 export const maxDuration = 300;
 
 function parseYear(value: unknown) {

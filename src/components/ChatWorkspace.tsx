@@ -8,6 +8,7 @@ import { Loader2, Plus, Send, Paperclip, X, Search, Menu, Trash2, ThumbsUp, Thum
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authFetch } from '@/lib/client-auth';
 import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
+import { countries } from '@/lib/countries';
 
 interface ChatWorkspaceProps {
   user: {
@@ -152,15 +153,17 @@ function parseAdvisorContextParam(raw: string | null): ClientAdvisorContextPaylo
 }
 
 export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
-  void user;
   const router = useRouter();
   const searchParams = useSearchParams();
   const { language, t } = useLanguage();
+  const defaultCountry =
+    countries.find((item) => item.code.toUpperCase() === user.phoneCountry.toUpperCase())?.name ||
+    'United Kingdom';
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [country, setCountry] = useState('United Kingdom');
+  const [country, setCountry] = useState(defaultCountry);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);

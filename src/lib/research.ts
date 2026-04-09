@@ -1,8 +1,12 @@
 import { prisma } from "./prisma";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Prisma } from "@prisma/client";
 import type { Language } from "@/lib/i18n";
 import { getResearchTuitionOverride } from "@/lib/university-research-overrides";
+import {
+  generateAzureChatCompletionText,
+  getAzureOpenAIDeploymentByPurpose,
+  isAzureOpenAiConfigured,
+} from "@/lib/azure-openai";
 import {
   clampResearchUrlToOfficial,
   collectOfficialBases,
@@ -11,16 +15,12 @@ import {
 } from "@/lib/official-url";
 
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const CACHE_TTL_DAYS = 14;
-/** Min interval between Serper+Gemini runs for the same university+language (per DB row). */
+/** Min interval between Serper+Azure OpenAI runs for the same university+language (per DB row). */
 const RESEARCH_REFRESH_COOLDOWN_MS =
   Number(process.env.RESEARCH_REFRESH_COOLDOWN_MS) > 0
     ? Number(process.env.RESEARCH_REFRESH_COOLDOWN_MS)
     : 6 * 60 * 60 * 1000;
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY || "");
 
 export type PerformResearchOptions = {
   /** When true, bypass DB-only fast path and cooldown (for explicit refresh). */
@@ -281,7 +281,7 @@ function isMissingColumnError(error: unknown) {
   return msg.includes("does not exist") && (msg.includes("column") || msg.includes("last_ai_refresh"));
 }
 
-/** Returns true if this request may call Serper/Gemini; false if another refresh is in-flight or in cooldown. */
+/** Returns true if this request may call Serper/AI; false if another refresh is in-flight or in cooldown. */
 async function tryClaimAiRefresh(cacheKey: string): Promise<boolean> {
   const cutoff = new Date(Date.now() - RESEARCH_REFRESH_COOLDOWN_MS);
   try {
@@ -357,13 +357,17 @@ async function findCachedDetails(cacheKey: string) {
 
 type CachedResearchDetailsRow = NonNullable<Awaited<ReturnType<typeof findCachedDetails>>>;
 
-/** Coalesce concurrent Serper+Gemini runs for the same cache key (single-flight). */
+/** Coalesce concurrent Serper+AI runs for the same cache key (single-flight). */
 const researchInflight = new Map<string, Promise<CachedResearchDetailsRow | null>>();
 
-async function generateWithGemini(prompt: string) {
-  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-  const aiResult = await model.generateContent(prompt);
-  return aiResult.response.text();
+async function generateWithAzure(prompt: string) {
+  return generateAzureChatCompletionText({
+    messages: [{ role: "user", content: prompt }],
+    deployment: getAzureOpenAIDeploymentByPurpose("reasoning"),
+    temperature: 0.2,
+    maxTokens: 1200,
+    responseFormat: "json_object",
+  });
 }
 
 async function upsertLegacyResearch(
@@ -417,12 +421,12 @@ export async function performResearch(
     return withTuitionOverride(university, safeLang, cachedDetails);
   }
 
-  if (!SERPER_API_KEY || !GEMINI_API_KEY) {
+  if (!SERPER_API_KEY || !isAzureOpenAiConfigured()) {
     if (cachedDetails && hasMinimumDetails(cachedDetails)) {
       return withTuitionOverride(university, safeLang, cachedDetails);
     }
     if (cachedDetails) return withTuitionOverride(university, safeLang, cachedDetails);
-    console.error("Missing SERPER_API_KEY or GEMINI_API_KEY.");
+    console.error("Missing SERPER_API_KEY or Azure OpenAI configuration.");
     return null;
   }
 
@@ -512,12 +516,12 @@ export async function performResearch(
           ? (serperData as { organic: unknown[] }).organic
           : [];
       const organicForOfficial = filterOrganicByOfficialHost(searchResults, bases);
-      const organicForGemini =
+      const organicForModel =
         organicForOfficial.length > 0 ? organicForOfficial : searchResults.slice(0, 8);
       const sourcesForStore = buildSourceLinks(
         organicForOfficial.length > 0 ? organicForOfficial : [],
       );
-      const snippetSources = buildSourceLinks(organicForGemini.slice(0, 8));
+      const snippetSources = buildSourceLinks(organicForModel.slice(0, 8));
       const snippetBlock = snippetSources
         .slice(0, 5)
         .map((source, index) => `${index + 1}. ${source.title}\nURL: ${source.link}\nSnippet: ${source.snippet}`)
@@ -558,7 +562,7 @@ Constraints:
 Sources:
 ${snippetBlock || "No external snippets available."}`;
 
-      const text = await generateWithGemini(prompt);
+      const text = await generateWithAzure(prompt);
       const parsed = JSON.parse(extractJsonObject(text));
       const structuredRaw = normalizeResearchOutput(parsed, {
         university,
