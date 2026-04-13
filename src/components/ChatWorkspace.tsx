@@ -837,9 +837,9 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                         </article>
                       ) : (
                         <div key={message.id} className="flex justify-end">
-                          <div className="max-w-[min(100%,34rem)] rounded-[20px] rounded-br-md bg-[#0a84ff] px-4 py-3 text-[15px] leading-[1.65] text-white shadow-[0_8px_20px_-12px_rgba(10,132,255,0.9)] sm:px-5">
+                          <div className="max-w-[min(100%,34rem)] rounded-[20px] rounded-br-md bg-stone-800 px-4 py-3 text-[15px] leading-[1.65] text-stone-50 shadow-[0_8px_24px_-8px_rgba(28,25,23,0.45)] sm:px-5">
                             {message.replyToText ? (
-                              <div className="mb-2 rounded-lg border border-white/30 bg-white/18 px-3 py-2 text-xs text-blue-50">
+                              <div className="mb-2 rounded-lg border border-white/25 bg-white/12 px-3 py-2 text-xs text-stone-100">
                                 <p className="font-semibold">
                                   {t('chat.replyTo')} {message.replyToRole === 'assistant' ? 'soso. ai' : t('chat.youLabel')}
                                 </p>
@@ -852,7 +852,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                             {message.attachmentDataUrl ? (
                               <div className="mt-3 space-y-1">
                                 {message.attachmentName ? (
-                                  <p className="text-[11px] text-blue-100">{message.attachmentName}</p>
+                                  <p className="text-[11px] text-stone-300">{message.attachmentName}</p>
                                 ) : null}
                                 <Image
                                   src={message.attachmentDataUrl}
@@ -868,7 +868,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                               <button
                                 type="button"
                                 onClick={() => setReplyTarget(message)}
-                                className="text-xs font-medium text-blue-100 hover:text-white"
+                                className="text-xs font-medium text-stone-300 hover:text-white"
                               >
                                 {t('chat.reply')}
                               </button>
@@ -955,7 +955,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                     >
                       <div
                         className={`flex items-end gap-2 rounded-[22px] border bg-[#f3f4f6] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-colors sm:gap-3 sm:px-3 ${
-                          isDragActive ? 'border-[#0a84ff]' : 'border-black/10'
+                          isDragActive ? 'border-stone-500' : 'border-black/10'
                         }`}
                       >
                         <label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-white hover:text-neutral-900 sm:h-11 sm:w-11">
@@ -986,7 +986,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
                           className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-all disabled:opacity-35 sm:h-11 sm:w-11 ${
                             !input.trim() && !screenshotDataUrl
                               ? 'border-neutral-300 bg-white text-neutral-300'
-                              : 'border-[#0a84ff] bg-[#0a84ff] text-white hover:bg-[#0077ed]'
+                              : 'border-stone-800 bg-stone-800 text-white hover:bg-stone-900'
                           }`}
                           aria-label="Send message"
                         >

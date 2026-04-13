@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import { fetchUniversities } from '@/lib/api';
 import UniversityCard from '@/components/UniversityCard';
 import { use, useMemo, useState } from 'react';
-import { Activity, Shield, Info, Database, Search, MapPin } from 'lucide-react';
+import { Activity, Shield, Info, Database, Search, MapPin, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import SearchHeader from '@/components/SearchHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -254,6 +254,24 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
                 </div>
               </div>
             </form>
+          </div>
+        </section>
+
+        <section className="mb-8 sm:mb-10">
+          <div className="product-card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2 max-w-xl">
+              <div className="inline-flex items-center gap-2 text-xs font-medium text-(--product-on-surface-variant)">
+                <Sparkles size={14} className="text-(--product-primary)" aria-hidden />
+                <span>SOSO AI</span>
+              </div>
+              <h2 className="text-lg font-medium tracking-tight text-(--product-on-surface) sm:text-xl">
+                {t('search.aiBanner.title')}
+              </h2>
+              <p className="text-sm leading-relaxed text-(--product-on-surface-variant)">{t('search.aiBanner.body')}</p>
+            </div>
+            <Link href="/ai-studio" className="product-primary-btn shrink-0 px-6 py-2.5 text-sm font-medium">
+              {t('search.aiBanner.cta')}
+            </Link>
           </div>
         </section>
 

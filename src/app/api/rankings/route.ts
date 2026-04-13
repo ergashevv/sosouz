@@ -2,12 +2,63 @@ import { after, NextResponse } from "next/server";
 import {
   COUNTRY_RANKING_API_PREFETCH_BATCHES,
   COUNTRY_RANKING_ENTRY_COUNT,
+  ensureCoreRankingSnapshot,
   ensureCountryRankingSnapshot,
   getRankingSnapshot,
   isCountryRankingSnapshotComplete,
   WORLD_RANKING_ENTRY_COUNT,
+  type RankingSnapshotLoadResult,
 } from "@/lib/rankings";
 import { foldGeoLabel, inferRegionFromCountry } from "@/lib/geoFilters";
+import {
+  TOP_UNIVERSITY_DEFAULT_PAGE,
+  TOP_UNIVERSITY_DEFAULT_PAGE_SIZE,
+  TOP_UNIVERSITY_DEFAULT_TOP,
+  normalizeTopTier,
+} from "@/lib/top-university-defaults";
+
+/** When world snapshot is missing, still populate country picker for ?country=… requests. */
+function availableGeoFromWorldOrFallback(
+  worldLoad: RankingSnapshotLoadResult | null,
+  countryHint: string,
+): { availableCountries: string[]; availableRegions: string[]; worldEnumEntryCount: number } {
+  if (!worldLoad) {
+    const fallback = [
+      "United States",
+      "United Kingdom",
+      "China",
+      "Japan",
+      "South Korea",
+      "Singapore",
+      process.env.NEXT_PUBLIC_LOCAL_COUNTRY || "Uzbekistan",
+    ];
+    const availableCountries = Array.from(
+      new Set([countryHint, ...fallback].map((c) => c.trim()).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b));
+    return { availableCountries, availableRegions: [], worldEnumEntryCount: 0 };
+  }
+
+  const enumSnapshot = worldLoad.snapshot;
+  const enumEntriesWithRegion = enumSnapshot.entries.map((entry) => ({
+    ...entry,
+    region: entry.region || inferRegionFromCountry(entry.country),
+  }));
+
+  const availableCountries = Array.from(
+    new Set(
+      enumEntriesWithRegion.map((entry) => entry.country).filter((item) => item && item !== "Unknown"),
+    ),
+  ).sort((a, b) => a.localeCompare(b));
+  const availableRegions = Array.from(
+    new Set(enumEntriesWithRegion.map((entry) => entry.region).filter((item) => item && item !== "Other")),
+  ).sort((a, b) => a.localeCompare(b));
+
+  return {
+    availableCountries,
+    availableRegions,
+    worldEnumEntryCount: enumSnapshot.entries.length,
+  };
+}
 
 export const runtime = "nodejs";
 
@@ -57,44 +108,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const year = toYear(searchParams.get("year"));
     const monthSnapshot = toMonthSnapshot(searchParams.get("month"));
-    const page = toPositiveInt(searchParams.get("page"), 1);
-    const pageSize = Math.min(50, toPositiveInt(searchParams.get("pageSize"), 10));
-    const top = Math.min(100, toPositiveInt(searchParams.get("top"), 100));
+    const page = toPositiveInt(searchParams.get("page"), TOP_UNIVERSITY_DEFAULT_PAGE);
+    const pageSize = Math.min(50, toPositiveInt(searchParams.get("pageSize"), TOP_UNIVERSITY_DEFAULT_PAGE_SIZE));
+    const rawTop = Math.min(100, toPositiveInt(searchParams.get("top"), TOP_UNIVERSITY_DEFAULT_TOP));
+    const top = normalizeTopTier(rawTop);
     const country = normalizeCountry(searchParams.get("country"));
     const region = normalizeRegion(searchParams.get("region"));
     const calendarYear = year ?? new Date().getUTCFullYear();
-
-    const worldForEnums = await getRankingSnapshot({
-      dataset: "world-top-100",
-      year,
-      monthSnapshot,
-    });
-
-    if (!worldForEnums) {
-      return NextResponse.json(
-        {
-          error: "Ranking snapshot not found.",
-          hint: "Run /api/rankings/sync first.",
-        },
-        { status: 404 },
-      );
-    }
-
-    const enumSnapshot = worldForEnums.snapshot;
-    const enumEntriesWithRegion = enumSnapshot.entries.map((entry) => ({
-      ...entry,
-      region: entry.region || inferRegionFromCountry(entry.country),
-    }));
-
-    const availableCountries = Array.from(
-      new Set(
-        enumEntriesWithRegion.map((entry) => entry.country).filter((item) => item && item !== "Unknown"),
-      ),
-    ).sort((a, b) => a.localeCompare(b));
-    const availableRegions = Array.from(
-      new Set(enumEntriesWithRegion.map((entry) => entry.region).filter((item) => item && item !== "Other")),
-    ).sort((a, b) => a.localeCompare(b));
-
     const effectiveRegion = country ? "" : region;
 
     if (country) {
@@ -130,6 +150,14 @@ export async function GET(request: Request) {
           { status: 503 },
         );
       }
+
+      /** DB-only: never run heavy world sync here — country list is already loaded; dropdown uses world cache or static fallback. */
+      const worldForEnums = await getRankingSnapshot({
+        dataset: "world-top-100",
+        year,
+        monthSnapshot,
+      });
+      const { availableCountries, availableRegions } = availableGeoFromWorldOrFallback(worldForEnums, country);
 
       const snapshot = countryLoaded.snapshot;
       const entriesWithRegion = snapshot.entries.map((entry) => ({
@@ -185,8 +213,30 @@ export async function GET(request: Request) {
       );
     }
 
+    const worldForEnums = await ensureCoreRankingSnapshot({
+      dataset: "world-top-100",
+      year,
+      monthSnapshot,
+    });
+
+    if (!worldForEnums) {
+      return NextResponse.json(
+        {
+          error: "Ranking snapshot not found.",
+          hint:
+            "Configure SERPER_API_KEY and Azure OpenAI (or run /api/rankings/sync with CRON_SECRET). On-demand sync can be disabled with RANKINGS_DISABLE_ON_DEMAND_SYNC=1.",
+        },
+        { status: 404 },
+      );
+    }
+
+    const { availableCountries, availableRegions, worldEnumEntryCount } = availableGeoFromWorldOrFallback(
+      worldForEnums,
+      country,
+    );
+
     const dataset = toDataset(searchParams.get("dataset"));
-    const loaded = await getRankingSnapshot({
+    const loaded = await ensureCoreRankingSnapshot({
       dataset,
       year,
       monthSnapshot,
@@ -196,7 +246,8 @@ export async function GET(request: Request) {
       return NextResponse.json(
         {
           error: "Ranking snapshot not found.",
-          hint: "Run /api/rankings/sync first.",
+          hint:
+            "Configure SERPER_API_KEY and Azure OpenAI (or run /api/rankings/sync with CRON_SECRET). On-demand sync can be disabled with RANKINGS_DISABLE_ON_DEMAND_SYNC=1.",
         },
         { status: 404 },
       );
@@ -230,7 +281,7 @@ export async function GET(request: Request) {
     const start = (safePage - 1) * pageSize;
     const entries = withPresentationRank.slice(start, start + pageSize);
 
-    const worldPoolLoaded = enumSnapshot.entries.length;
+    const worldPoolLoaded = worldEnumEntryCount;
 
     return NextResponse.json(
       {

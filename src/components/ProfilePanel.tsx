@@ -386,12 +386,12 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
 
         <section className="rounded-3xl border border-neutral-200 bg-white p-5 sm:p-7 shadow-[0_20px_80px_rgba(15,23,42,0.06)]">
           <div className="mb-4 flex items-center gap-2">
-            <KeyRound size={16} className="text-blue-600" />
+            <KeyRound size={16} className="text-stone-600" />
             <h2 className="text-lg font-semibold">{user.hasPassword ? 'Change password' : 'Set password'}</h2>
           </div>
 
           {!user.hasPassword ? (
-            <p className="mb-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+            <p className="mb-3 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800">
               You signed in with Google. Set a password to enable password-based login as a backup.
             </p>
           ) : null}
@@ -432,7 +432,7 @@ export default function ProfilePanel({ user }: ProfilePanelProps) {
             <button
               type="submit"
               disabled={passwordLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-stone-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-stone-900 disabled:opacity-50"
             >
               {passwordLoading ? 'Updating...' : user.hasPassword ? 'Update password' : 'Set password'}
             </button>

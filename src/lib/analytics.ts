@@ -25,7 +25,8 @@ export interface OutcomeMetricsSnapshot {
   official_link_clicked: number;
 }
 
-const EMPTY_METRICS: OutcomeMetricsSnapshot = {
+/** Default snapshot; safe for SSR and initial client paint (before localStorage hydrate). */
+export const EMPTY_OUTCOME_METRICS: OutcomeMetricsSnapshot = {
   discovery_search_started: 0,
   profile_opened: 0,
   chat_message_sent: 0,
@@ -47,10 +48,10 @@ function toFiniteCount(value: unknown): number {
 }
 
 export function getOutcomeMetricsSnapshot(): OutcomeMetricsSnapshot {
-  if (typeof window === "undefined") return { ...EMPTY_METRICS };
+  if (typeof window === "undefined") return { ...EMPTY_OUTCOME_METRICS };
   try {
     const raw = window.localStorage.getItem(METRICS_STORAGE_KEY);
-    if (!raw) return { ...EMPTY_METRICS };
+    if (!raw) return { ...EMPTY_OUTCOME_METRICS };
     const parsed = JSON.parse(raw) as Partial<OutcomeMetricsSnapshot>;
     return {
       discovery_search_started: toFiniteCount(parsed.discovery_search_started),
@@ -59,12 +60,12 @@ export function getOutcomeMetricsSnapshot(): OutcomeMetricsSnapshot {
       official_link_clicked: toFiniteCount(parsed.official_link_clicked),
     };
   } catch {
-    return { ...EMPTY_METRICS };
+    return { ...EMPTY_OUTCOME_METRICS };
   }
 }
 
 export function bumpOutcomeMetric(metric: OutcomeMetricKey, delta = 1): OutcomeMetricsSnapshot {
-  if (typeof window === "undefined") return { ...EMPTY_METRICS };
+  if (typeof window === "undefined") return { ...EMPTY_OUTCOME_METRICS };
   const current = getOutcomeMetricsSnapshot();
   const next = {
     ...current,

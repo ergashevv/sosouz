@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
+  EMPTY_OUTCOME_METRICS,
   getOutcomeMetricsSnapshot,
   onOutcomeMetricsUpdated,
   type OutcomeMetricsSnapshot,
@@ -10,9 +11,10 @@ import {
 
 export default function OutcomeMetricsPanel() {
   const { t } = useLanguage();
-  const [metrics, setMetrics] = useState<OutcomeMetricsSnapshot>(() => getOutcomeMetricsSnapshot());
+  const [metrics, setMetrics] = useState<OutcomeMetricsSnapshot>(EMPTY_OUTCOME_METRICS);
 
   useEffect(() => {
+    setMetrics(getOutcomeMetricsSnapshot());
     return onOutcomeMetricsUpdated(setMetrics);
   }, []);
 

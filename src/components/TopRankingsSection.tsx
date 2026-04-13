@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Globe2 } from "lucide-react";
 import Link from "next/link";
 import DataFreshnessStrip from "@/components/DataFreshnessStrip";
+import {
+  TOP_UNIVERSITY_DEFAULT_PAGE,
+  TOP_UNIVERSITY_DEFAULT_PAGE_SIZE,
+  TOP_UNIVERSITY_TOP_TIERS,
+  buildTopUniversityPath,
+} from "@/lib/top-university-defaults";
 
 interface RankingEntry {
   rank: number;
@@ -95,9 +101,9 @@ async function fetchRanking(
   const url = new URL("/api/rankings", window.location.origin);
   url.searchParams.set("dataset", dataset);
   url.searchParams.set("year", String(year));
-  url.searchParams.set("top", dataset === "world-top-100" ? "10" : "10");
-  url.searchParams.set("page", "1");
-  url.searchParams.set("pageSize", "10");
+  url.searchParams.set("top", String(TOP_UNIVERSITY_TOP_TIERS[0]));
+  url.searchParams.set("page", String(TOP_UNIVERSITY_DEFAULT_PAGE));
+  url.searchParams.set("pageSize", String(TOP_UNIVERSITY_DEFAULT_PAGE_SIZE));
 
   const response = await fetch(url.toString());
   if (!response.ok) return null;
@@ -208,7 +214,7 @@ export default function TopRankingsSection({ language }: { language: SectionLang
             <p className="mt-2 text-sm sm:text-base text-neutral-500">{copy.subtitle}</p>
             <div className="mt-3">
               <Link
-                href="/top-university"
+                href={buildTopUniversityPath({})}
                 className="inline-flex items-center rounded-full border border-neutral-300 px-4 py-2 text-xs font-bold uppercase tracking-wide text-neutral-700 hover:border-black hover:text-black transition-colors"
               >
                 {copy.openAll}

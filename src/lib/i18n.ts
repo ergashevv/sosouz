@@ -15,6 +15,7 @@ export const translations: InternalDict = {
   "nav.top": { en: "Top University", ru: "Топ Университеты", uz: "Top Universitetlar" },
   "nav.about": { en: "About Us", ru: "О Нас", uz: "Biz Haqimizda" },
   "nav.students": { en: "For Students", ru: "Студентам", uz: "Talabalar Uchun" },
+  "nav.aiStudio": { en: "AI Studio", ru: "AI Studio", uz: "AI Studio" },
   "nav.terms": { en: "Terms of Service", ru: "Условия Использования", uz: "Foydalanish Shartlari" },
   "header.menu.navigation": { en: "Navigation", ru: "Навигация", uz: "Navigatsiya" },
   "header.menu.language": { en: "Language", ru: "Язык", uz: "Til" },
@@ -48,6 +49,146 @@ export const translations: InternalDict = {
   "home.reg.us": { en: "US UNIVERSITIES", ru: "УНИВЕРСИТЕТЫ США", uz: "AQSH UNIVERSITETLARI" },
   "home.reg.de": { en: "GERMANY UNIVERSITIES", ru: "УНИВЕРСИТЕТЫ ГЕРМАНИИ", uz: "GERMANIYA UNIVERSITETLARI" },
   "home.reg.view": { en: "View All", ru: "Смотреть Все", uz: "Barchasini Ko'rish" },
+
+  "aiStudio.productBreadcrumb": { en: "SOSO › AI Studio", ru: "SOSO › AI Studio", uz: "SOSO › AI Studio" },
+  "aiStudio.heroTitle": {
+    en: "Plan your next step with clear AI assistance",
+    ru: "Спланируйте следующий шаг с понятной помощью ИИ",
+    uz: "Keyingi qadamni aniq AI yordami bilan rejalashtiring",
+  },
+  "aiStudio.heroLead": {
+    en: "Search the catalog, get an indexed shortlist that references real rows, then open official sites to verify deadlines and fees. No hype — structured flows and transparent limits.",
+    ru: "Ищите в каталоге, получите индексированный shortlist по реальным строкам, затем откройте официальные сайты, чтобы проверить сроки и стоимость. Без лишних обещаний — понятные шаги и прозрачные ограничения.",
+    uz: "Katalogdan qidiring, haqiqiy qatorlarga tayanadigan indeksli qisqa ro‘yxat oling, keyin muddat va narxlarni tekshirish uchun rasmiy saytlarni oching. Ortiqcha va’dalar yo‘q — tartibli qadamlar va ochiq cheklovlar.",
+  },
+  "aiStudio.heroCtaPrimary": { en: "Try AI Match", ru: "Попробовать AI Match", uz: "AI Matchni sinash" },
+  "aiStudio.heroCtaSecondary": { en: "Browse catalog", ru: "Открыть каталог", uz: "Katalogni ko‘rish" },
+  "aiStudio.howTitle": { en: "How it works", ru: "Как это устройено", uz: "Qanday ishlaydi" },
+  "aiStudio.howStep1Title": { en: "Search & shortlist", ru: "Поиск и shortlist", uz: "Qidiruv va qisqa ro‘yxat" },
+  "aiStudio.howStep1Body": {
+    en: "Pick a country and describe your goals. AI Match only selects entries that already exist in the SOSO list for that country.",
+    ru: "Выберите страну и опишите цели. AI Match выбирает только те записи, которые уже есть в списке SOSO для этой страны.",
+    uz: "Mamlakatni tanlang va maqsadlarni yozing. AI Match faqat shu mamlakat uchun SOSO ro‘yxatida bor yozuvlarni tanlaydi.",
+  },
+  "aiStudio.howStep2Title": { en: "Advisor chat", ru: "Чат‑советник", uz: "Maslahatchi chat" },
+  "aiStudio.howStep2Body": {
+    en: "Ask about admissions and attach screenshots. Answers follow SOSO rules: no invented tuition or deadlines.",
+    ru: "Спрашивайте о поступлении и прикрепляйте скриншоты. Ответы следуют правилам SOSO: без выдуманных сумм и дедлайнов.",
+    uz: "Qabul haqida so‘rang va skrinshot yuboring. Javoblar SOSO qoidalariga bo‘ysunadi: o‘ylab topilgan narx va muddatlar yo‘q.",
+  },
+  "aiStudio.howStep3Title": { en: "Verify on the official site", ru: "Проверка на официальном сайте", uz: "Rasmiy saytda tekshirish" },
+  "aiStudio.howStep3Body": {
+    en: "Always confirm requirements, costs, and dates on the university’s own website before you apply.",
+    ru: "Перед подачей всегда подтверждайте требования, стоимость и даты на официальном сайте университета.",
+    uz: "Ariza yuborishdan oldin talablar, narx va sanalarni har doim universitetning o‘z saytida tasdiqlang.",
+  },
+  "aiStudio.trustTitle": { en: "How SOSO uses AI", ru: "Как SOSO использует ИИ", uz: "SOSO AI dan qanday foydalanadi" },
+  "aiStudio.trust1": {
+    en: "AI requests are handled on SOSO’s servers — not only inside your browser.",
+    ru: "Запросы к ИИ обрабатываются на серверах SOSO — не только в браузере.",
+    uz: "AI so‘rovlari SOSO serverlarida qayta ishlanadi — faqat brauzer ichida emas.",
+  },
+  "aiStudio.trust2": {
+    en: "Shortlists reference numbered rows from the same catalog you see in Search — the model does not invent new universities.",
+    ru: "Shortlist ссылается на нумерованные строки того же каталога, что в поиске — модель не придумывает новые университеты.",
+    uz: "Qisqa ro‘yxat qidiruvdagi katalogning raqamli qatorlariga tayanadi — model yangi universitet “o‘ylab” qo‘ymaydi.",
+  },
+  "aiStudio.trust3": {
+    en: "We do not use AI output as a source of truth for fees or deadlines — you verify those on official sites.",
+    ru: "Мы не считаем вывод ИИ источником правды о стоимости и сроках — вы проверяете это на официальных сайтах.",
+    uz: "Narx va muddatlar uchun AI javobini yakuniy manba deb hisoblamaymiz — ularni rasmiy saytlarda tekshirasiz.",
+  },
+  "aiStudio.trust4": {
+    en: "Sign-in is required for AI Match so usage stays accountable and rate limits can protect the service.",
+    ru: "Вход нужен для AI Match, чтобы ответственно учитывать использование и защищать сервис лимитами.",
+    uz: "AI Match uchun kirish talab qilinadi — foydalanish hisobga olinadi va xizmat limitlar bilan himoyalanadi.",
+  },
+  "aiStudio.featuresTitle": { en: "What you can do here", ru: "Что здесь можно сделать", uz: "Bu yerda nima qilish mumkin" },
+  "aiStudio.featureRankLink": { en: "View rankings", ru: "Рейтинги", uz: "Reytinglar" },
+  "aiStudio.featureGridSearchTitle": { en: "Catalog search", ru: "Поиск в каталоге", uz: "Katalog bo‘yicha qidiruv" },
+  "aiStudio.featureGridSearchBody": {
+    en: "Same live list AI Match uses — filter by country, then open a profile.",
+    ru: "Тот же актуальный список, что и у AI Match — фильтр по стране, затем профиль.",
+    uz: "AI Match ishlatadigan jonli ro‘yxat — mamlakat bo‘yicha filtr, keyin profil.",
+  },
+  "aiStudio.featureGridRankBody": {
+    en: "National and global ranking views to compare options before you commit.",
+    ru: "Национальный и мировой рейтинги для сравнения перед выбором.",
+    uz: "Tanlashdan oldin solishtirish uchun milliy va jahon reytinglari.",
+  },
+
+  "aiStudio.matchTitle": {
+    en: "AI Match",
+    ru: "AI Match",
+    uz: "AI Match",
+  },
+  "aiStudio.matchSubtitle": {
+    en: "Indexed shortlist from your goals. Same catalog as Search — picks are tied to real rows.",
+    ru: "Индексированный shortlist по вашим целям. Тот же каталог, что в поиске — выбор привязан к реальным строкам.",
+    uz: "Maqsadlaringiz bo‘yicha indeksli qisqa ro‘yxat. Qidiruvdagi katalog bilan bir xil — tanlov haqiqiy qatorlarga bog‘langan.",
+  },
+  "aiStudio.workflowTitle": {
+    en: "Quick path",
+    ru: "Короткий путь",
+    uz: "Qisqa yo‘l",
+  },
+  "aiStudio.step1": {
+    en: "Goals → indexed picks from the SOSO catalog for your country.",
+    ru: "Цели → индексированный выбор из каталога SOSO для вашей страны.",
+    uz: "Maqsadlar → mamlakatingiz uchun SOSO katalogidan indeksli tanlov.",
+  },
+  "aiStudio.step2": {
+    en: "Profiles → AI advisor for documents and screenshots.",
+    ru: "Профили → AI‑советник для документов и скриншотов.",
+    uz: "Profillar → hujjat va skrinshotlar uchun AI maslahatchi.",
+  },
+  "aiStudio.step3": {
+    en: "Official site → confirm fees and deadlines before applying.",
+    ru: "Официальный сайт → подтвердите стоимость и сроки перед подачей.",
+    uz: "Rasmiy sayt → ariza oldidan narx va muddatlarni tasdiqlang.",
+  },
+
+  "home.aiLayer.title": {
+    en: "Clear tools, not just a landing page",
+    ru: "Понятные инструменты, а не только лендинг",
+    uz: "Faqat landing emas — tushunarli vositalar",
+  },
+  "home.aiLayer.subtitle": {
+    en: "Search the catalog, run an indexed AI shortlist, then chat with the advisor — the same transparent rules everywhere.",
+    ru: "Ищите в каталоге, получите индексированный AI‑shortlist, затем чат с советником — одни и те же прозрачные правила.",
+    uz: "Katalogdan qidiring, indeksli AI qisqa ro‘yxat oling, keyin maslahatchi bilan suhbat — hamma joyda bir xil shaffof qoidalar.",
+  },
+  "home.aiLayer.cardMatchTitle": { en: "Indexed shortlist", ru: "Индексированный shortlist", uz: "Indeksli qisqa ro‘yxat" },
+  "home.aiLayer.cardMatchBody": {
+    en: "Goals and country → numbered picks from the live SOSO list.",
+    ru: "Цели и страна → нумерованный выбор из актуального списка SOSO.",
+    uz: "Maqsad va mamlakat → jonli SOSO ro‘yxatidan raqamli tanlov.",
+  },
+  "home.aiLayer.cardChatTitle": { en: "Advisor chat", ru: "Чат‑советник", uz: "Maslahatchi chat" },
+  "home.aiLayer.cardChatBody": {
+    en: "Admissions questions and screenshots, with rules against invented fees.",
+    ru: "Вопросы о поступлении и скриншоты, с запретом на выдуманные суммы.",
+    uz: "Qabul savollari va skrinshotlar — o‘ylab topilgan narxlar taqiqlangan.",
+  },
+  "home.aiLayer.cardRankTitle": { en: "Rankings & profiles", ru: "Рейтинги и профили", uz: "Reyting va profillar" },
+  "home.aiLayer.cardRankBody": {
+    en: "Context from rankings, then profiles with links you can verify.",
+    ru: "Контекст из рейтингов, затем профили со ссылками для проверки.",
+    uz: "Reytingdan kontekst, keyin tekshiriladigan havolalar bilan profillar.",
+  },
+  "home.aiLayer.cta": { en: "Open AI Studio", ru: "Открыть AI Studio", uz: "AI Studioni ochish" },
+
+  "search.aiBanner.title": {
+    en: "Prefer a shortlist before you scroll?",
+    ru: "Сначала короткий список, а потом листать?",
+    uz: "Avvalo qisqa ro‘yxat, keyin aylantirasizmi?",
+  },
+  "search.aiBanner.body": {
+    en: "AI Studio builds an indexed shortlist from this same catalog. Sign in, describe your goals, then verify everything on official sites.",
+    ru: "AI Studio делает индексированный shortlist из этого же каталога. Войдите, опишите цели, затем проверьте всё на официальных сайтах.",
+    uz: "AI Studio shu katalogdan indeksli qisqa ro‘yxat tuzadi. Kiring, maqsadlarni yozing, keyin hammasini rasmiy saytlarda tasdiqlang.",
+  },
+  "search.aiBanner.cta": { en: "Open AI Studio", ru: "Открыть AI Studio", uz: "AI Studioni ochish" },
 
   // Search Results Page
   "search.header.country": { en: "Search Results For", ru: "Результаты поиска для", uz: "Qidiruv natijalari:" },

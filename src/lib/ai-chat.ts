@@ -87,12 +87,12 @@ function getLocalizedGenericErrorMessage(language: UiLanguage): string {
 
 function getLocalizedConfigErrorMessage(language: UiLanguage): string {
   if (language === "ru") {
-    return "AI servisda konfiguratsiya xatosi bor (model yoki API kalit). Iltimos, admin bilan tekshiring.";
+    return "Сервис ИИ сейчас настроен неполно на нашей стороне. Попробуйте позже или напишите в поддержку.";
   }
   if (language === "en") {
-    return "AI service has a configuration issue (model or API key). Please contact admin.";
+    return "The AI service isn’t fully available on our side right now. Please try again later or contact support.";
   }
-  return "AI xizmatida sozlama xatosi bor (model yoki API key). Iltimos, admin bilan tekshiring.";
+  return "AI xizmati hozir to‘liq ishlamayapti. Birozdan keyin qayta urinib ko‘ring yoki qo‘llab-quvvatlashga yozing.";
 }
 
 function isModelNotFoundError(normalizedMessage: string): boolean {
@@ -155,7 +155,7 @@ export function toUserFacingAiError(
   return { status: 500, message: getLocalizedGenericErrorMessage(language) };
 }
 
-interface PlatformUniversity {
+export interface PlatformUniversity {
   name: string;
   country: string;
   website: string | null;
@@ -210,7 +210,7 @@ async function fetchHipoUniversities(country: string): Promise<PlatformUniversit
     .slice(0, 80);
 }
 
-async function resolvePlatformUniversities(country: string): Promise<{
+export async function resolvePlatformUniversities(country: string): Promise<{
   universities: PlatformUniversity[];
   listOrigin: "soso-country-ranking" | "soso-world-slice" | "hipolabs" | "global-world-pool";
 }> {

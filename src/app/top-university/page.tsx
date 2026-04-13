@@ -10,6 +10,13 @@ import { Globe2 } from "lucide-react";
 import SearchHeader from "@/components/SearchHeader";
 import DataFreshnessStrip from "@/components/DataFreshnessStrip";
 import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  TOP_UNIVERSITY_DEFAULT_PAGE,
+  TOP_UNIVERSITY_DEFAULT_PAGE_SIZE,
+  TOP_UNIVERSITY_DEFAULT_TOP,
+  buildTopUniversityPath,
+  normalizeTopTier,
+} from "@/lib/top-university-defaults";
 const outfit = Outfit({ subsets: ["latin"], weight: ["800"] });
 
 interface RankingEntry {
@@ -73,6 +80,8 @@ const pageCopy = {
   uz: {
     title: "Top universitetlar",
     subtitle: "Dunyo boʻyicha yetakchi universitetlar roʻyxati.",
+    subtitleCountry:
+      "{country} — milliy reyting asosida shu mamlakatdagi yetakchi universitetlar (jahon TOP-100 dan alohida roʻyxat).",
     country: "Mamlakat",
     allCountries: "Barcha davlatlar",
     region: "Hudud",
@@ -95,6 +104,8 @@ const pageCopy = {
   en: {
     title: "Top Universities",
     subtitle: "Explore the world’s leading universities in one list.",
+    subtitleCountry:
+      "{country} — leading universities in this country from national-ranking context (separate from the global TOP 100 list).",
     country: "Country",
     allCountries: "All countries",
     region: "Region",
@@ -117,6 +128,8 @@ const pageCopy = {
   ru: {
     title: "Топ университеты",
     subtitle: "Список ведущих университетов мира в одном месте.",
+    subtitleCountry:
+      "{country} — ведущие университеты этой страны в контексте национального рейтинга (отдельно от глобального TOP-100).",
     country: "Страна",
     allCountries: "Все страны",
     region: "Регион",
@@ -150,7 +163,17 @@ function toInt(value: string | null, fallback: number) {
 function fetchRankings(url: string): Promise<RankingsResponse> {
   return fetch(url).then(async (response) => {
     if (!response.ok) {
-      throw new Error("Failed to fetch rankings");
+      let detail = "";
+      try {
+        const body = (await response.json()) as { error?: string; hint?: string };
+        if (typeof body?.error === "string") detail = body.error;
+        if (typeof body?.hint === "string") {
+          detail = detail ? `${detail} ${body.hint}` : body.hint;
+        }
+      } catch {
+        /* ignore */
+      }
+      throw new Error(detail.trim() || "Failed to fetch rankings");
     }
     return (await response.json()) as RankingsResponse;
   });
@@ -162,16 +185,12 @@ function toLocation(entry: RankingEntry) {
 }
 
 function buildPageHref(args: { country: string; region: string; top: number; page: number }) {
-  const params = new URLSearchParams();
-  if (args.country) {
-    params.set("country", args.country);
-  }
-  if (args.region) {
-    params.set("region", args.region);
-  }
-  params.set("top", String(args.top));
-  params.set("page", String(args.page));
-  return `/top-university?${params.toString()}`;
+  return buildTopUniversityPath({
+    country: args.country || undefined,
+    region: args.region || undefined,
+    top: args.top,
+    page: args.page,
+  });
 }
 
 function buildChatAdvisorHref(entry: RankingEntry) {
@@ -220,8 +239,9 @@ export default function TopUniversityPage() {
   const searchParams = useSearchParams();
   const year = new Date().getUTCFullYear();
 
-  const page = toInt(searchParams.get("page"), 1);
-  const top = Math.min(100, toInt(searchParams.get("top"), 100));
+  const page = toInt(searchParams.get("page"), TOP_UNIVERSITY_DEFAULT_PAGE);
+  const rawTop = Math.min(100, toInt(searchParams.get("top"), TOP_UNIVERSITY_DEFAULT_TOP));
+  const top = normalizeTopTier(rawTop);
   const country = (searchParams.get("country") || "").trim();
   const region = (searchParams.get("region") || "").trim();
   const effectiveRegion = country ? "" : region;
@@ -231,7 +251,7 @@ export default function TopUniversityPage() {
     params.set("dataset", "world-top-100");
     params.set("year", String(year));
     params.set("page", String(page));
-    params.set("pageSize", "10");
+    params.set("pageSize", String(TOP_UNIVERSITY_DEFAULT_PAGE_SIZE));
     params.set("top", String(top));
     if (country) {
       params.set("country", country);
@@ -248,6 +268,23 @@ export default function TopUniversityPage() {
     dedupingInterval: 120_000,
     keepPreviousData: true,
   });
+
+  /** Keep shareable URLs aligned with allowed tiers and default page/top for everyone. */
+  useEffect(() => {
+    const sp = new URLSearchParams(searchParams.toString());
+    const hasPage = sp.has("page");
+    const hasTop = sp.has("top");
+    const rawTopNum = Math.min(100, toInt(sp.get("top"), TOP_UNIVERSITY_DEFAULT_TOP));
+    const normalizedTop = normalizeTopTier(rawTopNum);
+    const topMismatch = hasTop && rawTopNum !== normalizedTop;
+
+    if (!hasPage || !hasTop || topMismatch) {
+      if (!hasPage) sp.set("page", String(toInt(sp.get("page"), TOP_UNIVERSITY_DEFAULT_PAGE)));
+      if (!hasTop) sp.set("top", String(normalizedTop));
+      else if (topMismatch) sp.set("top", String(normalizedTop));
+      router.replace(`${pathname}?${sp.toString()}`, { scroll: false });
+    }
+  }, [pathname, router, searchParams]);
 
   useEffect(() => {
     if (!data?.ranking_build_incomplete || !country) return;
@@ -360,7 +397,11 @@ export default function TopUniversityPage() {
             <h1 className="mt-2 text-2xl sm:text-4xl font-extrabold tracking-tight text-neutral-900">
               {copy.title}
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">{copy.subtitle}</p>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
+              {country
+                ? copy.subtitleCountry.replace("{country}", country)
+                : copy.subtitle}
+            </p>
           </header>
 
           <div className="px-5 py-5 sm:px-6 sm:py-5">
@@ -458,7 +499,7 @@ export default function TopUniversityPage() {
                 className={`flex sm:col-span-2 ${country ? "lg:col-span-3" : "lg:col-span-3"} lg:justify-end lg:self-end`}
               >
                 <Link
-                  href={pathname}
+                  href={buildTopUniversityPath({})}
                   className="inline-flex h-[42px] w-full items-center justify-center rounded-xl border border-neutral-300 px-4 text-xs font-bold uppercase tracking-wide text-neutral-800 transition-colors hover:border-neutral-900 hover:bg-neutral-50 lg:w-auto"
                 >
                   {t("filters.reset")}
@@ -527,8 +568,11 @@ export default function TopUniversityPage() {
             ) : null}
           </div>
           {error ? (
-            <div className="rounded-3xl border border-neutral-200 bg-neutral-50 px-5 py-8 text-sm text-neutral-500">
-              {copy.loadError}
+            <div className="rounded-3xl border border-neutral-200 bg-neutral-50 px-5 py-8 text-sm text-neutral-600">
+              <p className="font-medium text-neutral-800">{copy.loadError}</p>
+              {error instanceof Error && error.message && error.message !== "Failed to fetch rankings" ? (
+                <p className="mt-3 text-xs leading-relaxed text-neutral-500">{error.message}</p>
+              ) : null}
             </div>
           ) : showListSkeleton ? (
             <RankingsListSkeleton />

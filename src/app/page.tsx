@@ -15,6 +15,8 @@ import {
   WalletCards,
   Rocket,
   ArrowRight,
+  Target,
+  MessageCircle,
 } from 'lucide-react';
 import { countries } from '@/lib/countries';
 import Link from 'next/link';
@@ -27,6 +29,7 @@ import ContactMailtoLink from '@/components/ContactMailtoLink';
 import { useRecommendedUniversities } from '@/lib/useRecommendedUniversities';
 import OutcomeMetricsPanel from '@/components/OutcomeMetricsPanel';
 import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
+import { buildTopUniversityPath } from '@/lib/top-university-defaults';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 const INDEX_START_VALUE = 0;
@@ -197,19 +200,19 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-white flex flex-col">
+    <main className="min-h-screen flex flex-col bg-transparent">
       {/* Modern Soft Navbar */}
-      <nav className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-neutral-100 bg-white relative z-50">
+      <nav className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-b border-slate-200/80 bg-white/80 backdrop-blur-md relative z-50 supports-[backdrop-filter]:bg-white/70">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center cursor-pointer" onClick={() => router.push('/')}>
-            <span className={`text-3xl sm:text-4xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
-              soso.
+            <span className={`text-3xl sm:text-4xl tracking-tight text-slate-800 leading-none ${outfit.className}`}>
+              soso<span className="text-stone-600">.</span>
             </span>
           </div>
 
           <button
             type="button"
-            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:text-black transition-colors"
+            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
@@ -218,12 +221,13 @@ export default function Home() {
           </button>
 
           <div className="hidden md:flex items-center flex-wrap justify-end gap-3 sm:gap-5">
-            <Link href="/search" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
-            <Link href="/top-university" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.top')}</Link>
-            <Link href="/about" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
-            <Link href="/students" className="text-[10px] sm:text-[11px] font-bold text-neutral-500 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
+            <Link href="/search" className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
+            <Link href="/ai-studio" className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.aiStudio')}</Link>
+            <Link href={buildTopUniversityPath({})} className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.top')}</Link>
+            <Link href="/about" className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
+            <Link href="/students" className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
 
-            <div className="h-4 w-px bg-neutral-200 mx-1"></div>
+            <div className="h-4 w-px bg-slate-200 mx-1"></div>
 
             <div className="flex items-center gap-3 sm:gap-4">
               {(['en', 'ru', 'uz'] as const).map((lang) => (
@@ -231,7 +235,7 @@ export default function Home() {
                   key={lang}
                   onClick={() => setLanguage(lang)}
                   className={`text-[10px] font-black uppercase tracking-widest transition-all ${
-                    language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
+                    language === lang ? 'text-slate-900 underline underline-offset-4' : 'text-slate-300 hover:text-slate-500'
                   }`}
                 >
                   {lang}
@@ -244,16 +248,17 @@ export default function Home() {
         </div>
 
         {mobileMenuOpen ? (
-          <div className="md:hidden mt-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm space-y-4">
+          <div className="md:hidden mt-4 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-sm space-y-4 backdrop-blur-sm">
             <div className="grid grid-cols-1 gap-3">
-              <Link href="/search" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
-              <Link href="/top-university" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.top')}</Link>
-              <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
-              <Link href="/students" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-neutral-600 hover:text-black transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
+              <Link href="/search" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.search')}</Link>
+              <Link href="/ai-studio" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.aiStudio')}</Link>
+              <Link href={buildTopUniversityPath({})} onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.top')}</Link>
+              <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
+              <Link href="/students" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
             </div>
 
-            <div className="border-t border-neutral-100 pt-4">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
+            <div className="border-t border-slate-100 pt-4">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 {t('header.menu.language')}
               </div>
               <div className="flex items-center gap-4">
@@ -265,7 +270,7 @@ export default function Home() {
                       setMobileMenuOpen(false);
                     }}
                     className={`text-[10px] font-black uppercase tracking-widest transition-all ${
-                      language === lang ? 'text-black underline underline-offset-4' : 'text-neutral-300 hover:text-neutral-500'
+                      language === lang ? 'text-slate-900 underline underline-offset-4' : 'text-slate-300 hover:text-slate-500'
                     }`}
                   >
                     {lang}
@@ -274,7 +279,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="border-t border-neutral-100 pt-4">
+            <div className="border-t border-slate-100 pt-4">
               <HeaderAccountActions />
             </div>
           </div>
@@ -294,36 +299,36 @@ export default function Home() {
               <div className="hero-status-strip">
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-0 top-0 h-px w-full bg-black/80 origin-left animate-[scanline_2.6s_ease-in-out_infinite]"
+                  className="pointer-events-none absolute left-0 top-0 h-px w-full bg-stone-400/30 origin-left animate-[scanline_2.6s_ease-in-out_infinite]"
                 />
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute bottom-0 left-0 h-px w-full bg-black/40 origin-right animate-[scanline_2.6s_ease-in-out_infinite_0.35s]"
+                  className="pointer-events-none absolute bottom-0 left-0 h-px w-full bg-stone-400/15 origin-right animate-[scanline_2.6s_ease-in-out_infinite_0.35s]"
                 />
                 <div className="relative z-10 flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
                   <span
-                    className="hidden sm:inline-flex items-center gap-2 border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-600"
+                    className="hidden sm:inline-flex items-center gap-2 border border-slate-200/90 bg-white/90 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-600"
                     suppressHydrationWarning
                   >
-                    <span className="inline-block h-1.5 w-1.5 bg-black animate-pulse" />
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-stone-700 animate-pulse" />
                     {`Index ${dynamicIndex}`}
                   </span>
-                  <span className="hidden sm:block h-5 w-px bg-neutral-200" />
-                  <span className="text-sm sm:text-base font-semibold text-neutral-800 tracking-[0.01em] text-center sm:text-left">
+                  <span className="hidden sm:block h-5 w-px bg-slate-200" />
+                  <span className="text-sm sm:text-base font-semibold text-slate-800 tracking-[0.01em] text-center sm:text-left">
                     {t('home.hero.badge')}
                   </span>
-                  <span className="hidden sm:block border border-neutral-300 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-neutral-700 animate-[microfloat_2.2s_ease-in-out_infinite]">
+                  <span className="hidden sm:block border border-slate-200/90 bg-white/60 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-600 animate-[microfloat_2.2s_ease-in-out_infinite]">
                     25K+
                   </span>
                 </div>
               </div>
             </div>
 
-            <h1 className="max-w-[16ch] text-[2.65rem] sm:text-5xl md:text-6xl font-extrabold text-neutral-900 tracking-tight leading-[1.04]">
+            <h1 className="max-w-[16ch] text-[2.65rem] sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.04]">
               {t('home.hero.title')} <br />
-              <span className="text-neutral-400 italic">{t('home.hero.subtitle')}</span>
+              <span className="text-slate-500 italic text-[0.92em]">{t('home.hero.subtitle')}</span>
             </h1>
-            <p className="max-w-xl text-neutral-500 text-[1.05rem] sm:text-lg leading-relaxed">
+            <p className="max-w-xl text-slate-600 text-[1.05rem] sm:text-lg leading-relaxed">
               {t('home.hero.desc')}
             </p>
           </motion.div>
@@ -337,7 +342,7 @@ export default function Home() {
           >
             <div className="flex flex-col items-stretch h-auto gap-2">
               <div className="hero-search-row">
-                <MapPin size={18} className="text-neutral-400" />
+                <MapPin size={18} className="text-slate-400" />
                 <select
                   value={selectedCountry}
                   onChange={(e) => {
@@ -350,7 +355,7 @@ export default function Home() {
                 </select>
               </div>
               <div className="hero-search-row">
-                <Search size={18} className="text-neutral-400" />
+                <Search size={18} className="text-slate-400" />
                 <select
                   value={selectedUniversity}
                   onChange={(e) => setSelectedUniversity(e.target.value)}
@@ -406,14 +411,14 @@ export default function Home() {
                       trigger: 'home_cta',
                     });
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-neutral-800"
+                  className="product-primary-btn px-6 py-3 text-sm font-semibold shadow-sm"
                 >
                   {copy.ctaPrimary}
                   <ArrowRight size={16} />
                 </a>
                 <Link
                   href="/about"
-                  className="inline-flex items-center justify-center rounded-full border border-neutral-300 px-6 py-3 text-sm font-semibold text-neutral-700 transition-colors hover:border-neutral-500 hover:text-black"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                 >
                   {copy.ctaSecondary}
                 </Link>
@@ -438,42 +443,82 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="home-ai-layer px-4 sm:px-6 py-14 sm:py-20 border-t border-(--product-outline)">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-10 sm:mb-14">
+            <div className="max-w-2xl space-y-4">
+              <span className="inline-flex items-center gap-2 rounded-full border border-(--product-outline) bg-white px-3 py-1 text-xs font-medium text-(--product-on-surface-variant)">
+                <Sparkles size={12} className="text-(--product-primary)" aria-hidden /> SOSO AI
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-medium tracking-tight leading-tight text-(--product-on-surface)">
+                {t('home.aiLayer.title')}
+              </h2>
+              <p className="text-sm sm:text-base text-(--product-on-surface-variant) leading-relaxed">{t('home.aiLayer.subtitle')}</p>
+            </div>
+            <Link
+              href="/ai-studio"
+              className="product-primary-btn inline-flex shrink-0 items-center gap-2 px-6 py-3 text-sm font-medium"
+            >
+              {t('home.aiLayer.cta')}
+              <ArrowRight size={14} aria-hidden />
+            </Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <article className="product-card">
+              <Target className="text-(--product-primary)" size={22} aria-hidden />
+              <h3 className="mt-4 text-base font-medium text-(--product-on-surface)">{t('home.aiLayer.cardMatchTitle')}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-(--product-on-surface-variant)">{t('home.aiLayer.cardMatchBody')}</p>
+            </article>
+            <article className="product-card">
+              <MessageCircle className="text-(--product-primary)" size={22} aria-hidden />
+              <h3 className="mt-4 text-base font-medium text-(--product-on-surface)">{t('home.aiLayer.cardChatTitle')}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-(--product-on-surface-variant)">{t('home.aiLayer.cardChatBody')}</p>
+            </article>
+            <article className="product-card">
+              <LayoutGrid className="text-(--product-primary)" size={22} aria-hidden />
+              <h3 className="mt-4 text-base font-medium text-(--product-on-surface)">{t('home.aiLayer.cardRankTitle')}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-(--product-on-surface-variant)">{t('home.aiLayer.cardRankBody')}</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <OutcomeMetricsPanel />
 
       <TopRankingsSection language={language} />
 
       {/* Trust & Categories Section */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-black/5 bg-neutral-50">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 border-t border-stone-200/60 bg-linear-to-b from-stone-100/90 to-[#ebe9e6]">
         <div className="max-w-5xl mx-auto space-y-16 sm:space-y-24">
           {/* Trust Counters */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-10 sm:gap-6 border-b border-black/10 pb-14 sm:pb-24">
+          <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-10 sm:gap-6 border-b border-slate-200/80 pb-14 sm:pb-24">
             <div className="flex flex-col items-center gap-4">
-              <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">25.4K</span>
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><Shield size={12} /> {t('home.stats.verified')}</span>
+              <span className="text-5xl md:text-7xl font-black tracking-tighter bg-linear-to-br from-slate-800 to-slate-600 bg-clip-text text-transparent">25.4K</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><Shield size={12} className="text-slate-400" /> {t('home.stats.verified')}</span>
             </div>
             <div className="flex flex-col items-center gap-4">
-              <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">195+</span>
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><Database size={12} /> {t('home.stats.countries')}</span>
+              <span className="text-5xl md:text-7xl font-black tracking-tighter bg-linear-to-br from-slate-800 to-slate-600 bg-clip-text text-transparent">195+</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><Database size={12} className="text-slate-400" /> {t('home.stats.countries')}</span>
             </div>
             <div className="flex flex-col items-center gap-4">
-              <span className="text-5xl md:text-7xl font-black text-black tracking-tighter">100%</span>
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-2"><LayoutGrid size={12} /> {t('home.stats.free')}</span>
+              <span className="text-5xl md:text-7xl font-black tracking-tighter bg-linear-to-br from-slate-800 to-slate-600 bg-clip-text text-transparent">100%</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><LayoutGrid size={12} className="text-slate-400" /> {t('home.stats.free')}</span>
             </div>
           </div>
 
           {/* Quick Access Tiles */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {[
-              { name: 'United Kingdom', key: 'home.reg.uk', color: 'bg-black text-white border-black' },
-              { name: 'United States', key: 'home.reg.us', color: 'bg-white text-black border-black/10 hover:border-black' },
-              { name: 'Germany', key: 'home.reg.de', color: 'bg-white text-black border-black/10 hover:border-black' }
+              { name: 'United Kingdom', key: 'home.reg.uk', color: 'bg-linear-to-br from-slate-800 to-slate-900 text-white border-slate-700 shadow-lg shadow-slate-900/15' },
+              { name: 'United States', key: 'home.reg.us', color: 'bg-white text-stone-900 border-stone-200/90 hover:border-stone-400 hover:shadow-md' },
+              { name: 'Germany', key: 'home.reg.de', color: 'bg-white text-stone-900 border-stone-200/90 hover:border-stone-400 hover:shadow-md' }
             ].map(dest => (
               <a
                 key={dest.name}
                 href={buildSearchHref(dest.name)}
-                className={`p-6 sm:p-10 border transition-all flex flex-col justify-between h-40 sm:h-48 group ${dest.color}`}
+                className={`p-6 sm:p-10 border rounded-2xl transition-all flex flex-col justify-between h-40 sm:h-48 group ${dest.color}`}
               >
-                <MapPin size={24} className={dest.name === 'United Kingdom' ? 'text-white/50' : 'text-black/20'} />
+                <MapPin size={24} className={dest.name === 'United Kingdom' ? 'text-white/50' : 'text-stone-300 group-hover:text-stone-500'} />
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-tighter">{t(dest.key)}</h3>
                   <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">{t('home.reg.view')} &rarr;</span>
@@ -485,17 +530,17 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 sm:py-12 px-4 sm:px-6 border-t border-black/10 bg-white flex flex-col justify-center">
+      <footer className="py-10 sm:py-12 px-4 sm:px-6 border-t border-slate-200/60 bg-white/90 backdrop-blur-sm flex flex-col justify-center">
         <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
-          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left flex-1">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left flex-1">
             {t('footer.copyright')}
           </div>
           <div className="flex flex-1 justify-center items-center gap-6 sm:gap-8 flex-wrap">
-            <Link href="/about" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">{t('nav.about')}</Link>
-            <Link href="/terms" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">{t('nav.terms')}</Link>
-            <ContactMailtoLink className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black" />
+            <Link href="/about" className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-slate-900">{t('nav.about')}</Link>
+            <Link href="/terms" className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-slate-900">{t('nav.terms')}</Link>
+            <ContactMailtoLink className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-slate-900" />
           </div>
-          <div className="flex flex-1 justify-center md:justify-end items-center gap-2 text-black font-bold text-[10px] uppercase tracking-widest">
+          <div className="flex flex-1 justify-center md:justify-end items-center gap-2 text-slate-700 font-bold text-[10px] uppercase tracking-widest">
             {t('footer.status')}
           </div>
         </div>

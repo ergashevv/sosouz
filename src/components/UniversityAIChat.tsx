@@ -218,7 +218,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
             onChange={(event) => setRecommendationCountry(event.target.value)}
             list="university-chat-country-options"
             autoComplete="off"
-            className="w-full rounded-xl border border-black/12 bg-white pl-9 pr-3 py-2.5 text-sm text-neutral-900 outline-none focus:border-[#0a84ff]"
+            className="w-full rounded-xl border border-black/12 bg-white pl-9 pr-3 py-2.5 text-sm text-neutral-900 outline-none focus:border-stone-500"
           />
         </div>
         <datalist id="university-chat-country-options">
@@ -235,7 +235,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
             className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-xs leading-relaxed ${
               message.role === 'assistant'
                 ? 'rounded-bl-md border border-black/8 bg-[#eef0f4] text-neutral-800'
-                : 'ml-auto max-w-[85%] rounded-br-md bg-[#0a84ff] text-white'
+                : 'ml-auto max-w-[85%] rounded-br-md bg-stone-800 text-stone-50'
             }`}
           >
             {message.content}
@@ -283,7 +283,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
           onKeyDown={handleInputKeyDown}
           placeholder={copy.placeholder}
           rows={3}
-          className="w-full resize-none rounded-2xl border border-black/10 bg-white px-3 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#0a84ff]"
+          className="w-full resize-none rounded-2xl border border-black/10 bg-white px-3 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-stone-500"
         />
         <p className="text-[11px] text-neutral-500">
           Press <span className="font-semibold text-neutral-700">Enter</span> to send,{' '}
@@ -309,7 +309,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
           <button
             type="submit"
             disabled={!canSend}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#0a84ff] px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#0077ed] disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-xl bg-stone-800 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-stone-900 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Send size={14} />
             {copy.send}

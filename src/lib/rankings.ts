@@ -19,6 +19,16 @@ const CACHE_NAMESPACE = "rankings:serper-azure";
 /** Keep moderate: very large lists often return truncated/invalid JSON from the model. */
 export const WORLD_RANKING_ENTRY_COUNT = 400;
 
+/**
+ * `buildSnapshot` requires this many rows minimum for world dataset (LLM/dedup sometimes drops 1–3 rows).
+ * Below this, sync still fails so we do not ship half-empty rankings.
+ */
+const WORLD_RANKING_MIN_ACCEPT = Math.max(
+  350,
+  WORLD_RANKING_ENTRY_COUNT -
+    Math.min(20, Math.max(5, Math.ceil(WORLD_RANKING_ENTRY_COUNT * 0.02))),
+);
+
 /** Max universities stored per country (matches UI “top” cap of 100). */
 export const COUNTRY_RANKING_ENTRY_COUNT = 100;
 
@@ -26,6 +36,12 @@ export const COUNTRY_RANKING_ENTRY_COUNT = 100;
 const COUNTRY_RANKING_BATCH_SIZE = Math.min(
   25,
   Math.max(5, Number(process.env.COUNTRY_RANKING_BATCH_SIZE || 10)),
+);
+
+/** World snapshot is extracted in slices so each JSON payload fits model output limits (400 rows in one call truncates and breaks JSON.parse). */
+const WORLD_RANKING_EXTRACTION_BATCH_SIZE = Math.min(
+  150,
+  Math.max(25, Number(process.env.WORLD_RANKING_EXTRACTION_BATCH_SIZE || 100)),
 );
 
 /** HTTP `/api/rankings?country=` runs this many batches before responding; rest finishes in background. */
@@ -135,6 +151,18 @@ function extractJson(input: string) {
   return cleaned.slice(firstBracket, lastBracket + 1);
 }
 
+function parseRankingEntriesJson(text: string): { entries?: unknown[] } {
+  const raw = extractJson(text);
+  try {
+    return JSON.parse(raw) as { entries?: unknown[] };
+  } catch (err) {
+    const preview = raw.length > 400 ? `${raw.slice(0, 400)}…` : raw;
+    throw new Error(
+      `Invalid JSON from ranking LLM (${err instanceof Error ? err.message : String(err)}). Preview: ${preview}`,
+    );
+  }
+}
+
 function stripHtmlToText(html: string) {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -200,6 +228,71 @@ async function fetchSourceExcerpt(url: string): Promise<string> {
   return text.slice(0, SOURCE_EXCERPT_MAX_CHARS);
 }
 
+function normalizeExtractedRankingRows(
+  rows: unknown[],
+  rankMin: number,
+  rankMax: number,
+): RankingEntry[] {
+  const normalized: RankingEntry[] = rows
+    .map((row) => {
+      if (!row || typeof row !== "object") return null;
+      const record = row as Record<string, unknown>;
+      const rank =
+        typeof record.rank === "number" && Number.isFinite(record.rank)
+          ? Math.trunc(record.rank)
+          : Number.NaN;
+      const universityName =
+        typeof record.university_name === "string" ? record.university_name.trim() : "";
+      const country = typeof record.country === "string" ? record.country.trim() : "";
+      const region =
+        typeof record.region === "string" && record.region.trim() ? record.region.trim() : null;
+      const officialWebsite =
+        typeof record.official_website === "string" && record.official_website.trim()
+          ? record.official_website.trim()
+          : null;
+      const sourceUrl =
+        typeof record.source_url === "string" && record.source_url.trim()
+          ? record.source_url.trim()
+          : null;
+      const sourceTitle =
+        typeof record.source_title === "string" && record.source_title.trim()
+          ? record.source_title.trim()
+          : null;
+      const confidence =
+        typeof record.confidence === "number" && Number.isFinite(record.confidence)
+          ? Math.max(0, Math.min(1, record.confidence))
+          : 0.6;
+
+      if (!Number.isFinite(rank) || rank < rankMin || rank > rankMax) return null;
+      if (!universityName || !country) return null;
+
+      const entry: RankingEntry = {
+        rank,
+        university_name: universityName,
+        country,
+        region,
+        state_province: null,
+        official_website: officialWebsite,
+        source_url: sourceUrl,
+        source_title: sourceTitle,
+        confidence,
+      };
+
+      return entry;
+    })
+    .filter((item): item is RankingEntry => item !== null)
+    .sort((a, b) => a.rank - b.rank);
+
+  const uniqueByRank = new Map<number, RankingEntry>();
+  for (const row of normalized) {
+    if (!uniqueByRank.has(row.rank)) {
+      uniqueByRank.set(row.rank, row);
+    }
+  }
+
+  return Array.from(uniqueByRank.values()).sort((a, b) => a.rank - b.rank);
+}
+
 async function extractRankingsWithLlm(args: {
   dataset: "world-top-100" | "south-korea-top-10";
   year: number;
@@ -221,6 +314,64 @@ async function extractRankingsWithLlm(args: {
         `# Source ${index + 1}\nTitle: ${source.title}\nURL: ${source.link}\nSnippet: ${source.snippet}\nExcerpt: ${source.excerpt || "No excerpt available."}`,
     )
     .join("\n\n");
+
+  const runSlice = async (rankMin: number, rankMax: number, sliceLabel: string) => {
+    const sliceCount = rankMax - rankMin + 1;
+    const prompt = `You are a strict data extraction assistant.
+Task: Build ${sliceLabel} for year ${args.year} from sources below. Use the GLOBAL / WORLD university ranking (not a single-country list).
+
+Return ONLY valid JSON in this schema:
+{
+  "entries": [
+    {
+      "rank": ${rankMin},
+      "university_name": "string",
+      "country": "string",
+      "region": "string or null",
+      "official_website": "https://... or null",
+      "source_url": "https://...",
+      "source_title": "string",
+      "confidence": 0.0
+    }
+  ]
+}
+
+Rules:
+- Return exactly ${sliceCount} entries.
+- rank must be unique and sequential from ${rankMin} to ${rankMax} (inclusive).
+- For "country" use standard English names only (e.g. "Brazil" not "Brasil", "Germany" not "Deutschland", "South Korea") so downstream filters match.
+- Prefer official university website for official_website.
+- confidence must be between 0 and 1.
+- Do not include markdown or explanations.
+
+Sources:
+${sourceBlock}`;
+
+    const text = await generateAzureChatCompletionText({
+      messages: [{ role: "user", content: prompt }],
+      deployment: getAzureOpenAIDeploymentByPurpose("reasoning"),
+      temperature: 0.1,
+      maxTokens: 16_000,
+      responseFormat: "json_object",
+    });
+    const parsed = parseRankingEntriesJson(text);
+    const rows = Array.isArray(parsed.entries) ? parsed.entries : [];
+    return normalizeExtractedRankingRows(rows, rankMin, rankMax);
+  };
+
+  if (args.dataset === "world-top-100") {
+    const merged: RankingEntry[] = [];
+    for (let rankMin = 1; rankMin <= targetCount; rankMin += WORLD_RANKING_EXTRACTION_BATCH_SIZE) {
+      const rankMax = Math.min(rankMin + WORLD_RANKING_EXTRACTION_BATCH_SIZE - 1, targetCount);
+      const slice = await runSlice(
+        rankMin,
+        rankMax,
+        `${datasetLabel} — ranks ${rankMin}–${rankMax} only`,
+      );
+      merged.push(...slice);
+    }
+    return merged.sort((a, b) => a.rank - b.rank);
+  }
 
   const prompt = `You are a strict data extraction assistant.
 Task: Build ${datasetLabel} university ranking for year ${args.year} from sources below.
@@ -257,70 +408,12 @@ ${sourceBlock}`;
     messages: [{ role: "user", content: prompt }],
     deployment: getAzureOpenAIDeploymentByPurpose("reasoning"),
     temperature: 0.1,
-    maxTokens: 3000,
+    maxTokens: 4000,
     responseFormat: "json_object",
   });
-  const parsed = JSON.parse(extractJson(text)) as { entries?: unknown[] };
+  const parsed = parseRankingEntriesJson(text);
   const rows = Array.isArray(parsed.entries) ? parsed.entries : [];
-
-  const normalized: RankingEntry[] = rows
-    .map((row) => {
-      if (!row || typeof row !== "object") return null;
-      const record = row as Record<string, unknown>;
-      const rank =
-        typeof record.rank === "number" && Number.isFinite(record.rank)
-          ? Math.trunc(record.rank)
-          : Number.NaN;
-      const universityName =
-        typeof record.university_name === "string" ? record.university_name.trim() : "";
-      const country = typeof record.country === "string" ? record.country.trim() : "";
-      const region =
-        typeof record.region === "string" && record.region.trim() ? record.region.trim() : null;
-      const officialWebsite =
-        typeof record.official_website === "string" && record.official_website.trim()
-          ? record.official_website.trim()
-          : null;
-      const sourceUrl =
-        typeof record.source_url === "string" && record.source_url.trim()
-          ? record.source_url.trim()
-          : null;
-      const sourceTitle =
-        typeof record.source_title === "string" && record.source_title.trim()
-          ? record.source_title.trim()
-          : null;
-      const confidence =
-        typeof record.confidence === "number" && Number.isFinite(record.confidence)
-          ? Math.max(0, Math.min(1, record.confidence))
-          : 0.6;
-
-      if (!Number.isFinite(rank) || rank < 1 || rank > targetCount) return null;
-      if (!universityName || !country) return null;
-
-      const entry: RankingEntry = {
-        rank,
-        university_name: universityName,
-        country,
-        region,
-        state_province: null,
-        official_website: officialWebsite,
-        source_url: sourceUrl,
-        source_title: sourceTitle,
-        confidence,
-      };
-
-      return entry;
-    })
-    .filter((item): item is RankingEntry => item !== null)
-    .sort((a, b) => a.rank - b.rank);
-
-  const uniqueByRank = new Map<number, RankingEntry>();
-  for (const row of normalized) {
-    if (!uniqueByRank.has(row.rank)) {
-      uniqueByRank.set(row.rank, row);
-    }
-  }
-
-  return Array.from(uniqueByRank.values()).sort((a, b) => a.rank - b.rank);
+  return normalizeExtractedRankingRows(rows, 1, targetCount);
 }
 
 function countryBatchRowToEntry(
@@ -493,7 +586,7 @@ ${sourceBlock}`;
       maxTokens: 2400,
       responseFormat: "json_object",
     });
-    const parsed = JSON.parse(extractJson(text)) as { entries?: unknown[] };
+    const parsed = parseRankingEntriesJson(text);
     const rows = Array.isArray(parsed.entries) ? parsed.entries : [];
     return normalizeCountryBatchFromParsedRows(rows, rankStart, rankEnd);
   };
@@ -1090,9 +1183,15 @@ async function buildSnapshot(dataset: CoreRankingDataset, year: number): Promise
     sources: sourcesWithExcerpts,
   });
   const targetCount = dataset === "world-top-100" ? WORLD_RANKING_ENTRY_COUNT : 10;
-  if (extracted.length < targetCount) {
+  const minAccept = dataset === "world-top-100" ? WORLD_RANKING_MIN_ACCEPT : targetCount;
+  if (extracted.length < minAccept) {
     throw new Error(
-      `Incomplete ranking extraction for ${dataset}: expected ${targetCount}, got ${extracted.length}.`,
+      `Incomplete ranking extraction for ${dataset}: expected at least ${minAccept}, got ${extracted.length}.`,
+    );
+  }
+  if (dataset === "world-top-100" && extracted.length < targetCount) {
+    console.warn(
+      `[rankings] world snapshot short ${extracted.length}/${targetCount}; saving partial list (min ${WORLD_RANKING_MIN_ACCEPT}).`,
     );
   }
   const enriched = await Promise.all(extracted.map((entry) => enrichWithHipo(entry)));
@@ -1195,26 +1294,82 @@ export async function getRankingSnapshot(args: {
     };
   }
 
-  const primary = await findRankingCacheRow(args.dataset, requestedYear);
-  if (primary) {
-    return {
-      snapshot: primary.row.results as unknown as RankingSnapshotPayload,
-      storedAt: primary.row.last_updated,
-      resolvedKeyYear: primary.year,
-      usedPriorYearKey: false,
-    };
+  /** Look back several years so older snapshots still work (e.g. DB has 2024 only, client asks 2026). */
+  const MAX_YEAR_LOOKBACK = 12;
+  for (let offset = 0; offset <= MAX_YEAR_LOOKBACK; offset += 1) {
+    const tryYear = requestedYear - offset;
+    if (tryYear < 2000) break;
+    const hit = await findRankingCacheRow(args.dataset, tryYear);
+    if (hit) {
+      return {
+        snapshot: hit.row.results as unknown as RankingSnapshotPayload,
+        storedAt: hit.row.last_updated,
+        resolvedKeyYear: hit.year,
+        usedPriorYearKey: offset > 0,
+      };
+    }
   }
 
-  const fallbackYear = requestedYear - 1;
-  const fallback = await findRankingCacheRow(args.dataset, fallbackYear);
-  if (!fallback) return null;
+  return null;
+}
 
-  return {
-    snapshot: fallback.row.results as unknown as RankingSnapshotPayload,
-    storedAt: fallback.row.last_updated,
-    resolvedKeyYear: fallback.year,
-    usedPriorYearKey: true,
-  };
+const coreRankingEnsureLocks = new Map<number, Promise<void>>();
+
+/** After a failed on-demand sync, skip retrying for this many ms (avoids 30s+ stalls on every refresh). */
+const CORE_SYNC_FAILURE_COOLDOWN_MS = Math.max(
+  60_000,
+  Number(process.env.RANKINGS_SYNC_FAILURE_COOLDOWN_MS || 300_000),
+);
+const coreSyncCooldownUntil = new Map<number, number>();
+
+/**
+ * Reads cache like getRankingSnapshot; if no row and month is not pinned, may run
+ * syncMonthlyRankings once per calendar year (Serper + Azure) so the first API hit can fill the DB.
+ * Set RANKINGS_DISABLE_ON_DEMAND_SYNC=1 to only allow /api/rankings/sync (cron) to populate.
+ */
+export async function ensureCoreRankingSnapshot(args: {
+  dataset: CoreRankingDataset;
+  year?: number;
+  monthSnapshot?: string;
+}): Promise<RankingSnapshotLoadResult | null> {
+  const existing = await getRankingSnapshot(args);
+  if (existing) return existing;
+
+  if (args.monthSnapshot) {
+    return null;
+  }
+
+  if (process.env.RANKINGS_DISABLE_ON_DEMAND_SYNC === "1") {
+    return null;
+  }
+
+  if (!SERPER_API_KEY || !isAzureOpenAiConfigured()) {
+    return null;
+  }
+
+  const year = args.year ?? new Date().getUTCFullYear();
+  const cooldownUntil = coreSyncCooldownUntil.get(year);
+  if (cooldownUntil && Date.now() < cooldownUntil) {
+    return null;
+  }
+
+  let pending = coreRankingEnsureLocks.get(year);
+  if (!pending) {
+    pending = (async () => {
+      try {
+        await syncMonthlyRankings(year);
+        coreSyncCooldownUntil.delete(year);
+      } catch (err) {
+        console.error("[rankings] ensureCoreRankingSnapshot sync failed", err);
+        coreSyncCooldownUntil.set(year, Date.now() + CORE_SYNC_FAILURE_COOLDOWN_MS);
+      }
+    })();
+    coreRankingEnsureLocks.set(year, pending);
+    void pending.finally(() => coreRankingEnsureLocks.delete(year));
+  }
+  await pending;
+
+  return getRankingSnapshot(args);
 }
 
 export async function hasMonthlySnapshots(year = new Date().getUTCFullYear()) {

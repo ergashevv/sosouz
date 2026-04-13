@@ -114,7 +114,7 @@ export function ConsentBanner() {
           <p className="text-sm font-bold text-neutral-900">{t("cookie.analytics.title")}</p>
           <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">{t("cookie.analytics.body")}</p>
           <p className="text-[11px] text-neutral-500">
-            <Link href="/terms" className="font-semibold text-blue-700 underline decoration-blue-200 hover:text-blue-800">
+            <Link href="/terms" className="font-semibold text-stone-700 underline decoration-stone-300 hover:text-stone-900">
               {t("cookie.analytics.termsLink")}
             </Link>
           </p>

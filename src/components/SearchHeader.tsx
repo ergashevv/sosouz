@@ -9,6 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import HeaderAccountActions from '@/components/HeaderAccountActions';
 import Link from 'next/link';
 import { useRecommendedUniversities } from '@/lib/useRecommendedUniversities';
+import { buildTopUniversityPath } from '@/lib/top-university-defaults';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 
@@ -48,7 +49,8 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
   const mobileLinks = [
     { href: '/', label: t('nav.home') },
     { href: '/search', label: t('nav.search') },
-    { href: '/top-university', label: t('nav.top') },
+    { href: '/ai-studio', label: t('nav.aiStudio') },
+    { href: buildTopUniversityPath({}), label: t('nav.top') },
     { href: '/about', label: t('nav.about') },
     { href: '/students', label: t('nav.students') },
   ];
@@ -156,8 +158,8 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
     <>
       <header
         ref={logoHeaderRef}
-        className={`${shouldStickHeader ? 'sticky top-0' : 'relative w-full'} z-50 border-b border-neutral-200 transition-all duration-300 ${
-          isLogoStickyElevated ? 'bg-(--bg-surface) shadow-none' : 'bg-(--bg-surface)'
+        className={`${shouldStickHeader ? 'sticky top-0' : 'relative w-full'} z-50 border-b border-slate-200/80 backdrop-blur-md transition-all duration-300 ${
+          isLogoStickyElevated ? 'bg-white/90 shadow-sm' : 'bg-white/80'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-3 pt-[max(calc(env(safe-area-inset-top)+12px),12px)] sm:pb-4 sm:pt-[max(calc(env(safe-area-inset-top)+16px),16px)]">
@@ -167,8 +169,8 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
               className="flex flex-col cursor-pointer"
               onClick={() => router.push('/')}
             >
-              <span className={`text-2xl sm:text-3xl tracking-tight text-neutral-900 leading-none ${outfit.className}`}>
-                soso.
+              <span className={`text-2xl sm:text-3xl tracking-tight text-slate-800 leading-none ${outfit.className}`}>
+                soso<span className="text-stone-600">.</span>
               </span>
             </div>
 
