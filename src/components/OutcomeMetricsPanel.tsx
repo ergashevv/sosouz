@@ -1,22 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
-  EMPTY_OUTCOME_METRICS,
-  getOutcomeMetricsSnapshot,
-  onOutcomeMetricsUpdated,
+  getOutcomeMetricsSnapshotString,
+  getServerOutcomeMetricsSnapshotString,
+  subscribeOutcomeMetrics,
   type OutcomeMetricsSnapshot,
 } from "@/lib/analytics";
 
 export default function OutcomeMetricsPanel() {
   const { t } = useLanguage();
-  const [metrics, setMetrics] = useState<OutcomeMetricsSnapshot>(EMPTY_OUTCOME_METRICS);
-
-  useEffect(() => {
-    setMetrics(getOutcomeMetricsSnapshot());
-    return onOutcomeMetricsUpdated(setMetrics);
-  }, []);
+  const metricsJson = useSyncExternalStore(
+    subscribeOutcomeMetrics,
+    getOutcomeMetricsSnapshotString,
+    getServerOutcomeMetricsSnapshotString,
+  );
+  const metrics = useMemo(() => JSON.parse(metricsJson) as OutcomeMetricsSnapshot, [metricsJson]);
 
   return (
     <section className="px-4 sm:px-6 pb-10 sm:pb-14">

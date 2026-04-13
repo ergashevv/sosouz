@@ -95,6 +95,23 @@ export function onOutcomeMetricsUpdated(
   return () => window.removeEventListener(METRICS_EVENT_NAME, handler);
 }
 
+/** For `useSyncExternalStore`: subscribe without setState-in-effect. */
+export function subscribeOutcomeMetrics(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => onStoreChange();
+  window.addEventListener(METRICS_EVENT_NAME, handler);
+  return () => window.removeEventListener(METRICS_EVENT_NAME, handler);
+}
+
+/** Stable string snapshot for `useSyncExternalStore` (Object.is compares strings). */
+export function getOutcomeMetricsSnapshotString(): string {
+  return JSON.stringify(getOutcomeMetricsSnapshot());
+}
+
+export function getServerOutcomeMetricsSnapshotString(): string {
+  return JSON.stringify(EMPTY_OUTCOME_METRICS);
+}
+
 export function trackEvent(name: string, params: EventParams = {}): void {
   if (typeof window === "undefined") return;
   if (!hasAnalyticsConsent()) return;
