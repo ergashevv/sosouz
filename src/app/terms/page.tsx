@@ -3,8 +3,15 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import ContactMailtoLink from '@/components/ContactMailtoLink';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getContactEmail, getSiteOperatorLegalName, getSiteOperatorHandle } from '@/lib/site';
 
 export default function TermsPage() {
+  const { t } = useLanguage();
+  const operatorName = getSiteOperatorLegalName();
+  const operatorHandle = getSiteOperatorHandle();
+  const contactEmail = getContactEmail();
+
   return (
     <main className="min-h-screen bg-white flex flex-col">
       <nav className="flex items-center px-4 sm:px-6 py-5 sm:py-8 border-b border-black/5 bg-white">
@@ -32,8 +39,22 @@ export default function TermsPage() {
             
             <div className="space-y-6 sm:space-y-8 mt-8 sm:mt-12 text-xs sm:text-sm font-bold uppercase tracking-wide sm:tracking-widest leading-loose text-neutral-600">
                <p>
+                 <strong className="text-black block mb-2">0. Operator</strong>
+                 The SOSO brand and website are operated by <span className="text-black">{operatorName}</span> as an
+                 individual (natural person), not as a registered company. Public username: @{operatorHandle}. Primary
+                 contact:{' '}
+                 <a href={`mailto:${contactEmail}`} className="text-black underline underline-offset-2">
+                   {contactEmail}
+                 </a>
+                 .
+               </p>
+               <p>
                  <strong className="text-black block mb-2">1. Acceptance of Terms</strong>
-                 By accessing or using the SOSO university discovery tool, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not access the service.
+                 By accessing or using the SOSO university discovery tool, you agree to be bound by these Terms of Service and our{' '}
+                 <Link href="/privacy" className="text-black underline underline-offset-2">
+                   Privacy Policy
+                 </Link>
+                 . If you disagree with any part of the terms, you may not access the service.
                </p>
                <p>
                  <strong className="text-black block mb-2">2. Data Accuracy and Liability</strong>
@@ -57,6 +78,9 @@ export default function TermsPage() {
             <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left">
                &copy; 2026 SOSO 
             </div>
+            <Link href="/privacy" className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black">
+              {t('nav.privacy')}
+            </Link>
             <ContactMailtoLink className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em] hover:text-black" />
          </div>
       </footer>

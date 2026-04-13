@@ -53,6 +53,7 @@ function SearchHeaderContent({ fixed = true, showSearchForm = true }: SearchHead
     { href: buildTopUniversityPath({}), label: t('nav.top') },
     { href: '/about', label: t('nav.about') },
     { href: '/students', label: t('nav.students') },
+    { href: '/privacy', label: t('nav.privacy') },
   ];
 
   const buildSearchHref = (country: string, searchQuery?: string) => {

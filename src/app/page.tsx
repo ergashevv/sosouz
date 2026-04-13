@@ -30,6 +30,7 @@ import { useRecommendedUniversities } from '@/lib/useRecommendedUniversities';
 import OutcomeMetricsPanel from '@/components/OutcomeMetricsPanel';
 import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
 import { buildTopUniversityPath } from '@/lib/top-university-defaults';
+import { getSiteOperatorLegalName } from '@/lib/site';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['800'] });
 const INDEX_START_VALUE = 0;
@@ -226,6 +227,7 @@ export default function Home() {
             <Link href={buildTopUniversityPath({})} className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.top')}</Link>
             <Link href="/about" className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
             <Link href="/students" className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
+            <Link href="/privacy" className="text-[10px] sm:text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.privacy')}</Link>
 
             <div className="h-4 w-px bg-slate-200 mx-1"></div>
 
@@ -255,6 +257,7 @@ export default function Home() {
               <Link href={buildTopUniversityPath({})} onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.top')}</Link>
               <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.about')}</Link>
               <Link href="/students" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.students')}</Link>
+              <Link href="/privacy" onClick={() => setMobileMenuOpen(false)} className="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition-colors uppercase tracking-widest">{t('nav.privacy')}</Link>
             </div>
 
             <div className="border-t border-slate-100 pt-4">
@@ -531,18 +534,27 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="py-10 sm:py-12 px-4 sm:px-6 border-t border-slate-200/60 bg-white/90 backdrop-blur-sm flex flex-col justify-center">
-        <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
-          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left flex-1">
-            {t('footer.copyright')}
-          </div>
-          <div className="flex flex-1 justify-center items-center gap-6 sm:gap-8 flex-wrap">
-            <Link href="/about" className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-slate-900">{t('nav.about')}</Link>
+        <div className="max-w-7xl mx-auto w-full flex flex-col gap-5">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] sm:tracking-[0.4em] text-center md:text-left flex-1">
+              {t('footer.copyright')}
+            </div>
+            <div className="flex flex-1 justify-center items-center gap-6 sm:gap-8 flex-wrap">
+              <Link href="/about" className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-slate-900">{t('nav.about')}</Link>
             <Link href="/terms" className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-slate-900">{t('nav.terms')}</Link>
+            <Link href="/privacy" className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-slate-900">{t('nav.privacy')}</Link>
             <ContactMailtoLink className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] hover:text-slate-900" />
+            </div>
+            <div className="flex flex-1 justify-center md:justify-end items-center gap-2 text-slate-700 font-bold text-[10px] uppercase tracking-widest">
+              {t('footer.status')}
+            </div>
           </div>
-          <div className="flex flex-1 justify-center md:justify-end items-center gap-2 text-slate-700 font-bold text-[10px] uppercase tracking-widest">
-            {t('footer.status')}
-          </div>
+          <p className="text-center text-[10px] font-semibold text-slate-400 uppercase tracking-[0.18em]">
+            <span className="text-slate-500">{t('footer.operator')}:</span>{' '}
+            <span className="text-slate-600 normal-case tracking-normal">{getSiteOperatorLegalName()}</span>
+            <span className="mx-2 opacity-50">·</span>
+            <ContactMailtoLink className="text-slate-600 normal-case tracking-normal hover:text-slate-900" />
+          </p>
         </div>
       </footer>
     </main>

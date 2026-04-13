@@ -17,6 +17,7 @@ export const translations: InternalDict = {
   "nav.students": { en: "For Students", ru: "Студентам", uz: "Talabalar Uchun" },
   "nav.aiStudio": { en: "AI Studio", ru: "AI Studio", uz: "AI Studio" },
   "nav.terms": { en: "Terms of Service", ru: "Условия Использования", uz: "Foydalanish Shartlari" },
+  "nav.privacy": { en: "Privacy", ru: "Конфиденциальность", uz: "Maxfiylik" },
   "header.menu.navigation": { en: "Navigation", ru: "Навигация", uz: "Navigatsiya" },
   "header.menu.language": { en: "Language", ru: "Язык", uz: "Til" },
   "header.menu.account": { en: "Account", ru: "Аккаунт", uz: "Hisob" },
@@ -483,9 +484,11 @@ export const translations: InternalDict = {
   "cookie.analytics.accept": { en: "Accept analytics", ru: "Разрешить аналитику", uz: "Analitikaga rozilik" },
   "cookie.analytics.reject": { en: "Essential only", ru: "Только необходимые", uz: "Faqat zarur" },
   "cookie.analytics.termsLink": { en: "Terms", ru: "Условия", uz: "Shartlar" },
+  "cookie.analytics.privacyLink": { en: "Privacy Policy", ru: "Политика конфиденциальности", uz: "Maxfiylik siyosati" },
 
   // Footer
   "footer.copyright": { en: "© 2026 SOSO Education", ru: "© 2026 SOSO Образование", uz: "© 2026 SOSO Ta'lim" },
+  "footer.operator": { en: "Operator", ru: "Оператор", uz: "Operator" },
   "footer.status": { en: "All systems operational", ru: "Все системы работают", uz: "Barcha tizimlar ishlamoqda" },
 
   // About Page
@@ -594,6 +597,39 @@ export const translations: InternalDict = {
     ru: "Интерфейс и подсказки SOSO поддерживают английский, узбекский и русский языки.",
     uz: "SOSO interfeysi va yo'l-yo'riqlari ingliz, o'zbek va rus tillarini qo'llab-quvvatlaydi.",
   },
+  "about.operatorTitle": { en: "Site operator", ru: "Оператор сайта", uz: "Sayt operatori" },
+  "about.operatorLead": {
+    en: "The SOSO brand and this website are operated by an independent individual (natural person), not a registered legal entity. The details below are published for transparency and professional correspondence.",
+    ru: "Бренд SOSO и этот сайт ведёт независимый частный основатель (физическое лицо), без отдельной зарегистрированной компании. Ниже — данные для прозрачности и деловой переписки.",
+    uz: "SOSO brendi va ushbu veb-saytni mustaqil jismoniy shaxs (yakka tartib) boshqaradi; alohida ro‘yxatdan o‘tgan yuridik tuzilma emas. Quyida shaffoflik va rasmiy yozishmalar uchun ma’lumotlar keltirilgan.",
+  },
+  "about.operatorNameLabel": {
+    en: "Legal name (as on ID)",
+    ru: "ФИО (как в документе)",
+    uz: "Pasport bo‘yicha F.I.Sh.",
+  },
+  "about.operatorRole": {
+    en: "Role",
+    ru: "Роль",
+    uz: "Rol",
+  },
+  "about.operatorRoleValue": {
+    en: "Founder & operator of the SOSO product",
+    ru: "Основатель и оператор продукта SOSO",
+    uz: "SOSO mahsulotining asoschisi va operatori",
+  },
+  "about.operatorBrandLabel": { en: "Brand", ru: "Бренд", uz: "Brend" },
+  "about.operatorBrandValue": { en: "SOSO", ru: "SOSO", uz: "SOSO" },
+  "about.operatorHandleLabel": {
+    en: "Public username",
+    ru: "Публичный никнейм",
+    uz: "Ochiq username",
+  },
+  "about.operatorHandleHint": {
+    en: "Used for code repositories and professional profiles where applicable.",
+    ru: "Используется в репозиториях кода и профессиональных профилях, где это уместно.",
+    uz: "Kod repozitoriyalari va professional profillarda qo‘llaniladi.",
+  },
   "about.contactTitle": { en: "Contact", ru: "Контакты", uz: "Aloqa" },
   "about.contactLead": {
     en: "Questions about the platform, partnerships, or data corrections — reach us by email.",
@@ -607,6 +643,69 @@ export const translations: InternalDict = {
     ru: "Мы читаем все письма; ответ может занять несколько рабочих дней. По срочным решениям (офер, виза) ориентируйтесь на официальные письма вуза и госорганов.",
     uz: "Har bir xabarni oʻqimiz; javob bir necha ish kuni suralishi mumkin. Kontrakt yoki viza boʻyicha shoshilinch qarorlar uchun rasmiy xat va hujjatlarga tayaning.",
   },
+
+  "privacy.metaTitle": { en: "Privacy Policy", ru: "Политика конфиденциальности", uz: "Maxfiylik siyosati" },
+  "privacy.title": { en: "Privacy Policy", ru: "Политика конфиденциальности", uz: "Maxfiylik siyosati" },
+  "privacy.updated": {
+    en: "Last updated: 13 April 2026",
+    ru: "Последнее обновление: 13 апреля 2026",
+    uz: "Oxirgi yangilanish: 2026-yil 13-aprel",
+  },
+  "privacy.intro": {
+    en: "This Privacy Policy explains how SOSO (“we”, “us”) collects, uses, and protects information when you use soso.uz and related services. SOSO is operated by an individual (natural person), not a registered company. By using the site, you agree to this policy.",
+    ru: "Настоящая Политика конфиденциальности описывает, как SOSO («мы») собирает, использует и защищает информацию при использовании soso.uz и связанных сервисов. SOSO управляется физическим лицом, а не зарегистрированной компанией. Пользуясь сайтом, вы соглашаетесь с этой политикой.",
+    uz: "Ushbu Maxfiylik siyosati SOSO (“biz”) soso.uz va tegishli xizmatlardan foydalaningizda ma’lumotlarni qanday yig‘ishi, ishlatishi va himoya qilishini tushuntiradi. SOSO yakka tartibdagi jismoniy shaxs tomonidan boshqariladi, ro‘yxatdan o‘tgan kompaniya emas. Saytdan foydalanish bu siyosatga rozilik berish hisoblanadi.",
+  },
+  "privacy.s1Title": { en: "1. Who is responsible", ru: "1. Кто отвечает за обработку", uz: "1. Kim mas’ul" },
+  "privacy.s1Body": {
+    en: "The data controller for this website is the operator listed on our About page (legal name, email, and public username). For privacy-related requests, contact us at the email address shown in the footer and on the About page.",
+    ru: "Ответственным за обработку данных на этом сайте является оператор, указанный на странице «О нас» (ФИО, email и публичный ник). По вопросам конфиденциальности пишите на адрес, указанный в подвале сайта и на странице «О нас».",
+    uz: "Ushbu veb-saytdagi ma’lumotlarni qayta ishlash uchun mas’ul shaxs «Biz haqimizda» sahifasida ko‘rsatilgan operator (F.I.Sh., email va ochiq username). Maxfiylik bo‘yicha so‘rovlar uchun sayt pastki qismi va «Biz haqimizda» sahifasidagi email manziliga yozing.",
+  },
+  "privacy.s2Title": { en: "2. What information we process", ru: "2. Какие данные мы обрабатываем", uz: "2. Qanday ma’lumotlar qayta ishlanadi" },
+  "privacy.s2Body": {
+    en: "We may process: (a) technical data automatically sent by your browser (such as IP address, user agent, and approximate region required for security and routing); (b) usage data related to pages and features you use; (c) account or session data if you sign in; (d) messages you send us by email; (e) aggregated analytics and diagnostics when you consent to analytics cookies. We do not require you to upload identity documents to browse public university information.",
+    ru: "Мы можем обрабатывать: (a) технические данные, которые браузер передаёт автоматически (IP, user agent, приблизительный регион — для безопасности и маршрутизации); (b) данные об использовании страниц и функций; (c) данные аккаунта/сессии при входе; (d) сообщения, которые вы отправляете на email; (e) агрегированную аналитику при согласии на аналитические cookie. Для просмотра публичной информации об университетах мы не требуем загрузки документов, удостоверяющих личность.",
+    uz: "Quyidagilar qayta ishlanishi mumkin: (a) brauzer avtomatik yuboradigan texnik ma’lumotlar (IP, user agent, taxminiy mintaqa — xavfsizlik va marshrutlash uchun); (b) siz foydalangan sahifalar va funksiyalar bo‘yicha foydalanish ma’lumotlari; (c) kirishda hisob/yarim ma’lumotlar; (d) email orqali yuborgan xabarlaringiz; (e) analitika cookie’lariga rozilik berganingizda yig‘ilgan analitika va diagnostika. Ochiq universitet ma’lumotlarini ko‘rish uchun shaxsni tasdiqlovchi hujjatlarni yuklash talab qilinmaydi.",
+  },
+  "privacy.s3Title": { en: "3. Cookies and local storage", ru: "3. Cookie и локальное хранилище", uz: "3. Cookie va mahalliy xotira" },
+  "privacy.s3Body": {
+    en: "We use cookies and similar technologies that are strictly necessary for the site to function (for example, language preference and security). Where you consent, we also use analytics cookies. Local storage may be used for non-sensitive UI preferences (for example, analytics consent state). You can change or withdraw analytics consent via the cookie banner and your browser settings.",
+    ru: "Мы используем строго необходимые cookie для работы сайта (например, язык и безопасность). При вашем согласии — также аналитические cookie. Локальное хранилище может использоваться для несущественных настроек интерфейса (например, состояние согласия на аналитику). Согласие на аналитику можно изменить через баннер и настройки браузера.",
+    uz: "Sayt ishlashi uchun zarur cookie va shu kabi texnologiyalardan foydalanamiz (masalan, til va xavfsizlik). Roziligingiz bilan analitika cookie’lari ham. Mahalliy xotira nozik bo‘lmagan sozlamalar uchun ishlatilishi mumkin (masalan, analitika rozilik holati). Analitika roziligini banner va brauzer sozlamalari orqali o‘zgartirish yoki bekor qilish mumkin.",
+  },
+  "privacy.s4Title": { en: "4. Analytics and marketing tags", ru: "4. Аналитика и теги", uz: "4. Analitika va teglar" },
+  "privacy.s4Body": {
+    en: "If you accept analytics in the cookie banner, we may load measurement tools (e.g. Google Tag Manager / Google Analytics) to understand how the app is used in aggregate. We do not use advertising personalization for visitors based on this policy configuration. You may reject analytics; essential-only mode remains available.",
+    ru: "Если вы соглашаетесь с аналитикой в баннере, мы можем подключать инструменты измерений (например, Google Tag Manager / Google Analytics) для агрегированной статистики. Персонализация рекламы для посетителей по этой конфигурации не используется. Вы можете отказаться от аналитики — доступен режим только необходимых cookie.",
+    uz: "Cookie bannerida analitikaga rozilik bersangiz, yig‘ma statistika uchun o‘lchov vositalari (masalan, Google Tag Manager / Google Analytics) yuklanishi mumkin. Ushbu sozlamalarda tashrif buyuruvchilar uchun reklama shaxsiylashtirish ishlatilmaydi. Analitikani rad etish mumkin — faqat zarur rejim mavjud.",
+  },
+  "privacy.s5Title": { en: "5. Third parties and hosting", ru: "5. Третьи стороны и хостинг", uz: "5. Uchinchi tomonlar va hosting" },
+  "privacy.s5Body": {
+    en: "The service is hosted on modern cloud infrastructure (e.g. Vercel). We may use public university data sources and APIs (for example, open directories) to display information. Those providers process data under their own terms. Where we integrate AI features, prompts are processed by our configured AI provider according to our security practices; do not paste sensitive personal data into public forms unless necessary.",
+    ru: "Сервис размещён на облачной инфраструктуре (например, Vercel). Мы можем использовать открытые источники и API университетских данных для отображения информации. Эти провайдеры обрабатывают данные на своих условиях. ИИ‑функции обрабатываются у выбранного нами провайдера; не вставляйте чувствительные персональные данные в публичные формы без необходимости.",
+    uz: "Xizmat zamonaviy bulut infratuzilmasida host qilinadi (masalan, Vercel). Ma’lumotlarni ko‘rsatish uchun ochiq universitet manbalari va API’lar ishlatilishi mumkin. Ular o‘z shartlari bilan ishlaydi. AI funksiyalari sozlangan provayder orqali qayta ishlanadi; kerak bo‘lmasa, ochiq formalarga sezilarli shaxsiy ma’lumotlarni qo‘ymang.",
+  },
+  "privacy.s6Title": { en: "6. Security and retention", ru: "6. Безопасность и хранение", uz: "6. Xavfsizlik va saqlash" },
+  "privacy.s6Body": {
+    en: "We apply reasonable technical and organizational measures to protect the service. Logs and backups may be retained for a limited period for security and reliability. Retention periods may vary by data type and legal obligations. Aggregated analytics may be stored longer in a non-identifying form.",
+    ru: "Мы применяем разумные технические и организационные меры защиты. Логи и резервные копии могут храниться ограниченное время для безопасности и стабильности. Сроки зависят от типа данных и законов. Агрегированная аналитика может храниться дольше в обезличенном виде.",
+    uz: "Xizmatni himoya qilish uchun mantiqiy texnik va tashkiliy choralarni qo‘llaymiz. Log va zaxira nusxalar xavfsizlik va barqarorlik uchun cheklangan muddat saqlanishi mumkin. Muddatlar ma’lumot turi va qonuniy talablarga qarab farq qiladi. Yig‘ma analitika shaxsni aniqlamasdan uzoqroq saqlanishi mumkin.",
+  },
+  "privacy.s7Title": { en: "7. Your rights and contact", ru: "7. Ваши права и контакты", uz: "7. Huquqlaringiz va aloqa" },
+  "privacy.s7Body": {
+    en: "Depending on applicable law, you may have rights to access, delete, or restrict certain processing of your personal data. To exercise these rights or ask questions about this policy, email us at the contact address listed on the site. We will respond within a reasonable time. If you are not satisfied, you may contact your local data protection authority.",
+    ru: "В зависимости от применимого права вы можете иметь права на доступ, удаление или ограничение обработки персональных данных. Для реализации прав или вопросов по политике напишите на адрес, указанный на сайте. Мы ответим в разумный срок. При необходимости вы можете обратиться в надзорный орган по защите данных.",
+    uz: "Amaldagi qonunga qarab, shaxsiy ma’lumotlaringizga kirish, o‘chirish yoki qayta ishlashni cheklash huquqlaringiz bo‘lishi mumkin. Ushbu huquqlarni yoki siyosat bo‘yicha savollarni amalga oshirish uchun saytda ko‘rsatilgan manzilga yozing. Maqbul muddatda javob beramiz. Zarurat bo‘lsa, mahalliy ma’lumotlarni himoya qilish organiga murojaat qilishingiz mumkin.",
+  },
+  "privacy.s8Title": { en: "8. Changes to this policy", ru: "8. Изменения политики", uz: "8. Siyosatga o‘zgartirishlar" },
+  "privacy.s8Body": {
+    en: "We may update this Privacy Policy from time to time. The “Last updated” date at the top will change when we do. Continued use of the site after changes means you accept the updated policy.",
+    ru: "Мы можем обновлять эту Политику время от времени. Дата «Последнее обновление» вверху будет меняться. Продолжение использования сайта после изменений означает согласие с новой редакцией.",
+    uz: "Ushbu Maxfiylik siyosatini vaqti-vaqti bilan yangilashimiz mumkin. Yuqoridagi «Oxirgi yangilanish» sanasi o‘zgaradi. O‘zgarishlardan keyin saytdan foydalanish yangilangan siyosatga rozilik hisoblanadi.",
+  },
+  "privacy.back": { en: "Back to Home", ru: "На главную", uz: "Bosh sahifaga" },
+
   "about.ctaSearch": { en: "Open search", ru: "Открыть поиск", uz: "Qidiruvni ochish" },
   "about.ctaStudents": { en: "Student hub", ru: "Раздел для студентов", uz: "Talabalar markazi" },
   "about.ctaChat": { en: "AI advisor", ru: "ИИ‑советник", uz: "AI maslahatchi" },

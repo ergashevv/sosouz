@@ -14,7 +14,13 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import ContactMailtoLink from '@/components/ContactMailtoLink';
 import SearchHeader from '@/components/SearchHeader';
-import { getSiteUrl } from '@/lib/site';
+import {
+  getSiteUrl,
+  getSiteOperatorLegalName,
+  getSiteOperatorHandle,
+  getSiteOperatorProfileUrl,
+  SITE_BRAND_NAME,
+} from '@/lib/site';
 
 const softPanel =
   'edge-panel relative overflow-hidden p-6 sm:p-8 lg:p-10';
@@ -26,6 +32,9 @@ const answerIconWrap =
 export default function AboutPage() {
   const { t } = useLanguage();
   const siteUrl = getSiteUrl();
+  const operatorName = getSiteOperatorLegalName();
+  const operatorHandle = getSiteOperatorHandle();
+  const operatorProfileUrl = getSiteOperatorProfileUrl();
   const faqItems = [
     { q: t('about.faq1Q'), a: t('about.faq1A') },
     { q: t('about.faq2Q'), a: t('about.faq2A') },
@@ -111,6 +120,56 @@ export default function AboutPage() {
             <div className="mt-4 sm:mt-5 space-y-4 text-base sm:text-lg text-neutral-600 leading-relaxed font-medium">
               <p>{t('about.dataP1')}</p>
               <p>{t('about.dataP2')}</p>
+            </div>
+          </div>
+
+          <div className={softPanel}>
+            <div className="relative z-10 space-y-6 sm:space-y-8">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight">{t('about.operatorTitle')}</h2>
+                <p className="mt-3 text-sm sm:text-base text-neutral-600 leading-relaxed">{t('about.operatorLead')}</p>
+              </div>
+              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 text-sm sm:text-base">
+                <div className="edge-panel px-4 py-4">
+                  <dt className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
+                    {t('about.operatorNameLabel')}
+                  </dt>
+                  <dd className="font-semibold text-neutral-900">{operatorName}</dd>
+                </div>
+                <div className="edge-panel px-4 py-4">
+                  <dt className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
+                    {t('about.operatorRole')}
+                  </dt>
+                  <dd className="font-medium text-neutral-800 leading-snug">{t('about.operatorRoleValue')}</dd>
+                </div>
+                <div className="edge-panel px-4 py-4">
+                  <dt className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
+                    {t('about.operatorBrandLabel')}
+                  </dt>
+                  <dd className="font-semibold text-neutral-900">{SITE_BRAND_NAME}</dd>
+                </div>
+                <div className="edge-panel px-4 py-4">
+                  <dt className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
+                    {t('about.operatorHandleLabel')}
+                  </dt>
+                  <dd className="font-semibold text-neutral-900">
+                    {operatorProfileUrl ? (
+                      <a
+                        href={operatorProfileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 hover:underline break-all"
+                      >
+                        @{operatorHandle}
+                        <ExternalLink size={14} className="shrink-0 opacity-45" aria-hidden />
+                      </a>
+                    ) : (
+                      <>@{operatorHandle}</>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">{t('about.operatorHandleHint')}</p>
             </div>
           </div>
 
@@ -206,6 +265,9 @@ export default function AboutPage() {
             </Link>
             <Link href="/terms" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">
               {t('nav.terms')}
+            </Link>
+            <Link href="/privacy" className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors">
+              {t('nav.privacy')}
             </Link>
             <ContactMailtoLink className="text-sm font-semibold text-neutral-600 hover:text-black transition-colors" />
           </div>

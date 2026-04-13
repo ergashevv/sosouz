@@ -1,5 +1,9 @@
+import { getContactEmail, getSiteOperatorLegalName } from "@/lib/site";
+
 function siteJsonLd(siteUrl: string) {
   const clean = siteUrl.replace(/\/$/, "");
+  const email = getContactEmail();
+  const operatorName = getSiteOperatorLegalName();
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -8,8 +12,20 @@ function siteJsonLd(siteUrl: string) {
         "@id": `${clean}/#organization`,
         name: "SOSO",
         url: clean,
+        email,
+        privacyPolicy: `${clean}/privacy`,
         description:
           "Global university discovery and search — live higher-education listings, rankings context, and institutional research.",
+        founder: {
+          "@type": "Person",
+          name: operatorName,
+        },
+        contactPoint: {
+          "@type": "ContactPoint",
+          email,
+          contactType: "customer support",
+          availableLanguage: ["English", "Uzbek", "Russian"],
+        },
       },
       {
         "@type": "WebSite",

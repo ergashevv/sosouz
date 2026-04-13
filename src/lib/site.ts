@@ -8,6 +8,24 @@ export function getContactEmail(): string {
   return 'info@soso.uz';
 }
 
+/** Passport / legal name shown on About (imprint). Override with NEXT_PUBLIC_SITE_OPERATOR_NAME. */
+export function getSiteOperatorLegalName(): string {
+  return process.env.NEXT_PUBLIC_SITE_OPERATOR_NAME?.trim() || 'Ergashev Pulot';
+}
+
+/** Public username (GitHub, etc.). Override with NEXT_PUBLIC_SITE_OPERATOR_HANDLE. */
+export function getSiteOperatorHandle(): string {
+  return process.env.NEXT_PUBLIC_SITE_OPERATOR_HANDLE?.trim() || 'edevzi';
+}
+
+/** Optional profile URL for the handle (e.g. GitHub). */
+export function getSiteOperatorProfileUrl(): string | null {
+  const u = process.env.NEXT_PUBLIC_SITE_OPERATOR_PROFILE_URL?.trim();
+  return u || null;
+}
+
+export const SITE_BRAND_NAME = 'SOSO';
+
 /**
  * Canonical site origin for metadata, sitemap, and JSON-LD.
  * Set NEXT_PUBLIC_SITE_URL in production (e.g. https://soso.example.com).
