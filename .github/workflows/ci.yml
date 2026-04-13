@@ -12,7 +12,10 @@ jobs:
     timeout-minutes: 15
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soso
-      GEMINI_API_KEY: ci-placeholder-key
+      AZURE_OPENAI_ENDPOINT: https://ci-placeholder.openai.azure.com
+      AZURE_OPENAI_API_KEY: ci-placeholder-key
+      AZURE_OPENAI_DEPLOYMENT: gpt-4o-mini
+      AZURE_OPENAI_API_VERSION: 2024-10-21
       SERPER_API_KEY: ci-placeholder-key
       NEXT_PUBLIC_SITE_URL: https://sosouz.vercel.app
       NEXT_PUBLIC_APP_URL: https://sosouz.vercel.app

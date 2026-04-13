@@ -7,6 +7,9 @@ import { fetchUniversities } from '@/lib/api';
 const RECOMMENDED_LIMIT = 60;
 
 const fetchRecommendedUniversities = async ([, country]: [string, string]) => {
+  if (!country || country === "Worldwide") {
+    return [];
+  }
   return fetchUniversities(country);
 };
 

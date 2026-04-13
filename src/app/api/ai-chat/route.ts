@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     const recommendationCountry =
       typeof payload.recommendationCountry === "string" && payload.recommendationCountry.trim()
         ? payload.recommendationCountry.trim()
-        : payload.context?.country || "United Kingdom";
+        : payload.context?.country?.trim() || "";
 
     const reply = await generateAdvisorReply({
       language,

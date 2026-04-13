@@ -13,7 +13,7 @@ const SERPER_API_KEY = process.env.SERPER_API_KEY;
 
 const SERPER_SEARCH_ENDPOINT = "https://google.serper.dev/search";
 const HIPO_BASE_URL = "http://universities.hipolabs.com/search";
-const CACHE_NAMESPACE = "rankings:serper-gemini";
+const CACHE_NAMESPACE = "rankings:serper-azure";
 
 /** World snapshot size; used for country/region “top N” lists (ordered within that geo by global rank in this list). */
 /** Keep moderate: very large lists often return truncated/invalid JSON from the model. */
@@ -85,7 +85,7 @@ interface RankingSnapshotPayload {
   year: number;
   month_snapshot: string;
   generated_at: string;
-  source_strategy: "serper+gemini";
+  source_strategy: "serper+azure";
   entries: RankingEntry[];
 }
 
@@ -670,7 +670,7 @@ async function buildCountryRankingSnapshot(
       year,
       month_snapshot: monthSnapshot,
       generated_at: existingSnapshot?.generated_at ?? new Date().toISOString(),
-      source_strategy: "serper+gemini",
+      source_strategy: "serper+azure",
       entries: merged.slice(0, targetCount),
     };
   }
@@ -727,7 +727,7 @@ async function buildCountryRankingSnapshot(
         year,
         month_snapshot: monthSnapshot,
         generated_at: new Date().toISOString(),
-        source_strategy: "serper+gemini",
+        source_strategy: "serper+azure",
         entries: merged.slice(0, targetCount),
       };
       await saveCountryRanking(lastPayload);
@@ -751,7 +751,7 @@ async function buildCountryRankingSnapshot(
       year,
       month_snapshot: monthSnapshot,
       generated_at: new Date().toISOString(),
-      source_strategy: "serper+gemini",
+      source_strategy: "serper+azure",
       entries: merged.slice(0, targetCount),
     };
     await saveCountryRanking(lastPayload);
@@ -958,6 +958,41 @@ export async function getAdvisorRankingUniversities(args: {
 }
 
 /**
+ * Diverse global pool for AI advisor when no single country filter is set (not USA/UK-only).
+ */
+export async function getWorldwideAdvisorPoolUniversities(args?: {
+  year?: number;
+  monthSnapshot?: string;
+  limit?: number;
+}): Promise<{
+  rows: AdvisorRankingUniversityRow[];
+  source: AdvisorUniversityListSource | null;
+}> {
+  const world = await getRankingSnapshot({
+    dataset: "world-top-100",
+    year: args?.year ?? new Date().getUTCFullYear(),
+    monthSnapshot: args?.monthSnapshot,
+  });
+  if (!world || world.snapshot.entries.length === 0) {
+    return { rows: [], source: null };
+  }
+
+  const cap = Math.min(args?.limit ?? 60, world.snapshot.entries.length, WORLD_RANKING_ENTRY_COUNT);
+
+  return {
+    source: "world-cache",
+    rows: world.snapshot.entries.slice(0, cap).map((e) => ({
+      rank: e.rank,
+      university_name: e.university_name,
+      country: e.country,
+      official_website: e.official_website,
+      world_rank: pickWorldRank(e),
+      source_url: e.source_url,
+    })),
+  };
+}
+
+/**
  * Returns a country-national ranking from cache, or builds and caches it (Serper + Azure OpenAI).
  */
 export async function ensureCountryRankingSnapshot(args: {
@@ -1067,7 +1102,7 @@ async function buildSnapshot(dataset: CoreRankingDataset, year: number): Promise
     year,
     month_snapshot: monthSnapshot,
     generated_at: new Date().toISOString(),
-    source_strategy: "serper+gemini",
+    source_strategy: "serper+azure",
     entries: enriched.sort((a, b) => a.rank - b.rank),
   };
 }

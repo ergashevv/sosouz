@@ -111,7 +111,7 @@ export default function UniversityAIChat({ lang, defaultCountry, context }: Univ
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [recommendationCountry, setRecommendationCountry] = useState(defaultCountry || 'United Kingdom');
+  const [recommendationCountry, setRecommendationCountry] = useState(defaultCountry || '');
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const [screenshotName, setScreenshotName] = useState<string | null>(null);
 

@@ -12,10 +12,11 @@
     "db:sync-migration-checksums": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/sync-migration-checksums.ts",
     "db:baseline": "prisma migrate resolve --applied 20260407100000_baseline",
     "db:push": "prisma db push",
-    "db:sync-nuu-tuition": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/sync-nuu-tuition.ts"
+    "db:sync-nuu-tuition": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/sync-nuu-tuition.ts",
+    "test:azure": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/test-azure-openai.ts",
+    "warm:hipo-cache": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/warm-hipo-cache.ts"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "bcryptjs": "^3.0.3",
@@ -28,6 +29,7 @@
     "react": "19.2.4",
     "react-country-flag": "^3.1.0",
     "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
     "swr": "^2.4.1",
     "tailwind-merge": "^3.5.0"
   },

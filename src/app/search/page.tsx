@@ -15,8 +15,21 @@ import { bumpOutcomeMetric, trackEvent } from '@/lib/analytics';
 
 const PAGE_SIZE = 12;
 
+/** Hipolabs search without country — global name search */
+const SEARCH_COUNTRY_WORLDWIDE = 'Worldwide';
+
+function normalizeCountryParam(
+  raw: string | string[] | undefined,
+): string {
+  if (raw === undefined) return 'United Kingdom';
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (v === undefined || v === '') return 'United Kingdom';
+  return v;
+}
+
 const fetcher = async ([country, query]: [string, string | undefined]) => {
-  return await fetchUniversities(country, query);
+  const apiCountry = country === SEARCH_COUNTRY_WORLDWIDE ? undefined : country;
+  return await fetchUniversities(apiCountry, query);
 };
 
 const buildSearchHref = (country: string, page: number, query?: string) => {
@@ -29,8 +42,9 @@ const buildSearchHref = (country: string, page: number, query?: string) => {
 
 function ResultsGrid({ country, q, page }: { country: string; q?: string; page: number }) {
   const { t } = useLanguage();
+  const worldwideNoQuery = country === SEARCH_COUNTRY_WORLDWIDE && !q?.trim();
   const { data: universities, error, isLoading } = useSWR(
-    [country, q],
+    worldwideNoQuery ? null : [country, q],
     fetcher,
     {
       revalidateOnFocus: false, // Prevents multiple calls when switching tabs
@@ -38,6 +52,17 @@ function ResultsGrid({ country, q, page }: { country: string; q?: string; page: 
       dedupingInterval: 60000 // Cache locally for 1 minute
     }
   );
+
+  if (worldwideNoQuery) {
+    return (
+      <div className="p-8 sm:p-16 md:p-24 border border-neutral-100 text-center relative z-10 bg-neutral-50 rounded-3xl">
+        <Database size={80} className="mx-auto text-neutral-200 mb-10" />
+        <p className="text-neutral-600 font-medium max-w-xl mx-auto leading-relaxed">
+          {t('search.results.worldwideNeedQuery')}
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -62,9 +87,11 @@ function ResultsGrid({ country, q, page }: { country: string; q?: string; page: 
   }
 
   if (universities.length === 0) {
+    const countryLabel =
+      country === SEARCH_COUNTRY_WORLDWIDE ? t('search.countryWorldwide') : country;
     const emptyDetail = t('search.results.emptyBody')
       .replace('{query}', q?.trim() ? q : '—')
-      .replace('{country}', country);
+      .replace('{country}', countryLabel);
     return (
       <div className="p-8 sm:p-16 md:p-24 border border-neutral-100 text-center relative z-10 bg-neutral-50 shadow-sm rounded-3xl">
         <Database size={80} className="mx-auto text-neutral-200 mb-10" />
@@ -132,7 +159,7 @@ function ResultsGrid({ country, q, page }: { country: string; q?: string; page: 
 export default function SearchPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const { t } = useLanguage();
   const params = use(searchParams);
-  const country = (params.country as string) || 'United Kingdom';
+  const country = normalizeCountryParam(params.country);
   const query = (params.q as string) || undefined;
   const page = parseInt((params.page as string)) || 1;
   const [searchCountry, setSearchCountry] = useState(country);
@@ -181,6 +208,7 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
                     }}
                     className="bg-transparent text-sm font-semibold text-neutral-700 outline-none cursor-pointer py-2.5 md:py-3.5 w-full min-w-0"
                   >
+                    <option value={SEARCH_COUNTRY_WORLDWIDE}>{t('search.countryWorldwide')}</option>
                     {countries.map((c) => (
                       <option key={c.code} value={c.name}>
                         {c.name}
@@ -190,21 +218,33 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
                 </div>
 
                 <div className="flex-1 px-4 flex items-center gap-3 min-h-11">
-                  <Search size={16} className="text-neutral-400" />
-                  <select
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-transparent w-full py-2.5 md:py-3.5 text-sm font-medium text-neutral-800 outline-none"
-                  >
-                    <option value="">
-                      {isUniversitiesLoading ? t('home.search.loadingUniversities') : t('home.search.selectUniversity')}
-                    </option>
-                    {universityOptions.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
+                  <Search size={16} className="text-neutral-400 shrink-0" />
+                  {searchCountry === SEARCH_COUNTRY_WORLDWIDE ? (
+                    <input
+                      type="search"
+                      name="university"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t('search.universityNamePlaceholderWorldwide')}
+                      autoComplete="off"
+                      className="bg-transparent w-full py-2.5 md:py-3.5 text-sm font-medium text-neutral-800 outline-none placeholder:text-neutral-400"
+                    />
+                  ) : (
+                    <select
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-transparent w-full py-2.5 md:py-3.5 text-sm font-medium text-neutral-800 outline-none"
+                    >
+                      <option value="">
+                        {isUniversitiesLoading ? t('home.search.loadingUniversities') : t('home.search.selectUniversity')}
                       </option>
-                    ))}
-                  </select>
+                      {universityOptions.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="px-2 pb-2 md:pb-0 md:pr-2">
@@ -224,7 +264,9 @@ export default function SearchPage({ searchParams }: { searchParams: Promise<{ [
               <Shield size={14} /> {t('search.header.country')}
             </div>
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-extrabold text-neutral-900 tracking-tight leading-[1.1] capitalize wrap-break-word">
-              {t('search.countryUniversities').replace('{country}', country)}
+              {country === SEARCH_COUNTRY_WORLDWIDE
+                ? t('search.countryUniversitiesWorldwide')
+                : t('search.countryUniversities').replace('{country}', country)}
             </h1>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mt-4 sm:mt-6">
                <div className="px-4 py-1.5 rounded-full bg-white text-neutral-600 text-[10px] font-bold uppercase tracking-widest border border-neutral-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2">

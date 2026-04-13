@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const HIPO_BASE_URL = "http://universities.hipolabs.com/search";
+import { getHipoSearchResultsCached } from "@/lib/hipo-search";
 
 export const runtime = "nodejs";
 
@@ -15,30 +14,18 @@ export async function GET(request: Request) {
     const country = sanitizeParam(searchParams.get("country"));
     const name = sanitizeParam(searchParams.get("name"));
 
-    const upstreamUrl = new URL(HIPO_BASE_URL);
-    if (country) upstreamUrl.searchParams.set("country", country);
-    if (name) upstreamUrl.searchParams.set("name", name);
-
-    const upstreamResponse = await fetch(upstreamUrl.toString(), {
-      headers: {
-        Accept: "application/json",
-      },
-      next: { revalidate: 3600 },
-    });
-
-    if (!upstreamResponse.ok) {
+    if (!country && !name) {
       return NextResponse.json(
-        { error: "University provider request failed." },
-        { status: upstreamResponse.status },
+        { error: "Specify at least a country or a university name." },
+        { status: 400 },
       );
     }
 
-    const data: unknown = await upstreamResponse.json();
-    if (!Array.isArray(data)) {
-      return NextResponse.json([], { status: 200 });
-    }
+    const { data, source } = await getHipoSearchResultsCached({ country, name });
 
-    return NextResponse.json(data, { status: 200 });
+    const res = NextResponse.json(data, { status: 200 });
+    res.headers.set("X-Hipo-Source", source);
+    return res;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "University provider request failed.";
     return NextResponse.json({ error: message }, { status: 502 });

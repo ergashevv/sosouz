@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { fetchUniversityByNameDirect, getLogoUrl, getFallbackLogoUrl } from '@/lib/api';
+import { getLogoUrl, getFallbackLogoUrl } from '@/lib/api';
+import { fetchUniversityByNameDirect } from '@/lib/hipo-search';
 import { getSiteUrl } from '@/lib/site';
 import { performResearch } from '@/lib/research';
 import { GraduationCap } from 'lucide-react';

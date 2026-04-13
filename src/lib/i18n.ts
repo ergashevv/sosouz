@@ -56,6 +56,22 @@ export const translations: InternalDict = {
   "search.header.live": { en: "Live Data Search", ru: "Поиск данных в реальном времени", uz: "Jonli qidiruv tizimi" },
   "search.header.browsing": { en: "Browsing verified academic directory", ru: "Просмотр проверенного каталога", uz: "Rasmiy akademik bazani ko'rish" },
   "search.panel.title": { en: "Search universities", ru: "Поиск университетов", uz: "Universitetlarni qidirish" },
+  "search.countryWorldwide": { en: "Worldwide", ru: "По всему миру", uz: "Butun dunyo" },
+  "search.countryUniversitiesWorldwide": {
+    en: "Universities worldwide.",
+    ru: "Университеты по всему миру.",
+    uz: "Butun dunyo boʻylab universitetlar.",
+  },
+  "search.universityNamePlaceholderWorldwide": {
+    en: "Type part of the university name…",
+    ru: "Введите часть названия вуза…",
+    uz: "Universitet nomining bir qismini yozing…",
+  },
+  "search.results.worldwideNeedQuery": {
+    en: "For worldwide search, enter part of the university name above, then search. Loading every university at once is not supported.",
+    ru: "Для поиска по всему миру введите часть названия университета и нажмите поиск. Полный список всех вузов сразу недоступен.",
+    uz: "Butun dunyo boʻylab qidirish uchun universitet nomining bir qismini yozing va «Izlash»ni bosing. Barcha universitetlarni bir vaqtda yuklash qo‘llab-quvvatlanmaydi.",
+  },
   "search.countryUniversities": {
     en: "{country} universities.",
     ru: "Университеты: {country}.",

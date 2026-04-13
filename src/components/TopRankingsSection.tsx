@@ -22,7 +22,7 @@ interface RankingSnapshotPayload {
   year: number;
   month_snapshot: string;
   generated_at: string;
-  source_strategy: "serper+gemini";
+  source_strategy: "serper+azure";
   entries: RankingEntry[];
   total: number;
   total_pages: number;

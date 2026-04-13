@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Buffer } from "buffer";
-import { getAdvisorRankingUniversities } from "@/lib/rankings";
+import { getAdvisorRankingUniversities, getWorldwideAdvisorPoolUniversities } from "@/lib/rankings";
 import { canonicalCountryKey } from "@/lib/geoFilters";
 import {
   generateAzureChatCompletionText,
@@ -212,11 +212,29 @@ async function fetchHipoUniversities(country: string): Promise<PlatformUniversit
 
 async function resolvePlatformUniversities(country: string): Promise<{
   universities: PlatformUniversity[];
-  listOrigin: "soso-country-ranking" | "soso-world-slice" | "hipolabs";
+  listOrigin: "soso-country-ranking" | "soso-world-slice" | "hipolabs" | "global-world-pool";
 }> {
   const target = country.trim();
   if (!target) {
-    return { universities: [], listOrigin: "hipolabs" };
+    try {
+      const pool = await getWorldwideAdvisorPoolUniversities({ limit: ADVISOR_MAX_PROMPT_UNIVERSITIES });
+      if (pool.rows.length > 0) {
+        return {
+          listOrigin: "global-world-pool",
+          universities: pool.rows.map((row) => ({
+            name: row.university_name,
+            country: row.country,
+            website: row.official_website,
+            national_rank: row.rank,
+            world_rank: row.world_rank,
+            ranking_source_url: row.source_url,
+          })),
+        };
+      }
+    } catch {
+      // Ranking cache may be empty on fresh deploys.
+    }
+    return { universities: [], listOrigin: "global-world-pool" };
   }
 
   try {
@@ -268,7 +286,7 @@ function buildConversationLog(messages: AdvisorMessage[]) {
 function buildSystemPrompt(
   language: "uz" | "ru" | "en",
   recommendationCountry: string,
-  listOrigin: "soso-country-ranking" | "soso-world-slice" | "hipolabs",
+  listOrigin: "soso-country-ranking" | "soso-world-slice" | "hipolabs" | "global-world-pool",
   platformUniversities: PlatformUniversity[],
   context?: AdvisorContext,
 ) {
@@ -314,9 +332,16 @@ function buildSystemPrompt(
       ? "PLATFORM_UNIVERSITIES is from SOSO national ranking cache (trusted list for this country). Prefer higher-ranked options when they fit the student's goals. Ranks are informational only—do not invent extra ranking claims."
       : listOrigin === "soso-world-slice"
         ? "PLATFORM_UNIVERSITIES is the intersection of SOSO world ranking data with this country (may be shorter than a full national list)."
-        : "PLATFORM_UNIVERSITIES is from the Hipolabs open directory for this country (broad list, not a formal ranking). Do not treat list order as world rank.";
+        : listOrigin === "global-world-pool"
+          ? "PLATFORM_UNIVERSITIES is a global sample from SOSO world ranking cache (many countries; not USA/UK-only). Use for comparisons only."
+          : "PLATFORM_UNIVERSITIES is from the Hipolabs open directory for this country (broad list, not a formal ranking). Do not treat list order as world rank.";
 
-  const effectiveCountry = recommendationCountry.trim() || "not set";
+  const effectiveCountry = recommendationCountry.trim()
+    ? recommendationCountry.trim()
+    : "Worldwide (no single-country filter)";
+  const canonicalLine = recommendationCountry.trim()
+    ? canonicalCountryKey(recommendationCountry)
+    : "(none — global comparison list)";
 
   return `You are SOSO AI Student Advisor.
 Language: ${language.toUpperCase()}.
@@ -332,24 +357,26 @@ Hard rules:
    - GENERAL mode: greetings, "who are you", how admissions works, how to choose countries/programs, visa/checklist questions.
    - RECOMMENDATION mode: when user asks to recommend/compare/list specific universities or programs.
 2) In GENERAL mode, do NOT force country-filtered recommendations and do NOT mention a specific country unless user asked for it.
-3) In RECOMMENDATION mode, ONLY use universities from PLATFORM_UNIVERSITIES.
-4) If user asks for universities outside current filter/list, explain the active country filter and ask them to switch country; still provide useful general guidance steps.
-5) Prefer official links (website / ranking_source_url when present) and provided platform links.
-6) Never invent fees, deadlines, or scholarship facts.
-7) When national_rank or world_rank appear on a row, you may cite them as shown—do not extrapolate ranks for other schools.
-8) End every answer with "Next steps" checklist (2-5 bullets).
-9) Add a "Sources used" block with 2-5 links from the provided data. If you lack links, explicitly say "No official source link found in current data".
-10) Add a one-line "Trust note" reminding the student to verify deadlines/fees on official websites before applying.
+3) If focused_university is present in Current context, it is the PRIMARY subject: answer about that university (any country). PLATFORM_UNIVERSITIES is supplementary for comparisons; never refuse to discuss the focused university because it is "not in the list".
+4) In RECOMMENDATION mode, prefer universities from PLATFORM_UNIVERSITIES for comparisons, but if the user names a specific university (especially when it matches focused_university), answer about that institution. Do NOT default to USA/UK-only advice when the student asked about another country.
+5) If a named university is not in PLATFORM_UNIVERSITIES, still give practical guidance (official site, documents, typical steps) and say data is not in the current batch—do not only tell the user to "change country" unless they are explicitly using a country filter in the UI.
+6) Prefer official links (website / ranking_source_url when present) and provided platform links.
+7) Never invent fees, deadlines, or scholarship facts.
+8) When national_rank or world_rank appear on a row, you may cite them as shown—do not extrapolate ranks for other schools.
+9) End every answer with "Next steps" checklist (2-5 bullets).
+10) Add a "Sources used" block with 2-5 links from the provided data. If you lack links, explicitly say "No official source link found in current data".
+11) Add a one-line "Trust note" reminding the student to verify deadlines/fees on official websites before applying.
 
 Data note:
 ${originNote}
+${universityList.length === 0 ? "\nPLATFORM_UNIVERSITIES is empty (ranking cache may not be synced yet). Use focused_university and general guidance; do not refuse non-US/UK questions.\n" : ""}
 
 Current context:
 ${contextBlock}
 
 Recommendation country (filter):
 ${effectiveCountry}
-Canonical country key (for matching): ${canonicalCountryKey(recommendationCountry)}
+Canonical country key (for matching): ${canonicalLine}
 
 PLATFORM_UNIVERSITIES:
 ${JSON.stringify(universityList, null, 2)}
@@ -370,12 +397,17 @@ export async function generateAdvisorReply(args: {
     throw new Error("Conversation is empty.");
   }
 
-  const { universities: platformUniversities, listOrigin } = await resolvePlatformUniversities(
-    args.recommendationCountry,
-  );
+  const countryForList =
+    (args.context?.country?.trim()) ||
+    (args.recommendationCountry.trim()) ||
+    "";
+
+  const { universities: platformUniversities, listOrigin } =
+    await resolvePlatformUniversities(countryForList);
+
   const systemPrompt = buildSystemPrompt(
     args.language,
-    args.recommendationCountry,
+    countryForList,
     listOrigin,
     platformUniversities,
     args.context,

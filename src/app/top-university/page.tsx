@@ -32,7 +32,7 @@ interface RankingsResponse {
   year: number;
   month_snapshot: string;
   generated_at: string;
-  source_strategy: "serper+gemini";
+  source_strategy: "serper+azure";
   cache_key_year?: number;
   requested_calendar_year?: number;
   used_prior_year_cache?: boolean;

@@ -157,8 +157,7 @@ export default function ChatWorkspace({ user }: ChatWorkspaceProps) {
   const searchParams = useSearchParams();
   const { language, t } = useLanguage();
   const defaultCountry =
-    countries.find((item) => item.code.toUpperCase() === user.phoneCountry.toUpperCase())?.name ||
-    'United Kingdom';
+    countries.find((item) => item.code.toUpperCase() === user.phoneCountry.toUpperCase())?.name || '';
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);

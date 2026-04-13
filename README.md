@@ -30,7 +30,7 @@ AI-powered platform for discovering, comparing, and shortlisting universities fo
 - **Framework:** Next.js 16 (App Router), React 19, TypeScript
 - **Database:** PostgreSQL + Prisma
 - **Styling/UI:** Tailwind CSS 4, Framer Motion, Lucide
-- **AI:** Google Gemini API (`@google/generative-ai`)
+- **AI:** Azure OpenAI (chat completions via `src/lib/azure-openai.ts`)
 - **Data integrations:** Serper, YouTube Data API (optional)
 - **Deployment:** Vercel
 
@@ -84,14 +84,23 @@ Set these in `.env` (and production environment settings).
 ### Required
 
 - `DATABASE_URL`: PostgreSQL connection string
-- `GEMINI_API_KEY`: Gemini API key
+- `AZURE_OPENAI_ENDPOINT`: Azure OpenAI resource endpoint URL
+- `AZURE_OPENAI_API_KEY`: Azure OpenAI API key
+- `AZURE_OPENAI_DEPLOYMENT`: Default deployment name (e.g. `gpt-4o-mini`)
+- `AZURE_OPENAI_API_VERSION`: API version (e.g. `2024-10-21`)
 
 ### Recommended
 
-- `GEMINI_MODEL`: Gemini model name (default in code: `gemini-2.5-flash`)
+- `AZURE_OPENAI_DEPLOYMENT_CHAT`: Optional faster deployment for chat
+- `AZURE_OPENAI_DEPLOYMENT_REASONER`: Optional deployment for heavier reasoning tasks
 - `SITE_URL`: Canonical backend/site URL
 - `NEXT_PUBLIC_SITE_URL`: Public app URL
 - `NEXT_PUBLIC_APP_URL`: Alternative public URL
+
+### Hipolabs / university directory cache
+
+- `HIPO_SEARCH_CACHE_TTL_HOURS`: How long Hipolabs search responses stay valid in `SearchCache` (default: **168** = 7 days). Same key hits the database only until TTL expires.
+- `HIPO_WARM_COUNTRIES`: Comma-separated country names for `npm run warm:hipo-cache` (optional; defaults to a small preset list).
 
 ### Optional Integrations
 
@@ -109,8 +118,8 @@ Set these in `.env` (and production environment settings).
 
 - `ADVISOR_MAX_PROMPT_UNIVERSITIES`
 - `ADVISOR_MAX_MESSAGE_CHARS`
-- `GEMINI_RETRY_MAX`
-- `GEMINI_FALLBACK_MODELS`
+- `AZURE_OPENAI_RETRY_MAX`
+- `AZURE_OPENAI_FALLBACK_DEPLOYMENTS` (comma-separated)
 - `COUNTRY_RANKING_BATCH_SIZE`
 - `COUNTRY_RANKING_API_PREFETCH_BATCHES`
 - `RANKING_SOURCE_EXCERPT_MAX_CHARS`
@@ -118,9 +127,9 @@ Set these in `.env` (and production environment settings).
 
 ## Database Notes
 
-- Prisma client is generated automatically on install via `postinstall`.
+- Prisma client is generated automatically on `postinstall`.
 - For first-time local setup, `npm run db:push` is the fastest path.
-- For managed environments, use `npm run db:migrate`.
+- For managed environments, run `npm run db:migrate` (applies migrations such as `UniversityCatalog` + `SearchCache` usage for Hipolabs).
 
 ## Available Scripts
 
@@ -133,6 +142,8 @@ Set these in `.env` (and production environment settings).
 - `npm run db:baseline` - mark baseline migration as applied
 - `npm run db:sync-migration-checksums` - sync migration checksums
 - `npm run db:sync-nuu-tuition` - run tuition sync script
+- `npm run test:azure` - smoke test Azure OpenAI (requires `.env` with Azure variables)
+- `npm run warm:hipo-cache` - prefetch country lists into PostgreSQL (`SearchCache` + `UniversityCatalog`)
 
 ## Deployment
 

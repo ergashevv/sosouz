@@ -39,6 +39,24 @@ model SearchCache {
   last_updated DateTime @updatedAt
 }
 
+/** Rows synced from Hipolabs (search responses); used to reduce repeat upstream fetches. */
+model UniversityCatalog {
+  id              String   @id @default(uuid())
+  name            String
+  country         String
+  alpha_two_code  String
+  web_pages       Json
+  domains         Json
+  state_province  String?
+  source          String   @default("hipolabs")
+  first_seen_at   DateTime @default(now())
+  last_synced_at  DateTime @updatedAt
+
+  @@unique([name, country])
+  @@index([country])
+  @@index([name])
+}
+
 model UniversityLogo {
   id          String   @id @default(uuid())
   domain      String   @unique
