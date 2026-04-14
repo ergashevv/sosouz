@@ -1,0 +1,24 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "sosouz",
+	"compatibility_date": "2026-04-14",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"observability": {
+		"enabled": true
+	},
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference: must match "name" exactly (see opennext.js.org/cloudflare/get-started)
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "sosouz"
+		}
+	],
+	"images": {
+		"binding": "IMAGES"
+	}
+}
