@@ -26,6 +26,24 @@ export function getSiteOperatorProfileUrl(): string | null {
 
 export const SITE_BRAND_NAME = 'SOSO';
 
+const DEFAULT_LINKEDIN_PULAT = 'https://www.linkedin.com/in/edevz/';
+const DEFAULT_LINKEDIN_AZAM =
+  'https://www.linkedin.com/in/azamkhuja-vosiljonov-38524b23a/';
+
+/** LinkedIn for the public team page; override with NEXT_PUBLIC_TEAM_LINKEDIN_PULAT. */
+export function getTeamLinkedInPulat(): string | null {
+  const u = process.env.NEXT_PUBLIC_TEAM_LINKEDIN_PULAT?.trim();
+  if (u && /^https:\/\//i.test(u)) return u;
+  return DEFAULT_LINKEDIN_PULAT;
+}
+
+/** LinkedIn for the public team page; override with NEXT_PUBLIC_TEAM_LINKEDIN_AZAM. */
+export function getTeamLinkedInAzam(): string | null {
+  const u = process.env.NEXT_PUBLIC_TEAM_LINKEDIN_AZAM?.trim();
+  if (u && /^https:\/\//i.test(u)) return u;
+  return DEFAULT_LINKEDIN_AZAM;
+}
+
 /**
  * Canonical site origin for metadata, sitemap, and JSON-LD.
  * Set NEXT_PUBLIC_SITE_URL in production (e.g. https://soso.example.com).
